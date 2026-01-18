@@ -18,23 +18,25 @@ MnemonicFlow is a full-stack web application for flashcard-based learning and me
 ```bash
 # Development (includes hot-reload)
 cd infra
-docker-compose -f compose.dev.yml up -d
+docker compose -f compose.dev.yml up -d
 
 # View logs
-docker-compose -f compose.dev.yml logs -f
-docker-compose -f compose.dev.yml logs backend --tail=50  # specific service
+docker compose -f compose.dev.yml logs -f
+docker compose -f compose.dev.yml logs backend --tail=50  # specific service
 
 # Rebuild a service after code changes
-docker-compose -f compose.dev.yml up -d --build frontend
-docker-compose -f compose.dev.yml up -d --build backend
-docker-compose -f compose.dev.yml up -d --build  # rebuild all
+docker compose -f compose.dev.yml up -d --build frontend
+docker compose -f compose.dev.yml up -d --build backend
+docker compose -f compose.dev.yml up -d --build  # rebuild all
 
 # Stop services
-docker-compose -f compose.dev.yml down
+docker compose -f compose.dev.yml down
 
 # Stop and remove volumes (clears database)
-docker-compose -f compose.dev.yml down -v
+docker compose -f compose.dev.yml down -v
 ```
+
+**Note:** `docker compose` (v2) is the modern syntax. `docker-compose` (v1) also works but is deprecated.
 
 ### Local Development (Without Docker)
 
@@ -64,6 +66,29 @@ pytest
 ```
 
 Configuration in `backend/backend/pytest.ini` - uses short traceback format and ignores SQLAlchemy deprecation warnings.
+
+**Frontend tests:**
+```bash
+cd frontend
+npm test           # Run Vitest tests
+npm run test:ui    # Run tests with UI
+npm run test:coverage  # Generate coverage report
+```
+
+### CI/CD
+
+**GitHub Actions** - Automated CI on Pull Requests to `main` branch.
+
+Configuration: `.github/workflows/ci.yml`
+
+**What CI checks:**
+- Frontend container build
+- Backend container build
+- All services build via `docker compose -f compose.dev.yml build`
+
+**Trigger:** Any PR targeting `main` branch
+
+**Note:** CI uses `docker compose` (v2 syntax), not `docker-compose` (v1). Local development can use either.
 
 ### Database Migrations
 
@@ -311,7 +336,7 @@ The backend uses a custom initialization approach in `entrypoint.sh`:
 
 **1. Frontend changes not appearing:**
 - Frontend is served from a built image, not hot-reloaded
-- After any TypeScript/React changes, rebuild: `docker-compose -f compose.dev.yml up -d --build frontend`
+- After any TypeScript/React changes, rebuild: `docker compose -f compose.dev.yml up -d --build frontend`
 - Changes to source code in `frontend/src/` won't appear without rebuild
 
 **2. Frontend build fails with "package-lock.json out of sync":**
@@ -320,7 +345,7 @@ The backend uses a custom initialization approach in `entrypoint.sh`:
 
 **3. Backend changes not appearing:**
 - Backend also uses a built image but has some Python hot-reload in dev mode
-- After major changes, rebuild: `docker-compose -f compose.dev.yml up -d --build backend`
+- After major changes, rebuild: `docker compose -f compose.dev.yml up -d --build backend`
 
 **4. Nginx can't find backend container:**
 - Error: "host not found in upstream 'backend'"
@@ -333,10 +358,10 @@ The backend uses a custom initialization approach in `entrypoint.sh`:
 **6. Database operations from host:**
 ```bash
 # Connect to PostgreSQL container
-docker-compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards
+docker compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards
 
 # Example: Update user email verification
-docker-compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards -c "UPDATE users SET is_email_verified = true;"
+docker compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards -c "UPDATE users SET is_email_verified = true;"
 ```
 
 **7. Nginx config path:**
