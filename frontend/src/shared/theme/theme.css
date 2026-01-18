@@ -1,0 +1,81 @@
+/*
+  Theme design tokens.
+
+  How it works:
+  - Base tokens are defined on :root (dark theme by default)
+  - Presets override tokens via :root[data-theme='...']
+  - Custom theme overrides are applied at runtime via JS (ThemeProvider) by setting CSS variables on :root
+
+  Available themes:
+  - dark (default)
+  - light
+  - blue (original blue theme from before refactoring)
+  - custom (user-defined, applied via ThemeProvider)
+*/
+
+:root {
+  /* surfaces */
+  --bg: #0b0f19;
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface-2: rgba(255, 255, 255, 0.1);
+
+  /* text */
+  --text: #f8fafc;
+  --muted: rgba(255, 255, 255, 0.6);
+
+  /* accents */
+  --primary: #ff9a76;
+  --primary-contrast: #0b0f19;
+
+  /* borders/shadows */
+  --border: rgba(255, 255, 255, 0.12);
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+
+  /* radius */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+
+  color-scheme: dark;
+}
+
+/* Light theme */
+:root[data-theme='light'] {
+  --bg: #ffffff;
+  --surface: rgba(0, 0, 0, 0.04);
+  --surface-2: rgba(0, 0, 0, 0.08);
+
+  --text: #0b0f19;
+  --muted: rgba(11, 15, 25, 0.65);
+
+  --primary: #ff6a3d;
+  --primary-contrast: #ffffff;
+
+  --border: rgba(0, 0, 0, 0.12);
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.16);
+
+  color-scheme: light;
+}
+
+/* Blue theme (original pre-refactoring colors) */
+:root[data-theme='blue'] {
+  --bg: #0b1220;
+  --surface: rgba(96, 165, 250, 0.08);
+  --surface-2: rgba(96, 165, 250, 0.14);
+
+  --text: #e5e7eb;
+  --muted: rgba(229, 231, 235, 0.6);
+
+  --primary: #60a5fa;
+  --primary-contrast: #0b1220;
+
+  --border: rgba(96, 165, 250, 0.18);
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+
+  color-scheme: dark;
+}
+
+/* Custom theme (values set dynamically by ThemeProvider) */
+:root[data-theme='custom'] {
+  /* Variables will be overridden at runtime via JS */
+  color-scheme: dark;
+}
