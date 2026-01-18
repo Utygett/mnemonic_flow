@@ -1,0 +1,34 @@
+name: Validate Commits
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_call:
+
+jobs:
+  validate-commits:
+    name: Validate Conventional Commits
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate commit messages
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: commits } = await github.rest.repos.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            const conventionalCommitPattern = /^(feat|fix|docs|style|refactor|perf|test|chore|revert)(\(.+\))?\!?:\s.+$/;
+
+            for (const commit of commits) {
+              const message = commit.commit.message.split('\n')[0]; // Get first line only
+              if (message.startsWith('Merge branch') || message.startsWith('Merge pull request')) {
+                continue; // Skip merge commits
+              }
+              if (!conventionalCommitPattern.test(message)) {
+                core.setFailed(`Commit "${commit.sha.substring(0, 7)}: ${message}" does not follow Conventional Commits format.\nExpected format: type(scope): description\nTypes: feat, fix, docs, style, refactor, perf, test, chore, revert`);
+                break;
+              }
+            }
