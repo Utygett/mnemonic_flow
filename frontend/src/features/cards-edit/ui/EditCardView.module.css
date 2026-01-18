@@ -1,0 +1,305 @@
+.page {
+  min-height: 100vh;
+  background: var(--bg);
+  padding-bottom: 96px;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 16px 0;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+.headerInner {
+  max-width: 390px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.iconButton {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  color: var(--text);
+}
+
+.headerTitle {
+  margin: 0;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.headerSpacer {
+  width: 32px;
+}
+
+.main {
+  width: 100%;
+  max-width: 390px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  display: grid;
+  gap: 24px;
+}
+
+.errorCard {
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(229, 62, 62, 0.4);
+  background: var(--surface);
+  padding: 16px;
+}
+
+.errorText {
+  color: #feb2b2;
+}
+
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.formLabel {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.rowWithActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.input:disabled {
+  opacity: 0.65;
+}
+
+.squareButton {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.squareButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.squareButtonDanger {
+  border-color: rgba(229, 62, 62, 0.35);
+  color: #e53e3e;
+}
+
+.squareButtonNeutral {
+  border-color: color-mix(in srgb, var(--muted) 12%, transparent);
+  color: var(--text);
+}
+
+.levelsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.levelsLabel {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.inlineAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.inlineAction:hover {
+  background: var(--surface-2);
+}
+
+.levelTabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  margin-bottom: 12px;
+}
+
+.levelTabs::-webkit-scrollbar {
+  display: none;
+}
+
+.levelTab {
+  flex: 0 0 auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.levelTabRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.levelTabActive {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+}
+
+.levelTabInactive {
+  opacity: 0.85;
+}
+
+.levelTabText {
+  font-size: 14px;
+}
+
+.reorderGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.reorderIcon {
+  display: inline-flex;
+  padding: 4px;
+  color: var(--muted);
+  border-radius: var(--radius-sm);
+}
+
+.reorderIcon:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.reorderIconDisabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.card {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 16px;
+}
+
+.mt4 {
+  margin-top: 16px;
+}
+
+.mt3 {
+  margin-top: 12px;
+}
+
+.mcqOptionRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.square40Button {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.square40Button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.square40ButtonNeutral {
+  border-color: color-mix(in srgb, var(--muted) 12%, transparent);
+  color: var(--muted);
+}
+
+.square40ButtonDanger {
+  border-color: rgba(229, 62, 62, 0.35);
+  color: #e53e3e;
+}
+
+.hintText {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.noticeCard {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 16px;
+}
+
+.noticeText {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.bottomActions {
+  display: flex;
+  gap: 12px;
+  padding-top: 16px;
+}

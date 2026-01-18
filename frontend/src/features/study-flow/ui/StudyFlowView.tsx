@@ -1,0 +1,97 @@
+import React from 'react';
+
+import type { CardReviewInput, StudyCard } from '@/entities/card';
+import { StudySession } from '../session/StudySession';
+
+import './StudyFlow.css';
+
+type Props = {
+  isStudying: boolean;
+  loadingDeckCards: boolean;
+  deckCards: StudyCard[];
+
+  cards: StudyCard[];
+  currentIndex: number;
+  isCompleted: boolean;
+
+  onRate: (review: CardReviewInput) => void;
+  onLevelUp: () => void;
+  onLevelDown: () => void;
+  onSkip: () => void;
+  onRemoveFromProgress: () => void;
+  onClose: () => void;
+
+  onBackToHome: () => void;
+};
+
+export function StudyFlowView(props: Props) {
+  if (!props.isStudying) return null;
+
+  if (props.loadingDeckCards) {
+    return (
+      <div className="study-flow">
+        <div className="study-flow__center">
+          <div className="study-flow__muted">Загрузка карточек…</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (props.deckCards.length === 0) {
+    return (
+      <div className="study-flow">
+        <div className="study-flow__center study-flow__center--padded">
+          <div className="study-flow__card study-flow__card--narrow">
+            <h2 className="study-flow__title">Нет карточек</h2>
+            <p className="study-flow__text">В этой сессии нет карточек для изучения.</p>
+            <button className="btn-primary study-flow__full-width" onClick={props.onBackToHome}>
+              Вернуться
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (props.isCompleted) {
+    return (
+      <div className="study-flow">
+        <div className="study-flow__center study-flow__center--padded">
+          <div className="study-flow__card study-flow__card--narrow">
+            <div className="study-flow__emoji" aria-hidden="true">
+              🎉
+            </div>
+            <h2 className="study-flow__title">Сессия завершена</h2>
+            <p className="study-flow__text">Отличная работа! Ты прошёл все карточки.</p>
+            <button className="btn-primary study-flow__full-width" onClick={props.onBackToHome}>
+              Вернуться в меню
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (props.cards.length === 0) {
+    return (
+      <div className="study-flow">
+        <div className="study-flow__center">
+          <div className="study-flow__muted">Нет карточек для изучения</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <StudySession
+      cards={props.cards}
+      currentIndex={props.currentIndex}
+      onRate={props.onRate}
+      onLevelUp={props.onLevelUp}
+      onLevelDown={props.onLevelDown}
+      onClose={props.onClose}
+      onSkip={props.onSkip}
+      onRemoveFromProgress={props.onRemoveFromProgress}
+    />
+  );
+}

@@ -1,0 +1,14 @@
+passlib
+pydantic-settings
+python-jose
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+pydantic
+email-validator
+bcrypt==3.2.2
+pytest
+httpx
+aiosmtplib
+alembic

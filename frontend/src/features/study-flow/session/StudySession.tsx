@@ -1,0 +1,328 @@
+import React, { useEffect, useRef, useState } from 'react';
+
+import { isMultipleChoice } from '../model/studyCardTypes';
+import { StudyCard } from '../model/studyCardTypes';
+
+import type { CardReviewInput, DifficultyRating } from '@/entities/card';
+
+import { FlipCard } from '../ui/FlipCard';
+import { RatingButton } from '../ui/RatingButton';
+
+import { Button } from '@/shared/ui/Button/Button';
+import { ProgressBar } from '@/shared/ui/ProgressBar';
+import { MarkdownView } from '@/shared/ui/MarkdownView';
+
+import { X, SkipForward, Trash2 } from 'lucide-react';
+
+import './StudySession.css';
+
+function getLevelIndex(l: any): number {
+  return typeof l?.level_index === 'number' ? l.level_index : l?.levelindex;
+}
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+export function StudySession({
+  cards,
+  currentIndex,
+  onRate,
+  onClose,
+  onLevelUp,
+  onLevelDown,
+  onSkip,
+  onRemoveFromProgress,
+}: {
+  cards: StudyCard[];
+  currentIndex: number;
+  onRate: (review: CardReviewInput) => void;
+  onClose: () => void;
+  onLevelUp: () => void;
+  onLevelDown: () => void;
+  onSkip: () => void;
+  onRemoveFromProgress: () => void;
+}) {
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
+  const [timeLeftMs, setTimeLeftMs] = useState<number | null>(null);
+
+  const currentCard = cards[currentIndex];
+
+  const shownAtRef = useRef<string | null>(null);
+  const revealedAtRef = useRef<string | null>(null);
+
+  if (!currentCard) {
+    return (
+      <div className="study-page flex items-center justify-center">
+        <div className="text-muted">Карточки закончились</div>
+      </div>
+    );
+  }
+
+  const progress = (currentIndex / cards.length) * 100;
+
+  const submitReview = (rating: DifficultyRating) => {
+    const ratedAt = nowIso();
+
+    const review: CardReviewInput = {
+      rating,
+      shownAt: shownAtRef.current ?? ratedAt,
+      revealedAt: revealedAtRef.current ?? undefined,
+      ratedAt,
+    };
+
+    setIsFlipped(false);
+    setTimeout(() => onRate(review), 300);
+  };
+
+  const handleFlip = () => {
+    // mark reveal moment on first reveal
+    if (!isFlipped && !revealedAtRef.current) {
+      revealedAtRef.current = nowIso();
+    }
+    setIsFlipped((v) => !v);
+  };
+
+  const handleSkip = () => {
+    setIsFlipped(false);
+    onSkip();
+  };
+
+  const handleRemoveFromProgress = () => {
+    const ok = window.confirm(
+      'Удалить карточку из прогресса?\n\n' +
+        'Она больше не будет отображаться в повторении. ' +
+        'Вернуть её можно будет, начав изучение снова (прогресс начнётся заново).',
+    );
+    if (!ok) return;
+
+    setIsFlipped(false);
+    onRemoveFromProgress();
+  };
+
+  useEffect(() => {
+    setIsFlipped(false);
+    setSelectedOptionId(null);
+
+    // reset timing for new card/level
+    shownAtRef.current = nowIso();
+    revealedAtRef.current = null;
+  }, [currentCard?.id, currentCard?.activeLevel]);
+
+  const level =
+    (currentCard.levels as any[]).find((l) => getLevelIndex(l) === currentCard.activeLevel) ??
+    currentCard.levels[0];
+
+  const mcq = isMultipleChoice(currentCard) ? ((level as any)?.content as any) : null;
+  const timerSec = typeof mcq?.timerSec === 'number' && mcq.timerSec > 0 ? mcq.timerSec : 0;
+
+  useEffect(() => {
+    if (!currentCard) return;
+    if (!isMultipleChoice(currentCard)) return;
+    if (isFlipped) {
+      setTimeLeftMs(null);
+      return;
+    }
+    if (!timerSec) {
+      setTimeLeftMs(null);
+      return;
+    }
+
+    const endAt = Date.now() + timerSec * 1000;
+
+    setTimeLeftMs(timerSec * 1000);
+
+    const id = window.setInterval(() => {
+      const left = endAt - Date.now();
+      if (left <= 0) {
+        window.clearInterval(id);
+        setTimeLeftMs(0);
+        // auto reveal
+        if (!revealedAtRef.current) revealedAtRef.current = nowIso();
+        setIsFlipped(true);
+        return;
+      }
+      setTimeLeftMs(left);
+    }, 200);
+
+    return () => window.clearInterval(id);
+  }, [currentCard?.id, currentCard?.activeLevel, timerSec, isFlipped]);
+
+  const renderMcqFront = () => {
+    const c = mcq;
+    if (!c) return null;
+
+    const correctId = String(c.correctOptionId ?? '');
+    const showResult = selectedOptionId !== null;
+    const leftSec =
+      timerSec > 0
+        ? Math.max(0, Math.ceil(((timeLeftMs ?? timerSec * 1000) as number) / 1000))
+        : 0;
+
+    const progressPct =
+      timerSec > 0 && timeLeftMs != null
+        ? Math.max(0, Math.min(100, (timeLeftMs / (timerSec * 1000)) * 100))
+        : 100;
+
+    return (
+      <div className="mcq">
+        <div className="mcq-question">
+          <MarkdownView value={String(c.question ?? '')} />
+        </div>
+
+        <div className="mcq-options">
+          {(c.options ?? []).map((opt: any) => {
+            const optId = String(opt.id);
+
+            const isSelected = selectedOptionId === optId;
+            const isCorrect = optId === correctId;
+
+            const className = [
+              'mcq-option',
+              showResult && isCorrect ? 'mcq-option--correct' : '',
+              showResult && isSelected && !isCorrect ? 'mcq-option--wrong' : '',
+            ]
+              .join(' ')
+              .trim();
+
+            return (
+              <button
+                key={optId}
+                type="button"
+                className={className}
+                disabled={isFlipped}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedOptionId(optId);
+                  if (!revealedAtRef.current) revealedAtRef.current = nowIso();
+                  setIsFlipped(true);
+                }}
+              >
+                <MarkdownView value={String(opt.text ?? '')} />
+              </button>
+            );
+          })}
+        </div>
+
+        {timerSec > 0 ? (
+          <div className="mcq-timer">
+            <div className="mcq-timer-text">⏳ {leftSec}s</div>
+            <div className="mcq-timer-bar">
+              <div className="mcq-timer-fill" style={{ width: `${progressPct}%` }} />
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
+  const renderMcqBack = () => {
+    if (!mcq) return null;
+
+    const options: any[] = mcq.options ?? [];
+    const correct = options.find((o) => String(o.id) === String(mcq.correctOptionId));
+    const selected = options.find((o) => String(o.id) === String(selectedOptionId));
+
+    return (
+      <div style={{ width: '100%', maxWidth: 520 }}>
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ opacity: 0.85, fontSize: 12, marginBottom: 6 }}>Правильный ответ</div>
+          <MarkdownView value={String(correct?.text ?? '')} />
+        </div>
+
+        {selectedOptionId ? (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ opacity: 0.85, fontSize: 12, marginBottom: 6 }}>Вы выбрали</div>
+            <MarkdownView value={String(selected?.text ?? '')} />
+          </div>
+        ) : null}
+
+        {mcq.explanation ? (
+          <div>
+            <div style={{ opacity: 0.85, fontSize: 12, marginBottom: 6 }}>Пояснение</div>
+            <MarkdownView value={String(mcq.explanation)} />
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
+  return (
+    <div className="study-page">
+      <div className="page__header py-4">
+        <div className="page__header-inner">
+          <div className="flex justify-between items-center mb-4">
+            <button onClick={onClose} className="icon-btn" aria-label="Закрыть сессию" type="button">
+              <X size={18} />
+            </button>
+
+            <span className="text-sm text-muted">
+              {currentIndex + 1} / {cards.length}
+            </span>
+
+            <div className="flex items-center" style={{ columnGap: 32 }}>
+              <button onClick={handleSkip} className="icon-btn" aria-label="Пропустить карточку" type="button">
+                <SkipForward size={18} />
+              </button>
+
+              <button
+                onClick={handleRemoveFromProgress}
+                className="icon-btn"
+                aria-label="Удалить прогресс карточки"
+                type="button"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
+          </div>
+
+          <ProgressBar progress={progress} color="#FF9A76" />
+        </div>
+      </div>
+
+      <div className="study__card-area">
+        {isMultipleChoice(currentCard) ? (
+          <FlipCard
+            card={currentCard}
+            isFlipped={isFlipped}
+            onFlip={() => {
+              if (!isFlipped && !revealedAtRef.current) revealedAtRef.current = nowIso();
+              setIsFlipped((v) => !v);
+            }}
+            disableFlipOnClick
+            onLevelUp={onLevelUp}
+            onLevelDown={onLevelDown}
+            frontContent={renderMcqFront()}
+            backContent={renderMcqBack()}
+          />
+        ) : (
+          <FlipCard
+            card={currentCard}
+            isFlipped={isFlipped}
+            onFlip={handleFlip}
+            onLevelUp={onLevelUp}
+            onLevelDown={onLevelDown}
+          />
+        )}
+      </div>
+
+      <div className="study__actions">
+        {!isFlipped ? (
+          <Button onClick={handleFlip} variant="primary" size="large" fullWidth>
+            Показать ответ
+          </Button>
+        ) : (
+          <div className="study__actions-inner">
+            <div className="rating-row">
+              <RatingButton rating="again" label="Снова" onClick={() => submitReview('again')} />
+              <RatingButton rating="hard" label="Трудно" onClick={() => submitReview('hard')} />
+              <RatingButton rating="good" label="Хорошо" onClick={() => submitReview('good')} />
+              <RatingButton rating="easy" label="Легко" onClick={() => submitReview('easy')} />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

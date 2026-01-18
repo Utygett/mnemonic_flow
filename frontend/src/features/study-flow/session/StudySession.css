@@ -1,0 +1,289 @@
+/* Study session screen styles (restored)
+   This file intentionally defines the utility-like classes used by StudySession.tsx,
+   because the project does not include Tailwind/utility framework.
+*/
+
+:root {
+  --study-bg: #0b1220;
+  --study-surface: rgba(79, 114, 172, 0.18);
+  --study-border: rgba(30, 41, 59, 0.9);
+  --study-text: #e8eaf0;
+  --study-muted: rgba(232, 234, 240, 0.72);
+}
+
+/* --- small utilities used in StudySession markup --- */
+
+.flex {
+  display: flex;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.mb-4 {
+  margin-bottom: 16px;
+}
+
+.py-4 {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.text-sm {
+  font-size: 12px;
+}
+
+.text-xs {
+  font-size: 10px;
+}
+
+.text-white {
+  color: #fff;
+}
+
+.text-muted {
+  color: var(--study-muted);
+}
+
+.transition-all {
+  transition: all 200ms ease;
+}
+
+.duration-200 {
+  transition-duration: 200ms;
+}
+
+.shadow-md {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* --- layout --- */
+
+.study-page {
+  min-height: 100vh;
+  background: var(--study-bg);
+  color: var(--study-text);
+  display: flex;
+  flex-direction: column;
+}
+
+.page__header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: color-mix(in srgb, var(--study-bg) 90%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.page__header-inner {
+  max-width: 390px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--study-border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--study-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.study__card-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.study__actions {
+  padding: 0 16px 16px 16px;
+  max-width: 390px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.study__actions-inner {
+  width: 100%;
+}
+
+/* --- flip card --- */
+
+.flipcard-container {
+  width: 100%;
+  max-width: 520px;
+}
+
+.flipcard {
+  width: 100%;
+  cursor: pointer;
+}
+
+.flipcard__inner {
+  position: relative;
+  width: 100%;
+  min-height: 320px;
+  transform-style: preserve-3d;
+}
+
+.flipcard__side {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  border: 2px solid var(--study-border);
+  background: rgba(79, 114, 172, 0.22);
+  padding: 16px;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.flipcard__front {
+  transform: rotateY(0deg);
+}
+
+.flipcard__back {
+  transform: rotateY(180deg);
+}
+
+.flipcard__text {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: left;
+  width: 100%;
+  overflow: auto;
+}
+
+.flipcard__hint {
+  font-size: 12px;
+  color: var(--study-muted);
+  text-align: center;
+}
+
+.flipcard__level-controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.flipcard__level-btn {
+  border: 1px solid var(--study-border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--study-text);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.flipcard__level-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* --- rating buttons --- */
+
+.rating-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.rating-button {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  border: 2px solid rgba(30, 41, 59, 0.9);
+  cursor: pointer;
+}
+
+.rating-button:hover {
+  transform: translateY(-1px);
+}
+
+/* --- mcq --- */
+
+.mcq {
+  width: 100%;
+}
+
+.mcq-question {
+  margin-bottom: 12px;
+}
+
+.mcq-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mcq-option {
+  width: 100%;
+  text-align: left;
+  border-radius: 12px;
+  border: 1px solid var(--study-border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--study-text);
+  padding: 12px;
+  cursor: pointer;
+}
+
+.mcq-option:disabled {
+  opacity: 0.95;
+  cursor: default;
+}
+
+.mcq-option--correct {
+  border-color: rgba(56, 161, 105, 0.9);
+  background: rgba(56, 161, 105, 0.22);
+}
+
+.mcq-option--wrong {
+  border-color: rgba(229, 62, 62, 0.9);
+  background: rgba(229, 62, 62, 0.18);
+}
+
+.mcq-timer {
+  margin-top: 12px;
+}
+
+.mcq-timer-text {
+  font-size: 12px;
+  color: var(--study-muted);
+  margin-bottom: 6px;
+}
+
+.mcq-timer-bar {
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid var(--study-border);
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.mcq-timer-fill {
+  height: 100%;
+  background: rgba(57, 142, 105, 0.55);
+  transition: width 200ms linear;
+}
