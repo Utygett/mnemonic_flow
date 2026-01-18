@@ -15,7 +15,7 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "noEmit": true,
-    "types": ["vite/client"]
+    "types": ["vite/client", "vitest/globals"]
   },
   "include": ["src", "vite.config.ts"],
   "exclude": ["dist", "dev-dist", "node_modules"]
