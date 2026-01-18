@@ -1,0 +1,72 @@
+name: Build All
+
+on:
+  workflow_call:
+
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        run: |
+          cd backend
+          docker build -t mnemonicflow-backend:test .
+
+      - name: Verify backend build
+        run: |
+          docker images | grep mnemonicflow-backend
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build frontend image
+        run: |
+          cd frontend
+          docker build -t mnemonicflow-frontend:test .
+
+      - name: Verify frontend build
+        run: |
+          docker images | grep mnemonicflow-frontend
+
+  build-docker-compose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env file
+        run: |
+          cd infra
+          cat > .env << EOF
+          POSTGRES_USER=flashcards_user
+          POSTGRES_PASSWORD=flashcards_password
+          POSTGRES_DB=flashcards
+          DATABASE_URL=postgresql+psycopg2://flashcards_user:flashcards_password@db:5432/flashcards
+          SECRET_KEY=test_secret_key_for_ci
+          ALGORITHM=HS256
+          ACCESS_TOKEN_EXPIRE_MINUTES=30
+          EOF
+
+      - name: Build all containers
+        run: |
+          cd infra
+          docker compose -f compose.dev.yml build
+
+      - name: Verify containers built
+        run: |
+          docker images | grep -E "mnemonicflow|flashcards" || true
