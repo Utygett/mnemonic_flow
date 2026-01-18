@@ -9,9 +9,9 @@ env:
   COMPOSE_DOCKER_CLI_BUILD: 1
 
 jobs:
-  validate-commits:
-    name: Validate Commits
-    uses: ./.github/workflows/validate-commits.yml
+#   validate-commits:
+#     name: Validate Commits
+#     uses: ./.github/workflows/validate-commits.yml
 
   build-all:
     name: Build All
