@@ -10,12 +10,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Read VERSION
+        id: version
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build and test backend
         run: |
           cd infra
+          export VERSION="${{ steps.version.outputs.version }}"
           docker compose -f compose.ci.yml build test-backend
           docker compose -f compose.ci.yml run --rm test-backend
 
@@ -25,11 +30,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Read VERSION
+        id: version
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build and test frontend
         run: |
           cd infra
+          export VERSION="${{ steps.version.outputs.version }}"
           docker compose -f compose.ci.yml build test-frontend
           docker compose -f compose.ci.yml run --rm test-frontend
