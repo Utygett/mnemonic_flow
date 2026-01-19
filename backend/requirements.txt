@@ -12,3 +12,8 @@ pytest
 httpx
 aiosmtplib
 alembic
+
+pytest-asyncio       # Для async тестов
+pytest-cov           # Coverage отчёты
+pytest-mock          # Моки (unittest.mock компактнее)
+pytest-xdist         # Параллельный запуск тестов
