@@ -1,6 +1,8 @@
 """Тесты для модели User с базой данных."""
 import uuid
 
+import pytest
+
 from app.models.user import User
 from app.core.security import hash_password
 
@@ -8,7 +10,7 @@ from app.core.security import hash_password
 class TestUserModel:
     """Тесты работы с моделью User в базе данных."""
 
-    def test_create_user(self, db):
+    def test_create_user(self, db, cleanup_db):
         """Создание пользователя в БД."""
         user = User(
             username="testuser",
@@ -26,7 +28,7 @@ class TestUserModel:
         assert user.password_hash is not None
         assert user.is_email_verified is False
 
-    def test_create_verified_user(self, db):
+    def test_create_verified_user(self, db, cleanup_db):
         """Создание пользователя с подтверждённым email."""
         user = User(
             username="verifieduser",
@@ -40,7 +42,7 @@ class TestUserModel:
 
         assert user.is_email_verified is True
 
-    def test_find_user_by_email(self, db):
+    def test_find_user_by_email(self, db, cleanup_db):
         """Поиск пользователя по email."""
         email = f"search_{uuid.uuid4()}@example.com"
         user = User(
@@ -57,7 +59,7 @@ class TestUserModel:
         assert found.username == "searchuser"
         assert found.email == email
 
-    def test_email_must_be_unique(self, db):
+    def test_email_must_be_unique(self, db, cleanup_db):
         """Email должен быть уникальным."""
         email = f"duplicate_{uuid.uuid4()}@example.com"
 
@@ -79,8 +81,10 @@ class TestUserModel:
         # Должна быть ошибка при коммите
         with pytest.raises(Exception):  # IntegrityError
             db.commit()
+        # Очищаем состояние сессии после ошибки
+        db.rollback()
 
-    def test_update_user_email(self, db):
+    def test_update_user_email(self, db, cleanup_db):
         """Обновление email пользователя."""
         user = User(
             username="updateme",
@@ -98,7 +102,7 @@ class TestUserModel:
 
         assert user.email == new_email
 
-    def test_delete_user(self, db):
+    def test_delete_user(self, db, cleanup_db):
         """Удаление пользователя."""
         user = User(
             username="deleteme",
