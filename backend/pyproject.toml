@@ -1,0 +1,36 @@
+[project]
+name = "mnemonicflow-backend"
+version = "0.0.99"
+description = "Backend for MnemonicFlow flashcard app"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "sqlalchemy",
+    "psycopg2-binary",
+    "pydantic",
+    "pydantic-settings",
+    "python-jose",
+    "passlib",
+    "bcrypt",
+    "email-validator",
+    "alembic",
+    "httpx",
+    "aiosmtplib",
+    "pytest",
+]
+
+[tool.pytest.ini_options]
+log_cli = false
+log_file_level = "ERROR"
+log_level = "ERROR"
+addopts = "--tb=short"
+pythonpath = "backend"
+testpaths = "backend/tests"
+filterwarnings = [
+    "ignore::DeprecationWarning:sqlalchemy.*",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
