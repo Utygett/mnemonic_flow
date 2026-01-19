@@ -120,3 +120,16 @@ npm run dev    # http://localhost:3000
 
 ## 🧪 Тесты
 
+**Frontend:**
+```bash
+cd frontend
+npm test              # Запуск Vitest тестов
+npm run test:ui       # Запуск тестов с UI
+npm run test:coverage # Генерация отчёта о покрытии
+```
+
+**Backend:**
+```bash
+cd backend
+pytest
+```
