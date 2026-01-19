@@ -1,0 +1,24 @@
+[project]
+name = "mnemonicflow-backend"
+version = "0.0.99"
+description = "Backend for MnemonicFlow flashcard app"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "sqlalchemy",
+    "psycopg2-binary",
+    "pydantic",
+    "pydantic-settings",
+    "python-jose",
+    "passlib",
+    "bcrypt",
+    "email-validator",
+    "alembic",
+    "httpx",
+    "aiosmtplib",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"

@@ -4,8 +4,9 @@ from app.api.routes import auth
 from starlette.middleware.cors import CORSMiddleware
 from app.api.routes import decks
 from app.db.init_db import init_db
+from app.core.version import __version__
 
-app = FastAPI(title="Flashcards API")
+app = FastAPI(title="Flashcards API", version=__version__)
 
 init_db()
 
@@ -35,3 +36,9 @@ app.include_router(api)
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+@app.get("/version")
+def version_check():
+    """Возвращает текущую версию приложения."""
+    return {"version": __version__}

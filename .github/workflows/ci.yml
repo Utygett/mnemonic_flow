@@ -10,7 +10,7 @@ env:
 
 jobs:
   validate-commits:
-    name: Validate Commits
+    name: Validate Commits & Version
     uses: ./.github/workflows/validate-commits.yml
 
   build-all:
