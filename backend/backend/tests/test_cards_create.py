@@ -1,9 +1,11 @@
 import uuid
 
-from backend.tests.conftest import register_and_login, create_deck
+from fastapi.testclient import TestClient
+
+from .conftest import register_and_login, create_deck
 
 
-def test_create_card_owner_ok(client):
+def test_create_card_owner_ok(client: TestClient):
     _, token = register_and_login(client)
     deck_id = create_deck(client, token, title="My Deck")
 
@@ -35,7 +37,7 @@ def test_create_card_owner_ok(client):
     assert any(c.get("card_id") == data["card_id"] for c in cards), cards
 
 
-def test_create_card_forbidden_not_owner(client):
+def test_create_card_forbidden_not_owner(client: TestClient):
     # user1 creates deck
     _, token1 = register_and_login(client)
     deck_id = create_deck(client, token1, title="Owner Deck")
@@ -57,7 +59,7 @@ def test_create_card_forbidden_not_owner(client):
     assert r.status_code == 403, r.text
 
 
-def test_create_card_unauthorized(client):
+def test_create_card_unauthorized(client: TestClient):
     payload = {
         "deck_id": str(uuid.uuid4()),
         "title": "Card",
@@ -68,7 +70,7 @@ def test_create_card_unauthorized(client):
     assert r.status_code == 401, r.text
 
 
-def test_create_card_deck_not_found(client):
+def test_create_card_deck_not_found(client: TestClient):
     _, token = register_and_login(client)
 
     payload = {
@@ -85,7 +87,7 @@ def test_create_card_deck_not_found(client):
     assert r.status_code == 404, r.text
 
 
-def test_create_card_validation_levels_empty(client):
+def test_create_card_validation_levels_empty(client: TestClient):
     _, token = register_and_login(client)
     deck_id = create_deck(client, token)
 
@@ -103,7 +105,7 @@ def test_create_card_validation_levels_empty(client):
     assert r.status_code == 422, r.text
 
 
-def test_create_card_validation_title_empty(client):
+def test_create_card_validation_title_empty(client: TestClient):
     _, token = register_and_login(client)
     deck_id = create_deck(client, token)
 
