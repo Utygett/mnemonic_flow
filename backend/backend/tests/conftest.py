@@ -1,10 +1,12 @@
 """Pytest fixtures для тестирования с базой данных."""
 import os
 import uuid
+import uuid as uuid_lib
 import warnings
 import logging
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import text, inspect
 
 # Отключаем SQLAlchemy логирование
@@ -13,11 +15,47 @@ for logger_name in ("sqlalchemy", "sqlalchemy.engine", "sqlalchemy.pool", "sqlal
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-# DATABASE_URL для тестов - можно переопределить через env
+# Устанавливаем переменные окружения для тестов
 if "DATABASE_URL" not in os.environ:
-    os.environ["DATABASE_URL"] = "postgresql+psycopg2://flashcards_user:flashcards_pass@localhost:15433/flashcards"
+    os.environ["DATABASE_URL"] = "postgresql+psycopg2://flashcards_user:SPORTISLIFE@localhost:5432/flashcards"
+if "SECRET_KEY" not in os.environ:
+    os.environ["SECRET_KEY"] = "CHANGE_ME_TO_LONG_RANDOM"
+if "ALGORITHM" not in os.environ:
+    os.environ["ALGORITHM"] = "HS256"
+if "ACCESS_TOKEN_EXPIRE_MINUTES" not in os.environ:
+    os.environ["ACCESS_TOKEN_EXPIRE_MINUTES"] = "360"
 
 from app.db.session import SessionLocal
+from app.db.base import Base
+# Импортируем модели для создания таблиц и использования в фикстурах
+from app.models.user import User
+from app.models.deck import Deck
+from app.models.card import Card
+from app.models.card_level import CardLevel
+from app.models.card_progress import CardProgress
+from app.models.card_review_history import CardReviewHistory
+from app.models.user_study_group import UserStudyGroup
+from app.models.user_study_group_deck import UserStudyGroupDeck
+from app.core.security import hash_password
+
+
+@pytest.fixture(scope="function", autouse=True)
+def init_database(db):
+    """
+    Создаёт таблицы в БД перед тестами.
+    Запускается автоматически для всех тестов.
+    """
+    # Создаём все таблицы
+    Base.metadata.create_all(bind=db.get_bind())
+    yield
+    # Очистка не нужна — cleanup_db разберётся
+
+
+@pytest.fixture(scope="function")
+def client() -> TestClient:
+    # Импортируем app только внутри fixture, чтобы избежать вызова init_db() при импорте conftest
+    from app.main import app
+    return TestClient(app)
 
 
 @pytest.fixture(scope="function")
@@ -30,11 +68,15 @@ def db():
         session.close()
 
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(scope="function")
 def cleanup_db(db):
     """
     Гарантированно чистит БД после каждого теста (в т.ч. данные,
     созданные через API, и любые "побочные" сущности).
+
+    Используй явно в тестах с БД через параметр:
+    def test_something(db, cleanup_db):
+        ...
     """
     yield
 

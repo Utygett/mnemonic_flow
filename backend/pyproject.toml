@@ -17,6 +17,18 @@ dependencies = [
     "alembic",
     "httpx",
     "aiosmtplib",
+    "pytest",
+]
+
+[tool.pytest.ini_options]
+log_cli = false
+log_file_level = "ERROR"
+log_level = "ERROR"
+addopts = "--tb=short"
+pythonpath = "backend"
+testpaths = "backend/tests"
+filterwarnings = [
+    "ignore::DeprecationWarning:sqlalchemy.*",
 ]
 
 [build-system]
