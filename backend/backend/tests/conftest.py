@@ -1,12 +1,10 @@
-"""Pytest fixtures - просто и надёжно."""
+"""Pytest fixtures для тестирования с базой данных."""
 import os
 import uuid
-import uuid as uuid_lib
 import warnings
 import logging
 
 import pytest
-from fastapi.testclient import TestClient
 from sqlalchemy import text, inspect
 
 # Отключаем SQLAlchemy логирование
@@ -19,22 +17,12 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 if "DATABASE_URL" not in os.environ:
     os.environ["DATABASE_URL"] = "postgresql+psycopg2://flashcards_user:flashcards_pass@localhost:15433/flashcards"
 
-from app.main import app
 from app.db.session import SessionLocal
-from app.models.user import User
-from app.core.security import hash_password
-from app.models.deck import Deck
-from app.models.user_study_group import UserStudyGroup
-from app.models.user_study_group_deck import UserStudyGroupDeck
-
-
-@pytest.fixture(scope="function")
-def client() -> TestClient:
-    return TestClient(app)
 
 
 @pytest.fixture(scope="function")
 def db():
+    """Сессия базы данных для тестов."""
     session = SessionLocal()
     try:
         yield session
@@ -55,31 +43,6 @@ def cleanup_db(db):
 
     # Порядок тут не важен, потому что TRUNCATE ... CASCADE
     tables_wanted = [
-        # M2M / tags (если есть)
-        "cardcardtag",
-        "cardtags",
-
-        # review/progress
-        "cardreviewhistory",
-        "cardprogress",
-
-        # card content
-        "cardlevels",
-        "cards",
-
-        # deck/group linkage
-        "userstudygroupdecks",
-        "studygroupdecks",
-
-        # decks / groups
-        "decks",
-        "userstudygroups",
-        "studygroups",
-
-        # settings
-        "userlearningsettings",
-
-        # users
         "users",
     ]
 
