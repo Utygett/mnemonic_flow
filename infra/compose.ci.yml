@@ -4,6 +4,8 @@ services:
     build:
       context: ../frontend
       target: build
+      args:
+        VERSION: ${VERSION:-0.0.0}
     command: npm test -- --run
     environment:
       - CI=true
@@ -27,6 +29,8 @@ services:
   test-backend:
     build:
       context: ../backend
+      args:
+        VERSION: ${VERSION:-0.0.0}
     command: pytest
     environment:
       DATABASE_URL: postgresql+psycopg2://test_user:test_password@db:5432/flashcards_test

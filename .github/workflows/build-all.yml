@@ -10,13 +10,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Read VERSION
+        id: version
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build backend image
         run: |
           cd backend
-          docker build -t mnemonicflow-backend:test .
+          docker build --build-arg VERSION="${{ steps.version.outputs.version }}" -t mnemonicflow-backend:test .
 
       - name: Verify backend build
         run: |
@@ -28,13 +32,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Read VERSION
+        id: version
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build frontend image
         run: |
           cd frontend
-          docker build -t mnemonicflow-frontend:test .
+          docker build --build-arg VERSION="${{ steps.version.outputs.version }}" -t mnemonicflow-frontend:test .
 
       - name: Verify frontend build
         run: |
@@ -45,6 +53,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Read VERSION
+        id: version
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -60,6 +72,7 @@ jobs:
           SECRET_KEY=test_secret_key_for_ci
           ALGORITHM=HS256
           ACCESS_TOKEN_EXPIRE_MINUTES=30
+          VERSION=${{ steps.version.outputs.version }}
           EOF
 
       - name: Build all containers
