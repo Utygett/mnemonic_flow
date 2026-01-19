@@ -115,6 +115,7 @@ npm run dev    # http://localhost:3000
 ## 📖 Документация
 
 - **[CLAUDE.md](./CLAUDE.md)** — подробная документация для разработчиков
+- **[Backend README](./backend/README.md)** — документация бэкенда
 - **API Docs** — `http://localhost/docs` (при запущенном бэкенде)
 - **FSD Contract** — `frontend/docs/fsd-contract.md` (на русском)
 
@@ -131,8 +132,14 @@ npm run test:coverage # Генерация отчёта о покрытии
 **Backend:**
 ```bash
 cd backend
-pytest
+pytest                              # Все тесты
+pytest backend/tests/test_security.py  # Конкретный файл
+pytest -s                           # С выводом print()
+pytest -x                           # Остановиться на первой ошибке
+pytest --cov=backend/app            # С покрытием (нужен pytest-cov)
 ```
+
+> Подробнее: [`backend/README.md`](./backend/README.md#-тесты)
 
 ## 🏷️ Версионирование
 

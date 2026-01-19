@@ -62,10 +62,14 @@ npm run preview  # Preview production build
 **Backend tests:**
 ```bash
 cd backend
-pytest
+pytest                              # All tests
+pytest backend/tests/test_security.py  # Specific file
+pytest -s                           # With print() output
+pytest -x                           # Stop on first failure
+pytest --cov=backend/app            # With coverage (requires pytest-cov)
 ```
 
-Configuration in `backend/backend/pytest.ini` - uses short traceback format and ignores SQLAlchemy deprecation warnings.
+Configuration in `backend/pyproject.toml` - sets `pythonpath = "backend"` for correct imports.
 
 **Frontend tests:**
 ```bash
@@ -75,16 +79,106 @@ npm run test:ui    # Run tests with UI
 npm run test:coverage  # Generate coverage report
 ```
 
+## Backend Testing
+
+### Test Structure
+
+```
+backend/backend/tests/
+├── conftest.py            # Pytest fixtures (db, client, auth)
+├── test_security.py       # Unit tests (no DB)
+├── test_user_model.py     # Integration tests (with DB)
+└── ...
+```
+
+### Fixtures (conftest.py)
+
+| Fixture | Description | Scope | Usage |
+|---------|-------------|-------|-------|
+| `init_database` | Creates all tables before test | function, autouse | Automatic |
+| `db` | SQLAlchemy database session | function | For DB operations |
+| `cleanup_db` | Truncates tables after test | function, explicit | Add `cleanup_db` param |
+| `client` | FastAPI TestClient for HTTP | function | For API tests |
+| `test_user` | Creates test user in DB | function | For authenticated tests |
+| `auth_token` | JWT token for test_user | function | For API auth |
+| `auth_headers` | Dict with Authorization header | function | For API auth |
+
+### Test Patterns
+
+**Unit test (no database):**
+```python
+# backend/tests/test_security.py
+from app.core.security import hash_password, verify_password
+
+class TestHashPassword:
+    def test_hash_returns_different_values(self):
+        password = "mypassword123"
+        hash1 = hash_password(password)
+        hash2 = hash_password(password)
+        assert hash1 != hash2  # Salt makes them different
+```
+
+**Integration test (with database):**
+```python
+# backend/tests/test_user_model.py
+from app.models.user import User
+from app.core.security import hash_password
+
+class TestUserModel:
+    def test_create_user(self, db, cleanup_db):
+        user = User(
+            username="testuser",
+            email=f"test_{uuid.uuid4()}@example.com",
+            password_hash=hash_password("password123"),
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        assert user.id is not None
+        assert user.username == "testuser"
+```
+
+**API endpoint test:**
+```python
+def test_login_success(client, test_user):
+    resp = client.post("/api/auth/login", json={
+        "email": test_user.email,
+        "password": "password123"
+    })
+    assert resp.status_code == 200
+    assert "access_token" in resp.json()
+```
+
+### Key Configuration Details
+
+1. **Environment variables** - Set in `conftest.py` before imports:
+   - `DATABASE_URL` - defaults to local PostgreSQL
+   - `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` - JWT config
+
+2. **Model imports** - All models must be imported in `conftest.py` so `Base.metadata` knows about them for table creation
+
+3. **init_database fixture** - Runs automatically before each test (`autouse=True`), creates tables via `Base.metadata.create_all()`
+
+4. **cleanup_db fixture** - Must be explicitly requested as parameter, uses `TRUNCATE ... CASCADE`
+
+5. **app.main import** - Delayed until inside `client()` fixture to avoid `init_db()` call during import
+
 ### CI/CD
 
 **GitHub Actions** - Automated CI on Pull Requests to `main` branch.
 
-Configuration: `.github/workflows/ci.yml`
+**Workflows:**
 
-**What CI checks:**
-- Frontend container build
-- Backend container build
-- All services build via `docker compose -f compose.dev.yml build`
+1. **`.github/workflows/validate-commits.yml`** - Runs on all PRs
+   - Validates VERSION file format (xx.xx.xx)
+   - Validates commit messages follow Conventional Commits
+   - Must pass before CI build runs
+
+2. **`.github/workflows/ci.yml`** - Runs on PRs to `main`
+   - Frontend container build
+   - Backend container build
+   - All services build via `docker compose -f compose.dev.yml build`
 
 **Trigger:** Any PR targeting `main` branch
 
@@ -292,6 +386,8 @@ import { DeleteCardButton } from '@/features/card-delete/ui/DeleteCardButton';  
 - `app/api/` - API route handlers
 - `app/core/` - Core functionality (security, config, database)
 - `app/alembic/` - Database migrations
+
+**Documentation:** See `backend/README.md` for detailed backend documentation including testing, migrations, and environment configuration.
 
 ## Environment Configuration
 
