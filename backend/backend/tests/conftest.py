@@ -15,7 +15,9 @@ for logger_name in ("sqlalchemy", "sqlalchemy.engine", "sqlalchemy.pool", "sqlal
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-os.environ["DATABASE_URL"] = "postgresql+psycopg2://flashcards_user:flashcards_pass@localhost:15433/flashcards"
+# DATABASE_URL для тестов - можно переопределить через env
+if "DATABASE_URL" not in os.environ:
+    os.environ["DATABASE_URL"] = "postgresql+psycopg2://flashcards_user:flashcards_pass@localhost:15433/flashcards"
 
 from app.main import app
 from app.db.session import SessionLocal
@@ -151,9 +153,6 @@ def auth_headers(auth_token: str) -> dict:
     return {"Authorization": f"Bearer {auth_token}"}
 
 
-@pytest.fixture()
-def client():
-    return TestClient(app)
 
 def _unique_email():
     return f"u{uuid.uuid4().hex[:10]}@example.com"
