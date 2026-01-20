@@ -41,18 +41,20 @@ src/
 ## 🏗️ FSD правила
 
 **Импорты только сверху вниз:**
+
 ```
 app → pages → widgets → features → entities → shared
 ```
 
 **Используйте алиас `@/`:**
+
 ```typescript
 // ✅ Правильно
-import { Button } from '@/shared/ui/Button/Button';
-import { StudyCard } from '@/entities/card';
+import { Button } from '@/shared/ui/Button/Button'
+import { StudyCard } from '@/entities/card'
 
 // ❌ Неправильно
-import { Button } from '../../../shared/ui/Button/Button';
+import { Button } from '../../../shared/ui/Button/Button'
 ```
 
 ## 🧪 Тесты

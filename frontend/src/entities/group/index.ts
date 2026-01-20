@@ -1,5 +1,5 @@
 // Public API for group entity
-export type { Group, GroupCreatePayload, UserGroupResponse } from './model/types';
+export type { Group, GroupCreatePayload, UserGroupResponse } from './model/types'
 export {
   getUserGroups,
   getGroupDecksSummary,
@@ -7,4 +7,4 @@ export {
   deleteGroup,
   addDeckToGroup,
   removeDeckFromGroup,
-} from './api/groupsApi';
+} from './api/groupsApi'

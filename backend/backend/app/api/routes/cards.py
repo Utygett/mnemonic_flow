@@ -1,10 +1,11 @@
 # backend/app/api/routes/cards.py
 from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
+from starlette import status
 
 from app.auth.dependencies import get_current_user_id
 from app.db.session import SessionLocal
@@ -12,18 +13,20 @@ from app.models.card import Card
 from app.models.card_level import CardLevel
 from app.models.card_progress import CardProgress
 from app.models.card_review_history import CardReviewHistory
+from app.models.deck import Deck
 from app.models.user_learning_settings import UserLearningSettings
 from app.schemas.card_review import CardForReview, ReviewRequest, ReviewResponse
-from app.schemas.cards import CardForReviewWithLevels, CardLevelContent
+from app.schemas.cards import (
+    CardForReviewWithLevels,
+    CardLevelContent,
+    CardSummary,
+    CreateCardRequest,
+    CreateCardResponse,
+    McqContentIn,
+    QaContentIn,
+    ReplaceLevelsRequest,
+)
 from app.services.review_service import ReviewService
-from app.schemas.cards import CreateCardRequest
-from app.schemas.cards import CreateCardResponse
-from starlette import status
-from app.models import Deck
-from app.schemas.cards import CardSummary
-from app.schemas.cards import ReplaceLevelsRequest
-
-from app.schemas.cards import QaContentIn, McqContentIn
 
 router = APIRouter()
 
@@ -34,6 +37,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
 
 def _ensure_settings(db: Session, user_id: UUID) -> UserLearningSettings:
     settings = db.query(UserLearningSettings).filter_by(user_id=user_id).first()
@@ -46,12 +50,12 @@ def _ensure_settings(db: Session, user_id: UUID) -> UserLearningSettings:
     return settings
 
 
-def _ensure_active_progress(db: Session, *, user_id: UUID, card: Card, settings: UserLearningSettings) -> CardProgress:
+def _ensure_active_progress(
+    db: Session, *, user_id: UUID, card: Card, settings: UserLearningSettings
+) -> CardProgress:
     # найти активный уровень
     progress = (
-        db.query(CardProgress)
-        .filter_by(user_id=user_id, card_id=card.id, is_active=True)
-        .first()
+        db.query(CardProgress).filter_by(user_id=user_id, card_id=card.id, is_active=True).first()
     )
     if progress:
         return progress
@@ -122,33 +126,45 @@ def create_card(
         if payload.type == "flashcard":
             a = (lvl.answer or "").strip()
             if not a:
-                raise HTTPException(status_code=422, detail=f"Level {i + 1}: answer is required for flashcard")
+                raise HTTPException(
+                    status_code=422, detail=f"Level {i + 1}: answer is required for flashcard"
+                )
 
             content = {"question": q, "answer": a}
 
         elif payload.type == "multiple_choice":
             options = lvl.options or []
             if len(options) < 2:
-                raise HTTPException(status_code=422, detail=f"Level {i + 1}: at least 2 options required")
+                raise HTTPException(
+                    status_code=422, detail=f"Level {i + 1}: at least 2 options required"
+                )
 
             # trim option texts
             options_norm = [{"id": o.id, "text": (o.text or "").strip()} for o in options]
             non_empty = [o for o in options_norm if o["text"]]
             if len(non_empty) < 2:
-                raise HTTPException(status_code=422, detail=f"Level {i + 1}: at least 2 non-empty options required")
+                raise HTTPException(
+                    status_code=422, detail=f"Level {i + 1}: at least 2 non-empty options required"
+                )
 
             correct_id = (lvl.correctOptionId or "").strip()
             if not correct_id:
-                raise HTTPException(status_code=422, detail=f"Level {i + 1}: correctOptionId is required")
+                raise HTTPException(
+                    status_code=422, detail=f"Level {i + 1}: correctOptionId is required"
+                )
 
             correct = next((o for o in options_norm if o["id"] == correct_id), None)
             if not correct or not correct["text"]:
-                raise HTTPException(status_code=422,
-                                    detail=f"Level {i + 1}: correctOptionId must point to a non-empty option")
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Level {i + 1}: correctOptionId must point to a non-empty option",
+                )
 
             timer = lvl.timerSec
             if timer is not None and (timer < 1 or timer > 3600):
-                raise HTTPException(status_code=422, detail=f"Level {i + 1}: timerSec must be 1..3600")
+                raise HTTPException(
+                    status_code=422, detail=f"Level {i + 1}: timerSec must be 1..3600"
+                )
 
             content = {
                 "question": q,
@@ -175,6 +191,7 @@ def create_card(
 
     return CreateCardResponse(card_id=card.id, deck_id=payload.deck_id)
 
+
 @router.get("/review", response_model=list[CardForReview])
 def get_cards_for_review(
     user_id: UUID = Depends(get_current_user_id),
@@ -187,7 +204,7 @@ def get_cards_for_review(
     progress_list = (
         db.query(CardProgress)
         .filter(CardProgress.user_id == user_uuid)
-        .filter(CardProgress.is_active == True)
+        .filter(CardProgress.is_active.is_(True))
         .filter(CardProgress.next_review <= now)
         .order_by(CardProgress.next_review.asc())
         .limit(limit)
@@ -213,6 +230,7 @@ def get_cards_for_review(
             )
         )
     return result
+
 
 @router.post("/{card_id}/review", response_model=ReviewResponse)
 async def review_card(
@@ -282,9 +300,7 @@ def level_up(
 
     settings = _ensure_settings(db, user_uuid)
     current = (
-        db.query(CardProgress)
-        .filter_by(user_id=user_uuid, card_id=card_id, is_active=True)
-        .first()
+        db.query(CardProgress).filter_by(user_id=user_uuid, card_id=card_id, is_active=True).first()
     )
     if not current:
         current = _ensure_active_progress(db, user_id=user_uuid, card=card, settings=settings)
@@ -293,9 +309,7 @@ def level_up(
     next_level_index = current_level.level_index + 1
 
     next_level = (
-        db.query(CardLevel)
-        .filter_by(card_id=card_id, level_index=next_level_index)
-        .first()
+        db.query(CardLevel).filter_by(card_id=card_id, level_index=next_level_index).first()
     )
     if not next_level:
         raise HTTPException(400, "No next level")
@@ -307,9 +321,7 @@ def level_up(
 
     # activate/create next progress
     next_progress = (
-        db.query(CardProgress)
-        .filter_by(user_id=user_uuid, card_level_id=next_level.id)
-        .first()
+        db.query(CardProgress).filter_by(user_id=user_uuid, card_level_id=next_level.id).first()
     )
 
     now = datetime.now(timezone.utc)
@@ -330,7 +342,10 @@ def level_up(
         db.add(next_progress)
 
     db.commit()
-    return {"active_level_index": next_level.level_index, "active_card_level_id": str(next_level.id)}
+    return {
+        "active_level_index": next_level.level_index,
+        "active_card_level_id": str(next_level.id),
+    }
 
 
 @router.post("/{card_id}/level_down")
@@ -345,9 +360,7 @@ def level_down(
         raise HTTPException(404, "Card not found")
 
     current = (
-        db.query(CardProgress)
-        .filter_by(user_id=user_uuid, card_id=card_id, is_active=True)
-        .first()
+        db.query(CardProgress).filter_by(user_id=user_uuid, card_id=card_id, is_active=True).first()
     )
     if not current:
         raise HTTPException(404, "Active progress not found")
@@ -358,9 +371,7 @@ def level_down(
         raise HTTPException(400, "Already at level 0")
 
     prev_level = (
-        db.query(CardLevel)
-        .filter_by(card_id=card_id, level_index=prev_level_index)
-        .first()
+        db.query(CardLevel).filter_by(card_id=card_id, level_index=prev_level_index).first()
     )
     if not prev_level:
         raise HTTPException(400, "No previous level")
@@ -371,9 +382,7 @@ def level_down(
     db.flush()
 
     prev_progress = (
-        db.query(CardProgress)
-        .filter_by(user_id=user_uuid, card_level_id=prev_level.id)
-        .first()
+        db.query(CardProgress).filter_by(user_id=user_uuid, card_level_id=prev_level.id).first()
     )
     if not prev_progress:
         # если раньше не учил этот уровень — создаём
@@ -395,7 +404,10 @@ def level_down(
         db.add(prev_progress)
 
     db.commit()
-    return {"active_level_index": prev_level.level_index, "active_card_level_id": str(prev_level.id)}
+    return {
+        "active_level_index": prev_level.level_index,
+        "active_card_level_id": str(prev_level.id),
+    }
 
 
 @router.get("/review_with_levels", response_model=list[CardForReviewWithLevels])
@@ -410,7 +422,7 @@ def get_cards_for_review_with_levels(
     progress_list = (
         db.query(CardProgress)
         .filter(CardProgress.user_id == user_uuid)
-        .filter(CardProgress.is_active == True)
+        .filter(CardProgress.is_active.is_(True))
         .filter(CardProgress.next_review <= now)
         .order_by(CardProgress.next_review.asc())
         .limit(limit)
@@ -446,8 +458,8 @@ def get_cards_for_review_with_levels(
                 difficulty=progress.difficulty,
                 next_review=progress.next_review,
                 levels=[
-                    CardLevelContent(level_index=l.level_index, content=l.content)
-                    for l in levels_by_card.get(card.id, [])
+                    CardLevelContent(level_index=card_level.level_index, content=card_level.content)
+                    for card_level in levels_by_card.get(card.id, [])
                 ],
             )
         )
@@ -481,7 +493,9 @@ def update_card_levels(
     # (опционально) проверим что индексы подряд 0..n-1, иначе можно словить странные дыры
     for expected_idx, lvl in enumerate(incoming):
         if lvl.level_index != expected_idx:
-            raise HTTPException(status_code=422, detail="level_index must be sequential starting from 0")
+            raise HTTPException(
+                status_code=422, detail="level_index must be sequential starting from 0"
+            )
 
     # Полная замена: удаляем старые и пишем новые (так поддерживается изменение количества уровней)
     db.query(CardLevel).filter(CardLevel.card_id == card_id).delete(synchronize_session=False)
@@ -496,7 +510,9 @@ def update_card_levels(
             q = (c.question or "").strip()
             a = (c.answer or "").strip()
             if not q or not a:
-                raise HTTPException(status_code=422, detail="QA level question/answer must be non-empty")
+                raise HTTPException(
+                    status_code=422, detail="QA level question/answer must be non-empty"
+                )
 
             content: Dict[str, Any] = {"question": q, "answer": a}
 
@@ -505,11 +521,13 @@ def update_card_levels(
             if not q:
                 raise HTTPException(status_code=422, detail="MCQ question must be non-empty")
 
-            options = [{"id": str(o.id), "text": (o.text or "").strip()} for o in (c.options or [])]
+            options = [{"id": str(o.id), "text": (o.text or "").strip()} for o in c.options or []]
             options = [o for o in options if o["text"]]
 
             if len(options) < 2:
-                raise HTTPException(status_code=422, detail="MCQ must have at least 2 non-empty options")
+                raise HTTPException(
+                    status_code=422, detail="MCQ must have at least 2 non-empty options"
+                )
 
             ids = [o["id"] for o in options]
             if len(set(ids)) != len(ids):
@@ -517,7 +535,9 @@ def update_card_levels(
 
             correct_id = str(c.correctOptionId)
             if correct_id not in set(ids):
-                raise HTTPException(status_code=422, detail="MCQ correctOptionId must match one of options")
+                raise HTTPException(
+                    status_code=422, detail="MCQ correctOptionId must match one of options"
+                )
 
             content = {
                 "question": q,
@@ -547,6 +567,7 @@ def update_card_levels(
         levels=[CardLevelContent(level_index=r.level_index, content=r.content) for r in new_rows],
     )
 
+
 @router.delete("/{card_id}/progress", status_code=204)
 def delete_card_progress(
     card_id: UUID,
@@ -561,8 +582,11 @@ def delete_card_progress(
     db.commit()
     return Response(status_code=204)
 
+
 @router.delete("/{card_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_card(card_id: UUID, user_id: UUID = Depends(get_current_user_id), db: Session = Depends(get_db)):
+def delete_card(
+    card_id: UUID, user_id: UUID = Depends(get_current_user_id), db: Session = Depends(get_db)
+):
     card = db.get(Card, card_id)
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
@@ -580,10 +604,10 @@ def delete_card(card_id: UUID, user_id: UUID = Depends(get_current_user_id), db:
 
 @router.patch("/{card_id}", response_model=CardSummary)
 def update_card(
-        card_id: UUID,
-        title: Optional[str] = None,  # будет приходить как query ?title=...
-        user_id: UUID = Depends(get_current_user_id),
-        db: Session = Depends(get_db),
+    card_id: UUID,
+    title: Optional[str] = None,  # будет приходить как query ?title=...
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
 ):
     card = db.get(Card, card_id)
     if not card:
@@ -616,5 +640,8 @@ def update_card(
         card_id=card.id,
         title=card.title,
         type=card.type,
-        levels=[CardLevelContent(level_index=l.level_index, content=l.content) for l in levels],
+        levels=[
+            CardLevelContent(level_index=card_level.level_index, content=card_level.content)
+            for card_level in levels
+        ],
     )

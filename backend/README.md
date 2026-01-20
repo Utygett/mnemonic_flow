@@ -157,6 +157,72 @@ filterwarnings = [
 ]
 ```
 
+## 🎨 Code Style
+
+### Инструменты
+
+| Инструмент | Назначение | Конфиг |
+|-----------|-----------|--------|
+| **Black** | Форматирование кода | `pyproject.toml` |
+| **isort** | Сортировка импортов | `pyproject.toml` |
+| **Flake8** | Проверка стиля | `.flake8` |
+| **mypy** | Проверка типов | `pyproject.toml` |
+| **autopep8** | Автофикс форматирования |手动 |
+| **autoflake** | Удаление неиспользуемых импортов |手动 |
+
+### Pre-commit hooks
+
+Автоматическая проверка при коммите:
+
+```bash
+# Установка
+pip install pre-commit
+pre-commit install
+
+# Запуск на всех файлах
+pre-commit run --all-files
+
+# Конкретный хук
+pre-commit run black --all-files
+```
+
+### Ручное исправление
+
+Если pre-commit не справился:
+
+```bash
+# Установка инструментов
+pip install autopep8 autoflake
+
+# Удалить неиспользуемые импорты
+autoflake --in-place --remove-all-unused-imports -r backend/
+
+# Исправить форматирование
+autopep8 --in-place --aggressive --max-line-length=100 -r backend/
+
+# Финальное форматирование black
+black . --preview
+```
+
+### SQLAlchemy Forward References
+
+Модели используют `# noqa` для forward references — это **нормально**:
+
+```python
+from __future__ import annotations
+from app.models.card_tag import CardTag  # noqa: F401 - нужно для relationship
+
+class Card(Base):
+    # Строка в relationship() = forward reference
+    tags = relationship("CardTag", secondary=CardCardTag)  # noqa: F821
+```
+
+**Почему:**
+- `from __future__ import annotations` делает все type hints строками
+- SQLAlchemy `relationship()` использует имена классов как строки
+- `# noqa: F401` — импорт нужен для инициализации маппера
+- `# noqa: F821` — ссылка на ещё не определённый класс
+
 ## 📦 Миграции БД
 
 ```bash

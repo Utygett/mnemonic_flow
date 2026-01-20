@@ -1,23 +1,19 @@
 """Pytest fixtures для тестирования с базой данных."""
+
+import logging
 import os
 import uuid
 import uuid as uuid_lib
 import warnings
-import logging
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import text, inspect
+from sqlalchemy import inspect, text
 
-# Отключаем SQLAlchemy логирование
-for logger_name in ("sqlalchemy", "sqlalchemy.engine", "sqlalchemy.pool", "sqlalchemy.orm", "sqlalchemy.dialects"):
-    logging.getLogger(logger_name).setLevel(logging.ERROR)
-
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
-# Устанавливаем переменные окружения для тестов
 if "DATABASE_URL" not in os.environ:
-    os.environ["DATABASE_URL"] = "postgresql+psycopg2://flashcards_user:SPORTISLIFE@localhost:5432/flashcards"
+    os.environ["DATABASE_URL"] = (
+        "postgresql+psycopg2://flashcards_user:SPORTISLIFE@localhost:5432/flashcards"
+    )
 if "SECRET_KEY" not in os.environ:
     os.environ["SECRET_KEY"] = "CHANGE_ME_TO_LONG_RANDOM"
 if "ALGORITHM" not in os.environ:
@@ -25,18 +21,28 @@ if "ALGORITHM" not in os.environ:
 if "ACCESS_TOKEN_EXPIRE_MINUTES" not in os.environ:
     os.environ["ACCESS_TOKEN_EXPIRE_MINUTES"] = "360"
 
-from app.db.session import SessionLocal
+from app.core.security import hash_password
 from app.db.base import Base
-# Импортируем модели для создания таблиц и использования в фикстурах
-from app.models.user import User
+from app.db.session import SessionLocal
 from app.models.deck import Deck
-from app.models.card import Card
-from app.models.card_level import CardLevel
-from app.models.card_progress import CardProgress
-from app.models.card_review_history import CardReviewHistory
+
+# Импортируем модели для создания таблиц и использования в фикстурах
+from app.models.study_group import StudyGroup  # noqa: F401 - needed for UserStudyGroup foreign key
+from app.models.user import User
 from app.models.user_study_group import UserStudyGroup
 from app.models.user_study_group_deck import UserStudyGroupDeck
-from app.core.security import hash_password
+
+# Отключаем SQLAlchemy логирование
+for logger_name in (
+    "sqlalchemy",
+    "sqlalchemy.engine",
+    "sqlalchemy.pool",
+    "sqlalchemy.orm",
+    "sqlalchemy.dialects",
+):
+    logging.getLogger(logger_name).setLevel(logging.ERROR)
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -55,6 +61,7 @@ def init_database(db):
 def client() -> TestClient:
     # Импортируем app только внутри fixture, чтобы избежать вызова init_db() при импорте conftest
     from app.main import app
+
     return TestClient(app)
 
 
@@ -158,7 +165,6 @@ def auth_headers(auth_token: str) -> dict:
     return {"Authorization": f"Bearer {auth_token}"}
 
 
-
 def _unique_email():
     return f"u{uuid.uuid4().hex[:10]}@example.com"
 
@@ -175,6 +181,7 @@ def register_and_login(client: TestClient, password: str = "secret123"):
     access_token = data.get("access_token") or data.get("accesstoken")
     assert access_token, data
     return email, access_token
+
 
 def create_deck(client: TestClient, token: str, title: str = "Deck"):
     r = client.post(

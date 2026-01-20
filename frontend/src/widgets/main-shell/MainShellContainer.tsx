@@ -1,26 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'
 
-import { useStatistics } from './model/useStatistics';
-import { useGroupsDecksController } from './model/useGroupsDecksController';
+import { useStatistics } from './model/useStatistics'
+import { useGroupsDecksController } from './model/useGroupsDecksController'
 
-import { StudyFlowStateContainer } from '@/features/study-flow';
+import { StudyFlowStateContainer } from '@/features/study-flow'
 
-import { CardsActionsContainer } from '@/features/cards-actions';
-import type { CardsActionsApi } from '@/features/cards-actions';
-import { CardsFlowContainer } from '@/features/cards-flow';
-import type { CardsFlowApi } from '@/features/cards-flow';
+import { CardsActionsContainer } from '@/features/cards-actions'
+import type { CardsActionsApi } from '@/features/cards-actions'
+import { CardsFlowContainer } from '@/features/cards-flow'
+import type { CardsFlowApi } from '@/features/cards-flow'
 
-import { DecksActionsContainer } from '@/features/decks-actions';
-import type { DecksActionsApi } from '@/features/decks-actions';
-import { DecksFlowContainer } from '@/features/decks-flow';
-import type { DecksFlowApi } from '@/features/decks-flow';
+import { DecksActionsContainer } from '@/features/decks-actions'
+import type { DecksActionsApi } from '@/features/decks-actions'
+import { DecksFlowContainer } from '@/features/decks-flow'
+import type { DecksFlowApi } from '@/features/decks-flow'
 
-import { useIsPWA } from '@/app/pwa/useIsPWA';
-import { useRegisterServiceWorker } from '@/app/pwa/useRegisterServiceWorker';
+import { useIsPWA } from '@/app/pwa/useIsPWA'
+import { useRegisterServiceWorker } from '@/app/pwa/useRegisterServiceWorker'
 
-import { MainShellView } from './MainShellView';
-import { MnemonicRootSwitch } from './MnemonicRootSwitch';
-import type { MainTab } from './mainShell.types';
+import { MainShellView } from './MainShellView'
+import { MnemonicRootSwitch } from './MnemonicRootSwitch'
+import type { MainTab } from './mainShell.types'
 
 export function MainShellContainer() {
   const {
@@ -34,33 +34,32 @@ export function MainShellContainer() {
     refreshGroups,
     deleteActiveGroup,
     currentGroupDeckIds,
-  } = useGroupsDecksController();
+  } = useGroupsDecksController()
 
   const {
     statistics,
     loading: statsLoading,
     error: statsError,
     refresh: refreshStats,
-  } = useStatistics();
+  } = useStatistics()
 
-  const dashboardStats =
-    statistics ?? {
-      cardsStudiedToday: 0,
-      timeSpentToday: 0,
-      currentStreak: 0,
-      totalCards: 0,
-      weeklyActivity: [0, 0, 0, 0, 0, 0, 0],
-      achievements: [],
-    };
+  const dashboardStats = statistics ?? {
+    cardsStudiedToday: 0,
+    timeSpentToday: 0,
+    currentStreak: 0,
+    totalCards: 0,
+    weeklyActivity: [0, 0, 0, 0, 0, 0, 0],
+    achievements: [],
+  }
 
-  const [activeTab, setActiveTab] = useState<MainTab>('home');
+  const [activeTab, setActiveTab] = useState<MainTab>('home')
 
-  useRegisterServiceWorker();
-  const isPWA = useIsPWA();
+  useRegisterServiceWorker()
+  const isPWA = useIsPWA()
 
   return (
     <StudyFlowStateContainer onExitToHome={() => setActiveTab('home')} onRated={refreshStats}>
-      {(study) => (
+      {study => (
         <DecksFlowContainer>
           {(decksFlow: DecksFlowApi) => (
             <DecksActionsContainer
@@ -79,7 +78,7 @@ export function MainShellContainer() {
                       cardsFlow.isCreatingCard ||
                       cardsFlow.isEditingCard ||
                       decksFlow.isCreatingDeck ||
-                      decksFlow.isEditingDeck;
+                      decksFlow.isEditingDeck
 
                     return (
                       <CardsActionsContainer
@@ -128,7 +127,7 @@ export function MainShellContainer() {
                           />
                         )}
                       </CardsActionsContainer>
-                    );
+                    )
                   }}
                 </CardsFlowContainer>
               )}
@@ -137,5 +136,5 @@ export function MainShellContainer() {
         </DecksFlowContainer>
       )}
     </StudyFlowStateContainer>
-  );
+  )
 }

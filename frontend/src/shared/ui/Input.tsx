@@ -1,31 +1,24 @@
-import React from 'react';
+import React from 'react'
 
-type InputType =
-  | 'text'
-  | 'password'
-  | 'email'
-  | 'number'
-  | 'search'
-  | 'tel'
-  | 'url';
+type InputType = 'text' | 'password' | 'email' | 'number' | 'search' | 'tel' | 'url'
 
 interface InputProps {
-  value: string;
-  onChange: (value: string) => void;
+  value: string
+  onChange: (value: string) => void
 
-  type?: InputType;          // <-- добавили
-  placeholder?: string;
-  label?: string;
+  type?: InputType // <-- добавили
+  placeholder?: string
+  label?: string
 
-  multiline?: boolean;
-  rows?: number;
-  disabled?: boolean;
+  multiline?: boolean
+  rows?: number
+  disabled?: boolean
 }
 
 export function Input({
   value,
   onChange,
-  type = 'text',             // <-- дефолт
+  type = 'text', // <-- дефолт
   placeholder,
   label,
   multiline = false,
@@ -39,7 +32,7 @@ export function Input({
       {multiline ? (
         <textarea
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
           rows={rows}
           disabled={disabled}
@@ -47,14 +40,14 @@ export function Input({
         />
       ) : (
         <input
-          type={type}          // <-- пробросили сюда
+          type={type} // <-- пробросили сюда
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
           className="input"
         />
       )}
     </div>
-  );
+  )
 }

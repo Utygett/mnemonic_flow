@@ -1,10 +1,10 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
-import { CircleIcon } from "lucide-react";
+import * as React from 'react'
+import * as RadioGroupPrimitive from '@radix-ui/react-radio-group'
+import { CircleIcon } from 'lucide-react'
 
-import { cn } from "./utils";
+import { cn } from './utils'
 
 function RadioGroup({
   className,
@@ -13,10 +13,10 @@ function RadioGroup({
   return (
     <RadioGroupPrimitive.Root
       data-slot="radio-group"
-      className={cn("radio-group", className)}
+      className={cn('radio-group', className)}
       {...props}
     />
-  );
+  )
 }
 
 function RadioGroupItem({
@@ -26,7 +26,7 @@ function RadioGroupItem({
   return (
     <RadioGroupPrimitive.Item
       data-slot="radio-group-item"
-      className={cn("radio-group__item", className)}
+      className={cn('radio-group__item', className)}
       {...props}
     >
       <RadioGroupPrimitive.Indicator
@@ -36,7 +36,7 @@ function RadioGroupItem({
         <CircleIcon className="radio-group__dot" />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
-  );
+  )
 }
 
-export { RadioGroup, RadioGroupItem };
+export { RadioGroup, RadioGroupItem }

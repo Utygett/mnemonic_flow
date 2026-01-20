@@ -1,50 +1,50 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react'
 
-import { createDeck } from '@/entities/deck';
+import { createDeck } from '@/entities/deck'
 
-import type { CreateDeckProps } from './types';
+import type { CreateDeckProps } from './types'
 
 export type CreateDeckViewModel = {
-  title: string;
-  setTitle: (v: string) => void;
+  title: string
+  setTitle: (v: string) => void
 
-  description: string;
-  setDescription: (v: string) => void;
+  description: string
+  setDescription: (v: string) => void
 
-  saving: boolean;
-  error: string | null;
+  saving: boolean
+  error: string | null
 
-  canSubmit: boolean;
-  submit: () => Promise<void>;
-};
+  canSubmit: boolean
+  submit: () => Promise<void>
+}
 
 export function useCreateDeckModel(props: CreateDeckProps): CreateDeckViewModel {
-  const { onSave } = props;
+  const { onSave } = props
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const canSubmit = useMemo(() => Boolean(title.trim()) && !saving, [title, saving]);
+  const canSubmit = useMemo(() => Boolean(title.trim()) && !saving, [title, saving])
 
   const submit = async () => {
-    const t = title.trim();
-    const d = description.trim();
-    if (!t) return;
+    const t = title.trim()
+    const d = description.trim()
+    if (!t) return
 
     try {
-      setSaving(true);
-      setError(null);
-      const created: any = await createDeck({ title: t, description: d ? d : null });
-      onSave(String(created?.id ?? created?.deck_id ?? ''));
+      setSaving(true)
+      setError(null)
+      const created: any = await createDeck({ title: t, description: d ? d : null })
+      onSave(String(created?.id ?? created?.deck_id ?? ''))
     } catch (e) {
-      console.error(e);
-      setError('Не удалось создать колоду');
+      console.error(e)
+      setError('Не удалось создать колоду')
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
   return {
     title,
@@ -57,5 +57,5 @@ export function useCreateDeckModel(props: CreateDeckProps): CreateDeckViewModel 
     error,
     canSubmit,
     submit,
-  };
+  }
 }

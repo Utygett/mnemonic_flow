@@ -31,6 +31,64 @@ filterwarnings = [
     "ignore::DeprecationWarning:sqlalchemy.*",
 ]
 
+# Black - code formatter
+[tool.black]
+line-length = 100
+target-version = ["py311", "py312", "py313"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+# isort - import sorting
+[tool.isort]
+profile = "black"
+line_length = 100
+known_first_party = ["app"]
+skip_gitignore = true
+
+# Flake8 - linting (read from pyproject via Flake8-pyproject)
+[tool.flake8]
+max-line-length = 100
+extend-ignore = ["E203", "W503"]  # conflicts with black
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "build",
+    "dist",
+    "*.egg-info",
+]
+max-complexity = 10
+
+# mypy - type checking
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # TODO: enable gradually
+plugins = ["pydantic.mypy"]
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+follow_imports = "normal"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"

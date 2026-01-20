@@ -3,14 +3,14 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import func
 from sqlalchemy.orm import Session
-from sqlalchemy import func, extract
 
 from app.auth.dependencies import get_current_user_id
 from app.db.session import SessionLocal
+from app.models.card import Card
 from app.models.card_progress import CardProgress
 from app.models.card_review_history import CardReviewHistory
-from app.models.card import Card
 from app.schemas.stats import DashboardStatsResponse
 
 router = APIRouter()
@@ -107,7 +107,8 @@ def get_dashboard_stats(
     time_result = (
         db.query(
             func.sum(
-                func.extract('epoch', CardReviewHistory.reviewed_at - CardReviewHistory.reveal_at) / 60
+                func.extract("epoch", CardReviewHistory.reviewed_at - CardReviewHistory.reveal_at)
+                / 60
             )
         )
         .filter(

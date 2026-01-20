@@ -1,31 +1,31 @@
-import React from 'react';
+import React from 'react'
 
-import type { Deck, Group, Statistics } from '../../../../types';
-import type { PersistedSession } from '@/shared/lib/utils/session-store';
+import type { Deck, Group, Statistics } from '../../../../types'
+import type { PersistedSession } from '@/shared/lib/utils/session-store'
 
-import type { PublicDeckSummary } from '@/entities/deck';
+import type { PublicDeckSummary } from '@/entities/deck'
 
-import { DashboardContainer } from '../DashboardContainer';
+import { DashboardContainer } from '../DashboardContainer'
 
 type Props = {
-  statistics: Statistics;
-  decks: Deck[];
-  groups: Group[];
-  activeGroupId: string | null;
+  statistics: Statistics
+  decks: Deck[]
+  groups: Group[]
+  activeGroupId: string | null
 
-  resumeCandidate: PersistedSession | null;
-  onResume: () => void;
-  onDiscardResume: () => void;
+  resumeCandidate: PersistedSession | null
+  onResume: () => void
+  onDiscardResume: () => void
 
-  onGroupChange: (groupId: string | null) => void;
-  onCreateGroup: () => void;
-  onDeleteActiveGroup: () => void;
+  onGroupChange: (groupId: string | null) => void
+  onCreateGroup: () => void
+  onDeleteActiveGroup: () => void
 
-  onStartStudy: () => void;
-  onDeckClick: (deckId: string) => void;
-  onOpenEditDeck: (deckId: string) => void;
-  onAddDeck: () => void;
-};
+  onStartStudy: () => void
+  onDeckClick: (deckId: string) => void
+  onOpenEditDeck: (deckId: string) => void
+  onAddDeck: () => void
+}
 
 export function HomeTab(props: Props) {
   return (
@@ -37,7 +37,7 @@ export function HomeTab(props: Props) {
       resumeCandidate={props.resumeCandidate}
       onResume={props.onResume}
       onDiscardResume={props.onDiscardResume}
-      onGroupChange={(id) => props.onGroupChange(id)}
+      onGroupChange={id => props.onGroupChange(id)}
       onCreateGroup={props.onCreateGroup}
       onDeleteActiveGroup={props.onDeleteActiveGroup}
       onStartStudy={props.onStartStudy}
@@ -45,5 +45,5 @@ export function HomeTab(props: Props) {
       onOpenEditDeck={props.onOpenEditDeck}
       onAddDeck={props.onAddDeck}
     />
-  );
+  )
 }

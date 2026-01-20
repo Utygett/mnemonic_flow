@@ -1,76 +1,76 @@
 // Card domain types
-import type { CardContent } from './contentTypes';
+import type { CardContent } from './contentTypes'
 
-export type StudyMode = 'random' | 'ordered' | 'new_random' | 'new_ordered';
-export type DifficultyRating = 'again' | 'hard' | 'good' | 'easy';
+export type StudyMode = 'random' | 'ordered' | 'new_random' | 'new_ordered'
+export type DifficultyRating = 'again' | 'hard' | 'good' | 'easy'
 
 export interface CardLevel {
-  levelindex: number;
-  content: CardContent;
+  levelindex: number
+  content: CardContent
 }
 
 export interface StudyCard {
-  id: string;
-  deckId: string;
-  title: string;
-  type: string;
-  levels: CardLevel[];
-  activeLevel: number;
+  id: string
+  deckId: string
+  title: string
+  type: string
+  levels: CardLevel[]
+  activeLevel: number
 }
 
 export type StudyCardsResponse = {
-  cards: StudyCard[];
-};
+  cards: StudyCard[]
+}
 
 // Analytics / review logging payload (no cardId here; cardId is in the URL)
 export interface CardReviewInput {
-  rating: DifficultyRating;
+  rating: DifficultyRating
 
   // timestamps in ISO for backend to compute think/grade/total
-  shownAt: string; // ISO
-  revealedAt?: string; // ISO
-  ratedAt: string; // ISO
+  shownAt: string // ISO
+  revealedAt?: string // ISO
+  ratedAt: string // ISO
 
   // optional client metadata
-  timezone?: string;
+  timezone?: string
 }
 
 // API-specific types
 export type ApiLevelIn = {
-  level_index: number;
-  content: Record<string, unknown>;
-};
+  level_index: number
+  content: Record<string, unknown>
+}
 
 export type ApiReplaceLevelsRequest = {
-  levels: ApiLevelIn[];
-};
+  levels: ApiLevelIn[]
+}
 
 // API request for creating a card - matches backend CreateCardRequest schema
 export type ApiCreateCardLevelRequest = {
-  question: string;
-  answer?: string;  // for flashcard
-  options?: Array<{ id: string; text: string }>;  // for multiple_choice
-  correctOptionId?: string;  // for multiple_choice
-  explanation?: string;  // for multiple_choice
-  timerSec?: number;  // for multiple_choice
-};
+  question: string
+  answer?: string // for flashcard
+  options?: Array<{ id: string; text: string }> // for multiple_choice
+  correctOptionId?: string // for multiple_choice
+  explanation?: string // for multiple_choice
+  timerSec?: number // for multiple_choice
+}
 
 export type ApiCreateCardRequest = {
-  deck_id: string;
-  title: string;
-  type: string;  // changed from card_type to match backend
-  levels: ApiCreateCardLevelRequest[];  // flat structure, not nested
-};
+  deck_id: string
+  title: string
+  type: string // changed from card_type to match backend
+  levels: ApiCreateCardLevelRequest[] // flat structure, not nested
+}
 
 export type ApiCreateCardResponse = {
-  card_id: string;
-  deck_id: string;
-  title: string;
-  card_type: string;
-  levels: ApiLevelIn[];
-};
+  card_id: string
+  deck_id: string
+  title: string
+  card_type: string
+  levels: ApiLevelIn[]
+}
 
 // Helper functions
 export function isMultipleChoice(card: StudyCard | null | undefined): boolean {
-  return !!card && card.type === 'multiple_choice';
+  return !!card && card.type === 'multiple_choice'
 }

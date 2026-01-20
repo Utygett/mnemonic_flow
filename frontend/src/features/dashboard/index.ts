@@ -1,5 +1,5 @@
-export { DashboardView } from './ui/DashboardView';
-export { DashboardContainer } from './ui/DashboardContainer';
-export { HomeTab } from './ui/home/HomeTab';
-export { HomeTabContainer } from './ui/home/HomeTabContainer';
-export * from './model/types';
+export { DashboardView } from './ui/DashboardView'
+export { DashboardContainer } from './ui/DashboardContainer'
+export { HomeTab } from './ui/home/HomeTab'
+export { HomeTabContainer } from './ui/home/HomeTabContainer'
+export * from './model/types'

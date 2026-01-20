@@ -1,2 +1,2 @@
-export { EditDeck } from './ui/EditDeck';
-export type { EditDeckProps } from './model/types';
+export { EditDeck } from './ui/EditDeck'
+export type { EditDeckProps } from './model/types'
