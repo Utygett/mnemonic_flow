@@ -1,19 +1,24 @@
 import secrets
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
+
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
-from app.db.session import SessionLocal
-from app.models.user import User
-from app.core.security import verify_password, hash_password, get_current_user, get_db
-from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserResponse
 from app.auth.jwt import create_access_token, create_refresh_token, decode_refresh_token
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, EmailStr
-from app.core.email import send_email, build_verification_email, build_password_reset_email
 from app.core.config import settings
-from app.schemas.auth import RegisterResponse
+from app.core.email import build_password_reset_email, build_verification_email, send_email
+from app.core.security import get_current_user, get_db, hash_password, verify_password
+from app.models.user import User
+from app.schemas.auth import (
+    LoginRequest,
+    RegisterRequest,
+    RegisterResponse,
+    TokenResponse,
+    UserResponse,
+)
 
 router = APIRouter(tags=["auth"])
 security = HTTPBearer()
@@ -80,11 +85,16 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     email = data.email.strip().lower()
     user = db.query(User).filter(User.email == email).first()
     if not user or not verify_password(data.password, user.password_hash):
-        raise HTTPException(status_code=401, detail={"code": "INVALID_CREDENTIALS", "message": "invalid login or pass"})
+        raise HTTPException(
+            status_code=401,
+            detail={"code": "INVALID_CREDENTIALS", "message": "invalid login or pass"},
+        )
 
     # Опционально: блокируй вход, если email не подтверждён
     if not user.is_email_verified:
-         raise HTTPException(status_code=403, detail={"code": "EMAIL_NOT_VERIFIED", "message": "email not verified"})
+        raise HTTPException(
+            status_code=403, detail={"code": "EMAIL_NOT_VERIFIED", "message": "email not verified"}
+        )
 
     access = create_access_token({"sub": str(user.id)})
     refresh_token = create_refresh_token({"sub": str(user.id)})

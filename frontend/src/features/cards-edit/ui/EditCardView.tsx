@@ -1,17 +1,17 @@
 // src/features/cards-edit/ui/EditCardView.tsx
-import React from 'react';
-import { X, Plus, Trash2, ChevronUp, ChevronDown, Pencil } from 'lucide-react';
+import React from 'react'
+import { X, Plus, Trash2, ChevronUp, ChevronDown, Pencil } from 'lucide-react'
 
-import { Button } from '../../../shared/ui/Button/Button';
-import { MarkdownField } from '../../../shared/ui/MarkdownField';
+import { Button } from '../../../shared/ui/Button/Button'
+import { MarkdownField } from '../../../shared/ui/MarkdownField'
 
-import type { EditCardViewModel } from '../model/useEditCardModel';
+import type { EditCardViewModel } from '../model/useEditCardModel'
 
-import styles from './EditCardView.module.css';
+import styles from './EditCardView.module.css'
 
 type Props = EditCardViewModel & {
-  onCancel: () => void;
-};
+  onCancel: () => void
+}
 
 export function EditCardView(props: Props) {
   const {
@@ -62,9 +62,9 @@ export function EditCardView(props: Props) {
     onEditDeck,
 
     onCancel,
-  } = props;
+  } = props
 
-  const active = levels[activeLevel];
+  const active = levels[activeLevel]
 
   return (
     <div className={styles.page}>
@@ -94,14 +94,14 @@ export function EditCardView(props: Props) {
           <div className={styles.rowWithActions}>
             <select
               value={deckId}
-              onChange={(e) => setDeckId(e.target.value)}
+              onChange={e => setDeckId(e.target.value)}
               className={styles.input}
               disabled={decks.length === 0 || saving}
             >
               {decks.length === 0 ? (
                 <option value="">Нет доступных колод</option>
               ) : (
-                decks.map((d) => (
+                decks.map(d => (
                   <option key={d.deck_id} value={d.deck_id}>
                     {d.title}
                   </option>
@@ -120,9 +120,9 @@ export function EditCardView(props: Props) {
 
             {isOwnerOfCurrentDeck && onEditDeck && deckId ? (
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEditDeck(deckId);
+                onClick={e => {
+                  e.stopPropagation()
+                  onEditDeck(deckId)
                 }}
                 title="Редактировать колоду"
                 className={`${styles.squareButton} ${styles.squareButtonNeutral}`}
@@ -140,12 +140,12 @@ export function EditCardView(props: Props) {
           <div className={styles.rowWithActions}>
             <select
               value={selectedCardId}
-              onChange={(e) => setSelectedCardId(e.target.value)}
+              onChange={e => setSelectedCardId(e.target.value)}
               className={styles.input}
               disabled={loading || cards.length === 0 || saving}
             >
               <option value="">{loading ? 'Загрузка…' : 'Выбери карточку'}</option>
-              {cards.map((c) => (
+              {cards.map(c => (
                 <option key={c.card_id} value={c.card_id}>
                   {c.title}
                 </option>
@@ -170,7 +170,7 @@ export function EditCardView(props: Props) {
               <input
                 className={styles.input}
                 value={titleDraft}
-                onChange={(e) => setTitleDraft(e.target.value)}
+                onChange={e => setTitleDraft(e.target.value)}
                 disabled={!selectedCardId || saving}
               />
             </div>
@@ -189,7 +189,7 @@ export function EditCardView(props: Props) {
 
               <div className={styles.levelTabs}>
                 {levels.map((_, index) => {
-                  const isActive = activeLevel === index;
+                  const isActive = activeLevel === index
 
                   return (
                     <div
@@ -202,17 +202,17 @@ export function EditCardView(props: Props) {
                       }
                       role="button"
                       tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') setActiveLevel(index);
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') setActiveLevel(index)
                       }}
                     >
                       <span className={styles.levelTabText}>Уровень {index + 1}</span>
 
                       <div className={styles.reorderGroup}>
                         <span
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            moveLevel(index, index - 1);
+                          onClick={e => {
+                            e.stopPropagation()
+                            moveLevel(index, index - 1)
                           }}
                           title="Вверх"
                           className={
@@ -225,9 +225,9 @@ export function EditCardView(props: Props) {
                         </span>
 
                         <span
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            moveLevel(index, index + 1);
+                          onClick={e => {
+                            e.stopPropagation()
+                            moveLevel(index, index + 1)
                           }}
                           title="Вниз"
                           className={
@@ -240,7 +240,7 @@ export function EditCardView(props: Props) {
                         </span>
                       </div>
                     </div>
-                  );
+                  )
                 })}
               </div>
 
@@ -251,18 +251,18 @@ export function EditCardView(props: Props) {
                     <MarkdownField
                       label="Вопрос"
                       value={active.question}
-                      onChange={(v) => patchLevel(activeLevel, { question: v } as any)}
+                      onChange={v => patchLevel(activeLevel, { question: v } as any)}
                       preview={qPreview}
-                      onTogglePreview={() => setQPreview((p) => !p)}
+                      onTogglePreview={() => setQPreview(p => !p)}
                       disabled={saving}
                     />
 
                     <MarkdownField
                       label="Ответ"
                       value={active.answer}
-                      onChange={(v) => patchLevel(activeLevel, { answer: v } as any)}
+                      onChange={v => patchLevel(activeLevel, { answer: v } as any)}
                       preview={aPreview}
-                      onTogglePreview={() => setAPreview((p) => !p)}
+                      onTogglePreview={() => setAPreview(p => !p)}
                       disabled={saving}
                       className={styles.mt4}
                     />
@@ -273,9 +273,9 @@ export function EditCardView(props: Props) {
                     <MarkdownField
                       label="Вопрос"
                       value={active.question}
-                      onChange={(v) => patchLevel(activeLevel, { question: v } as any)}
+                      onChange={v => patchLevel(activeLevel, { question: v } as any)}
                       preview={qPreview}
-                      onTogglePreview={() => setQPreview((p) => !p)}
+                      onTogglePreview={() => setQPreview(p => !p)}
                       disabled={saving}
                     />
 
@@ -287,7 +287,7 @@ export function EditCardView(props: Props) {
                           <input
                             className={styles.input}
                             value={o.text}
-                            onChange={(e) => patchOptionText(i, e.target.value)}
+                            onChange={e => patchOptionText(i, e.target.value)}
                             disabled={saving}
                             placeholder={`Вариант ${i + 1}`}
                           />
@@ -336,11 +336,13 @@ export function EditCardView(props: Props) {
                       <select
                         className={styles.input}
                         value={active.correctOptionId}
-                        onChange={(e) => patchLevel(activeLevel, { correctOptionId: e.target.value } as any)}
+                        onChange={e =>
+                          patchLevel(activeLevel, { correctOptionId: e.target.value } as any)
+                        }
                         disabled={saving}
                       >
                         <option value="">— выбери —</option>
-                        {active.options.map((o) => (
+                        {active.options.map(o => (
                           <option key={o.id} value={o.id}>
                             {o.text || o.id}
                           </option>
@@ -355,7 +357,9 @@ export function EditCardView(props: Props) {
                         type="number"
                         min={0}
                         value={active.timerSec}
-                        onChange={(e) => patchLevel(activeLevel, { timerSec: Number(e.target.value) || 0 } as any)}
+                        onChange={e =>
+                          patchLevel(activeLevel, { timerSec: Number(e.target.value) || 0 } as any)
+                        }
                         disabled={saving}
                       />
                       <div className={styles.hintText}>
@@ -366,9 +370,9 @@ export function EditCardView(props: Props) {
                     <MarkdownField
                       label="Пояснение (показывать на обороте)"
                       value={active.explanation}
-                      onChange={(v) => patchLevel(activeLevel, { explanation: v } as any)}
+                      onChange={v => patchLevel(activeLevel, { explanation: v } as any)}
                       preview={aPreview}
-                      onTogglePreview={() => setAPreview((p) => !p)}
+                      onTogglePreview={() => setAPreview(p => !p)}
                       disabled={saving}
                       className={styles.mt4}
                     />
@@ -378,16 +382,30 @@ export function EditCardView(props: Props) {
 
               {levels.length !== cleanedCount && (
                 <div className={styles.noticeCard}>
-                  <div className={styles.noticeText}>Пустые уровни (недозаполненные) не будут сохранены.</div>
+                  <div className={styles.noticeText}>
+                    Пустые уровни (недозаполненные) не будут сохранены.
+                  </div>
                 </div>
               )}
             </div>
 
             <div className={styles.bottomActions}>
-              <Button onClick={onCancel} variant="secondary" size="large" fullWidth disabled={saving}>
+              <Button
+                onClick={onCancel}
+                variant="secondary"
+                size="large"
+                fullWidth
+                disabled={saving}
+              >
                 Отмена
               </Button>
-              <Button onClick={saveCard} variant="primary" size="large" fullWidth disabled={!canSave}>
+              <Button
+                onClick={saveCard}
+                variant="primary"
+                size="large"
+                fullWidth
+                disabled={!canSave}
+              >
                 {saving ? 'Сохранение…' : 'Сохранить'}
               </Button>
             </div>
@@ -395,5 +413,5 @@ export function EditCardView(props: Props) {
         )}
       </main>
     </div>
-  );
+  )
 }

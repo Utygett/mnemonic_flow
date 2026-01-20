@@ -1,12 +1,12 @@
-import React from 'react';
+import React from 'react'
 
-import type { CreateGroupViewModel } from '../model/useCreateGroupModel';
+import type { CreateGroupViewModel } from '../model/useCreateGroupModel'
 
-import styles from './CreateGroupView.module.css';
+import styles from './CreateGroupView.module.css'
 
 type Props = CreateGroupViewModel & {
-  onCancel: () => void;
-};
+  onCancel: () => void
+}
 
 export function CreateGroupView(props: Props) {
   const {
@@ -19,7 +19,7 @@ export function CreateGroupView(props: Props) {
     canSubmit,
     submit,
     onCancel,
-  } = props;
+  } = props
 
   return (
     <div className={styles.page}>
@@ -32,7 +32,7 @@ export function CreateGroupView(props: Props) {
             <input
               className={styles.input}
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={e => setTitle(e.target.value)}
               placeholder="Например: Мои колоды"
               maxLength={60}
               disabled={saving}
@@ -44,7 +44,7 @@ export function CreateGroupView(props: Props) {
             <textarea
               className={`${styles.input} ${styles.textarea}`}
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               placeholder="Необязательно"
               rows={3}
               disabled={saving}
@@ -64,5 +64,5 @@ export function CreateGroupView(props: Props) {
         </div>
       </div>
     </div>
-  );
+  )
 }

@@ -10,7 +10,7 @@ export type {
   ApiReplaceLevelsRequest,
   ApiCreateCardRequest,
   ApiCreateCardResponse,
-} from './model/types';
+} from './model/types'
 
 export type {
   CardType,
@@ -18,7 +18,7 @@ export type {
   FlashcardContent,
   MultipleChoiceContent,
   McqOption,
-} from './model/contentTypes';
+} from './model/contentTypes'
 
 export {
   getStudyCards,
@@ -31,4 +31,4 @@ export {
   levelUp,
   levelDown,
   deleteCardProgress,
-} from './api/cardsApi';
+} from './api/cardsApi'

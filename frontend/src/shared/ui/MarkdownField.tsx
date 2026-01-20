@@ -1,20 +1,20 @@
-import React from 'react';
-import MDEditor from '@uiw/react-md-editor';
-import { Eye, EyeOff } from 'lucide-react';
-import { MarkdownView } from './MarkdownView';
+import React from 'react'
+import MDEditor from '@uiw/react-md-editor'
+import { Eye, EyeOff } from 'lucide-react'
+import { MarkdownView } from './MarkdownView'
 
 type Props = {
-  label: string;
-  value: string;
-  onChange: (next: string) => void;
+  label: string
+  value: string
+  onChange: (next: string) => void
 
-  preview: boolean;
-  onTogglePreview: () => void;
+  preview: boolean
+  onTogglePreview: () => void
 
-  disabled?: boolean;
-  emptyPreviewText?: string;
-  className?: string;
-};
+  disabled?: boolean
+  emptyPreviewText?: string
+  className?: string
+}
 
 export function MarkdownField({
   label,
@@ -48,7 +48,7 @@ export function MarkdownField({
       {!preview ? (
         <MDEditor
           value={value}
-          onChange={(v) => onChange(v ?? '')}
+          onChange={v => onChange(v ?? '')}
           preview="edit"
           extraCommands={[]}
           visibleDragbar={false}
@@ -57,5 +57,5 @@ export function MarkdownField({
         <MarkdownView value={value.trim() ? value : emptyPreviewText} />
       )}
     </div>
-  );
+  )
 }

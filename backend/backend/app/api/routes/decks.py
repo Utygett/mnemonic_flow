@@ -1,25 +1,32 @@
-from datetime import datetime, timezone
 import random
+from datetime import datetime, timezone
+from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import asc
 from sqlalchemy.orm import Session
-from typing import List, Optional
 
-from app.db.session import SessionLocal
 from app.auth.dependencies import get_current_user_id
-from app.models.deck import Deck
+from app.db.session import SessionLocal
 from app.models.card import Card
 from app.models.card_level import CardLevel
 from app.models.card_progress import CardProgress
+from app.models.deck import Deck
 from app.models.user_learning_settings import UserLearningSettings
-from app.schemas.cards import DeckSummary, CardSummary, CardLevelContent, DeckSessionCard, DeckCreate
 from app.models.user_study_group import UserStudyGroup
 from app.models.user_study_group_deck import UserStudyGroupDeck
-from app.schemas.cards import DeckWithCards
+from app.schemas.cards import (
+    CardLevelContent,
+    CardSummary,
+    DeckCreate,
+    DeckDetail,
+    DeckSessionCard,
+    DeckSummary,
+    DeckUpdate,
+    DeckWithCards,
+)
 from app.schemas.decks_public import PublicDeckSummary
-from app.schemas.cards import DeckDetail, DeckUpdate
 
 router = APIRouter(tags=["decks"])
 
@@ -43,12 +50,6 @@ def _ensure_settings(db: Session, user_id: UUID) -> UserLearningSettings:
     return s
 
 
-
-
-
-
-
-
 @router.get("/public", response_model=List[PublicDeckSummary])
 def search_public_decks(
     q: Optional[str] = Query(default=None),
@@ -56,17 +57,12 @@ def search_public_decks(
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
 ):
-    query = db.query(Deck).filter(Deck.is_public == True)
+    query = db.query(Deck).filter(Deck.is_public.is_(True))
 
     if q is not None and q.strip():
         query = query.filter(Deck.title.ilike(f"%{q.strip()}%"))
 
-    decks = (
-        query.order_by(asc(Deck.title), asc(Deck.id))
-        .offset(offset)
-        .limit(limit)
-        .all()
-    )
+    decks = query.order_by(asc(Deck.title), asc(Deck.id)).offset(offset).limit(limit).all()
     return [
         PublicDeckSummary(
             deck_id=d.id,
@@ -98,7 +94,9 @@ def list_user_decks(user_id: UUID = Depends(get_current_user_id), db: Session = 
 
 
 @router.get("/{deck_id}/cards", response_model=List[CardSummary])
-def list_deck_cards(deck_id: UUID, user_id: UUID = Depends(get_current_user_id), db: Session = Depends(get_db)):
+def list_deck_cards(
+    deck_id: UUID, user_id: UUID = Depends(get_current_user_id), db: Session = Depends(get_db)
+):
     user_uuid = user_id
 
     link = (
@@ -114,8 +112,13 @@ def list_deck_cards(deck_id: UUID, user_id: UUID = Depends(get_current_user_id),
     result = []
     for card in cards:
         levels = db.query(CardLevel).filter(CardLevel.card_id == card.id).all()
-        levels_data = [CardLevelContent(level_index=l.level_index, content=l.content) for l in levels]
-        result.append(CardSummary(card_id=card.id, title=card.title, type=card.type, levels=levels_data))
+        levels_data = [
+            CardLevelContent(level_index=card_level.level_index, content=card_level.content)
+            for card_level in levels
+        ]
+        result.append(
+            CardSummary(card_id=card.id, title=card.title, type=card.type, levels=levels_data)
+        )
     return result
 
 
@@ -128,18 +131,19 @@ def get_deck_session(
     user_uuid = user_id
     settings = _ensure_settings(db, user_uuid)
 
-    deck = db.query(Deck).filter(
-        Deck.id == deck_id,
-        (Deck.owner_id == user_uuid) | (Deck.is_public == True)
-    ).first()
+    deck = (
+        db.query(Deck)
+        .filter(
+            Deck.id == deck_id,
+            (Deck.owner_id == user_uuid) | (Deck.is_public.is_(True)),
+        )
+        .first()
+    )
     if not deck:
         raise HTTPException(403, "Deck not accessible")
 
     cards: List[Card] = (
-        db.query(Card)
-        .filter(Card.deck_id == deck_id)
-        .order_by(Card.created_at.asc())
-        .all()
+        db.query(Card).filter(Card.deck_id == deck_id).order_by(Card.created_at.asc()).all()
     )
     if not cards:
         return []
@@ -152,7 +156,7 @@ def get_deck_session(
         .filter(
             CardProgress.user_id == user_uuid,
             CardProgress.card_id.in_(card_ids),
-            CardProgress.is_active == True,
+            CardProgress.is_active.is_(True),
         )
         .all()
     )
@@ -168,7 +172,7 @@ def get_deck_session(
         .filter(CardLevel.card_id.in_(card_ids), CardLevel.level_index == 0)
         .all()
     )
-    lvl0_by_card = {l.card_id: l for l in lvl0_all}
+    lvl0_by_card = {card_level.card_id: card_level for card_level in lvl0_all}
 
     for c in cards:
         if c.id in progress_by_card:
@@ -220,7 +224,10 @@ def get_deck_session(
                 type=card.type,
                 active_card_level_id=active_level.id,
                 active_level_index=active_level.level_index,
-                levels=[CardLevelContent(level_index=l.level_index, content=l.content) for l in lvls],
+                levels=[
+                    CardLevelContent(level_index=card_level.level_index, content=card_level.content)
+                    for card_level in lvls
+                ],
             )
         )
     return result
@@ -264,6 +271,7 @@ def create_deck(
     db.commit()
     return DeckSummary(deck_id=deck.id, title=deck.title)
 
+
 @router.get("/{deck_id}", response_model=DeckWithCards)
 def get_deck_with_cards(
     deck_id: UUID,
@@ -293,7 +301,10 @@ def get_deck_with_cards(
                 card_id=card.id,
                 title=card.title,
                 type=card.type,
-                levels=[CardLevelContent(level_index=l.level_index, content=l.content) for l in levels],
+                levels=[
+                    CardLevelContent(level_index=card_level.level_index, content=card_level.content)
+                    for card_level in levels
+                ],
             )
         )
 
@@ -301,7 +312,7 @@ def get_deck_with_cards(
 
 
 @router.get("/{deck_id}/with_cards", response_model=DeckWithCards)
-def get_deck_with_cards(
+def get_deck_with_cards_ordered(
     deck_id: UUID,
     user_id: UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
@@ -334,11 +345,15 @@ def get_deck_with_cards(
                 card_id=c.id,
                 title=c.title,
                 type=c.type,
-                levels=[CardLevelContent(level_index=l.level_index, content=l.content) for l in levels],
+                levels=[
+                    CardLevelContent(level_index=card_level.level_index, content=card_level.content)
+                    for card_level in levels
+                ],
             )
         )
 
     return DeckWithCards(deck=deck, cards=out_cards)
+
 
 @router.delete("/{deck_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_deck(
@@ -429,18 +444,16 @@ def get_study_cards(
         raise HTTPException(status_code=422, detail="Only include=full is supported")
 
     # доступ как в /session: owner или public
-    deck = db.query(Deck).filter(
-        Deck.id == deck_id,
-        (Deck.owner_id == user_id) | (Deck.is_public == True)
-    ).first()
+    deck = (
+        db.query(Deck)
+        .filter(Deck.id == deck_id, (Deck.owner_id == user_id) | (Deck.is_public.is_(True)))
+        .first()
+    )
     if not deck:
         raise HTTPException(status_code=403, detail="Deck not accessible")
 
     cards: List[Card] = (
-        db.query(Card)
-        .filter(Card.deck_id == deck_id)
-        .order_by(Card.created_at.asc())
-        .all()
+        db.query(Card).filter(Card.deck_id == deck_id).order_by(Card.created_at.asc()).all()
     )
     if not cards:
         return {"cards": []}
@@ -493,7 +506,7 @@ def get_study_cards(
             .filter(
                 CardProgress.user_id == user_id,
                 CardProgress.card_id.in_(card_ids),
-                CardProgress.is_active == True,
+                CardProgress.is_active.is_(True),
             )
             .all()
         )
@@ -506,13 +519,18 @@ def get_study_cards(
         if not lvls:
             continue
 
-        out.append({
-            "id": str(c.id),
-            "deckId": str(c.deck_id),
-            "title": c.title,
-            "type": c.type,
-            "levels": [{"levelIndex": l.level_index, "content": l.content} for l in lvls],
-            "activeLevel": active_level_index_by_card.get(c.id, 0),
-        })
+        out.append(
+            {
+                "id": str(c.id),
+                "deckId": str(c.deck_id),
+                "title": c.title,
+                "type": c.type,
+                "levels": [
+                    {"levelIndex": card_level.level_index, "content": card_level.content}
+                    for card_level in lvls
+                ],
+                "activeLevel": active_level_index_by_card.get(c.id, 0),
+            }
+        )
 
     return {"cards": out}

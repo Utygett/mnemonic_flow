@@ -1,12 +1,12 @@
-import React from 'react';
+import React from 'react'
 
-import type { CreateDeckViewModel } from '../model/useCreateDeckModel';
+import type { CreateDeckViewModel } from '../model/useCreateDeckModel'
 
-import styles from './CreateDeckView.module.css';
+import styles from './CreateDeckView.module.css'
 
 type Props = CreateDeckViewModel & {
-  onCancel: () => void;
-};
+  onCancel: () => void
+}
 
 export function CreateDeckView(props: Props) {
   const {
@@ -19,7 +19,7 @@ export function CreateDeckView(props: Props) {
     canSubmit,
     submit,
     onCancel,
-  } = props;
+  } = props
 
   return (
     <div className={styles.page}>
@@ -32,7 +32,7 @@ export function CreateDeckView(props: Props) {
             <input
               className={styles.input}
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={e => setTitle(e.target.value)}
               placeholder="Например: Английские слова"
               maxLength={60}
               disabled={saving}
@@ -44,7 +44,7 @@ export function CreateDeckView(props: Props) {
             <textarea
               className={styles.textarea}
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               placeholder="Для чего эта колода, какие темы покрывает, и т.д."
               maxLength={500}
               disabled={saving}
@@ -70,5 +70,5 @@ export function CreateDeckView(props: Props) {
         </div>
       </div>
     </div>
-  );
+  )
 }

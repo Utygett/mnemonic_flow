@@ -1,25 +1,25 @@
-import React from 'react';
+import React from 'react'
 
-import { Button } from '../../../shared/ui/Button/Button';
-import { ResumeSessionCard } from '@/features/study-flow';
+import { Button } from '../../../shared/ui/Button/Button'
+import { ResumeSessionCard } from '@/features/study-flow'
 
-import type { DashboardActions, DashboardModel } from '../model/types';
+import type { DashboardActions, DashboardModel } from '../model/types'
 
-import { DashboardStats } from './components/DashboardStats';
-import { GroupsBar } from './components/GroupsBar';
-import { DeckList } from './components/DeckList';
+import { DashboardStats } from './components/DashboardStats'
+import { GroupsBar } from './components/GroupsBar'
+import { DeckList } from './components/DeckList'
 
-import styles from './DashboardView.module.css';
+import styles from './DashboardView.module.css'
 
 export function DashboardView({
   model,
   actions,
 }: {
-  model: DashboardModel;
-  actions: DashboardActions;
+  model: DashboardModel
+  actions: DashboardActions
 }) {
-  const activeGroup = model.groups.find((g) => g.id === model.activeGroupId);
-  const groupDescription = activeGroup?.description?.trim();
+  const activeGroup = model.groups.find(g => g.id === model.activeGroupId)
+  const groupDescription = activeGroup?.description?.trim()
 
   return (
     <div className={styles.dashboard}>
@@ -51,7 +51,11 @@ export function DashboardView({
         </div>
       )}
 
-      <DeckList decks={model.decks} onDeckClick={actions.onDeckClick} onEditDeck={actions.onEditDeck} />
+      <DeckList
+        decks={model.decks}
+        onDeckClick={actions.onDeckClick}
+        onEditDeck={actions.onEditDeck}
+      />
 
       <div className={styles.footerSection}>
         <Button onClick={actions.onAddDeck} variant="primary" size="medium" fullWidth>
@@ -59,5 +63,5 @@ export function DashboardView({
         </Button>
       </div>
     </div>
-  );
+  )
 }

@@ -1,7 +1,9 @@
 from enum import Enum
 from typing import Optional
-from pydantic import BaseModel
 from uuid import UUID
+
+from pydantic import BaseModel
+
 
 class GroupCreate(BaseModel):
     title: str
@@ -20,14 +22,17 @@ class GroupResponse(BaseModel):
     description: Optional[str] = None
     parent_id: Optional[UUID] = None
 
+
 class CardSummary(BaseModel):
     card_id: UUID
     title: str
     type: str
 
+
 class GroupKind(str, Enum):
-    personal = "personal"         # личная папка
-    subscription = "subscription" # подписка на общую группу
+    personal = "personal"  # личная папка
+    subscription = "subscription"  # подписка на общую группу
+
 
 class UserGroupResponse(BaseModel):
     user_group_id: UUID

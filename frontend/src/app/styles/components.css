@@ -296,7 +296,7 @@
   width: 100%;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   overflow: hidden;
 }
 
@@ -434,7 +434,7 @@
   width: 100%;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   overflow: hidden;
   display: flex;
   align-items: flex-end;
@@ -442,7 +442,11 @@
 
 .statsBars__fill {
   width: 100%;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 85%, white) 0%, var(--primary) 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 85%, white) 0%,
+    var(--primary) 100%
+  );
   border-radius: 12px;
 }
 
@@ -575,7 +579,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 70%, #ffffff) 0%, var(--primary) 100%);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary) 70%, #ffffff) 0%,
+    var(--primary) 100%
+  );
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 

@@ -1,27 +1,27 @@
-import React from 'react';
-import type { PublicDeckSummary } from '../model/deckTypes';
-import { useAuth } from '@/app/providers/auth/AuthContext';
+import React from 'react'
+import type { PublicDeckSummary } from '../model/deckTypes'
+import { useAuth } from '@/app/providers/auth/AuthContext'
 
-import styles from './DeckCard.module.css';
+import styles from './DeckCard.module.css'
 
 interface DeckCardProps {
-  deck: PublicDeckSummary;
-  onClick: () => void;
-  onEdit?: () => void;
+  deck: PublicDeckSummary
+  onClick: () => void
+  onEdit?: () => void
 }
 
 export function DeckCard({ deck, onClick }: DeckCardProps) {
-  const { currentUser } = useAuth();
-  const isOwner = currentUser?.id === deck.owner_id;
-  void isOwner;
+  const { currentUser } = useAuth()
+  const isOwner = currentUser?.id === deck.owner_id
+  void isOwner
 
-  const description = deck.description?.trim();
+  const description = deck.description?.trim()
 
-  const totalCards = deck.cards_count;
-  const completedCards = deck.completed_cards_count;
-  const repetitionsCount = deck.count_repeat;
-  const forRepetition = deck.count_for_repeat;
-  const progress = totalCards > 0 ? Math.round((completedCards / totalCards) * 100) : 0;
+  const totalCards = deck.cards_count
+  const completedCards = deck.completed_cards_count
+  const repetitionsCount = deck.count_repeat
+  const forRepetition = deck.count_for_repeat
+  const progress = totalCards > 0 ? Math.round((completedCards / totalCards) * 100) : 0
 
   return (
     <button onClick={onClick} className={styles.deckCard}>
@@ -50,5 +50,5 @@ export function DeckCard({ deck, onClick }: DeckCardProps) {
         </div>
       </div>
     </button>
-  );
+  )
 }
