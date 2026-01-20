@@ -36,7 +36,10 @@
 
   padding: 8px 6px;
   border-radius: var(--radius-md);
-  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .item:hover {

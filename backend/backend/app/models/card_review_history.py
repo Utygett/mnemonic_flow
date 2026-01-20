@@ -1,12 +1,12 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, Enum, Integer, DateTime
+from sqlalchemy import DateTime, Enum, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base
 from app.core.enums import ReviewRating
+from app.db.base import Base
 
 
 class CardReviewHistory(Base):

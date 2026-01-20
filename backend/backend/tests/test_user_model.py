@@ -1,10 +1,11 @@
 """Тесты для модели User с базой данных."""
+
 import uuid
 
 import pytest
 
-from app.models.user import User
 from app.core.security import hash_password
+from app.models.user import User
 
 
 class TestUserModel:

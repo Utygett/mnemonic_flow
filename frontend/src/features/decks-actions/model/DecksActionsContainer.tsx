@@ -1,9 +1,9 @@
-import React from 'react';
+import React from 'react'
 
 export type DecksActionsApi = {
-  onDeckCreated: () => void;
-  onDeckSaved: () => void;
-};
+  onDeckCreated: () => void
+  onDeckSaved: () => void
+}
 
 export function DecksActionsContainer({
   refreshDecks,
@@ -11,20 +11,20 @@ export function DecksActionsContainer({
   closeEditDeck,
   children,
 }: {
-  refreshDecks: () => void;
-  closeCreateDeck: () => void;
-  closeEditDeck: () => void;
-  children: (api: DecksActionsApi) => React.ReactNode;
+  refreshDecks: () => void
+  closeCreateDeck: () => void
+  closeEditDeck: () => void
+  children: (api: DecksActionsApi) => React.ReactNode
 }) {
   const onDeckCreated = () => {
-    refreshDecks();
-    closeCreateDeck();
-  };
+    refreshDecks()
+    closeCreateDeck()
+  }
 
   const onDeckSaved = () => {
-    refreshDecks();
-    closeEditDeck();
-  };
+    refreshDecks()
+    closeEditDeck()
+  }
 
-  return <>{children({ onDeckCreated, onDeckSaved })}</>;
+  return <>{children({ onDeckCreated, onDeckSaved })}</>
 }

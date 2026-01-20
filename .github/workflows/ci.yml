@@ -13,9 +13,14 @@ jobs:
     name: Validate Commits & Version
     uses: ./.github/workflows/validate-commits.yml
 
+  code-style:
+    name: Code Style
+    needs: validate-commits
+    uses: ./.github/workflows/code-style.yml
+
   build-all:
     name: Build All
-    needs: validate-commits
+    needs: code-style
     uses: ./.github/workflows/build-all.yml
 
   test-all:

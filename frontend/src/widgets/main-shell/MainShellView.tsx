@@ -1,12 +1,12 @@
-import React from 'react';
+import React from 'react'
 
-import { BottomNav } from '@/widgets/bottom-nav';
-import { InstallPrompt } from '@/shared/pwa/InstallPrompt';
+import { BottomNav } from '@/widgets/bottom-nav'
+import { InstallPrompt } from '@/shared/pwa/InstallPrompt'
 
-import { OfflineStatus } from '@/app/overlays/OfflineStatus';
-import { PWAUpdatePrompt } from '@/app/overlays/PWAUpdatePrompt';
+import { OfflineStatus } from '@/app/overlays/OfflineStatus'
+import { PWAUpdatePrompt } from '@/app/overlays/PWAUpdatePrompt'
 
-import type { MainShellViewProps } from './mainShell.types';
+import type { MainShellViewProps } from './mainShell.types'
 
 export function MainShellView(props: MainShellViewProps) {
   return (
@@ -21,5 +21,5 @@ export function MainShellView(props: MainShellViewProps) {
       )}
       <InstallPrompt />
     </div>
-  );
+  )
 }

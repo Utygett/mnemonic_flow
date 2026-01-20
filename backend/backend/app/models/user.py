@@ -2,15 +2,16 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Boolean, DateTime
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Boolean, DateTime, String
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.db.base import Base
 
 if TYPE_CHECKING:
-    from app.models.user_learning_settings import UserLearningSettings
     from app.models.card_progress import CardProgress
     from app.models.card_review_history import CardReviewHistory
+    from app.models.user_learning_settings import UserLearningSettings
 
 
 class User(Base):
@@ -23,27 +24,24 @@ class User(Base):
 
     is_email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     email_verification_token: Mapped[str | None] = mapped_column(String, nullable=True)
-    email_verification_expires: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    email_verification_expires: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # Password reset
     password_reset_token: Mapped[str | None] = mapped_column(String, nullable=True)
-    password_reset_expires: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-
+    password_reset_expires: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     card_progress: Mapped[list["CardProgress"]] = relationship(
-        "CardProgress",
-        back_populates="user",
-        cascade="all, delete-orphan"
+        "CardProgress", back_populates="user", cascade="all, delete-orphan"
     )
 
     learning_settings: Mapped["UserLearningSettings"] = relationship(
-        "UserLearningSettings",
-        back_populates="user",
-        uselist=False
+        "UserLearningSettings", back_populates="user", uselist=False
     )
 
     review_history: Mapped[list["CardReviewHistory"]] = relationship(
-        "CardReviewHistory",
-        back_populates="user",
-        cascade="all, delete-orphan"
+        "CardReviewHistory", back_populates="user", cascade="all, delete-orphan"
     )

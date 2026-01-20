@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useState } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
 
-import { Button } from '../../../shared/ui/Button/Button';
-import { LevelIndicator } from '../../../shared/ui/LevelIndicator';
+import { Button } from '../../../shared/ui/Button/Button'
+import { LevelIndicator } from '../../../shared/ui/LevelIndicator'
 
-import styles from './OnboardingPage.module.css';
+import styles from './OnboardingPage.module.css'
 
 interface OnboardingPageProps {
-  onComplete: () => void;
+  onComplete: () => void
 }
 
 export function OnboardingPage({ onComplete }: OnboardingPageProps) {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0)
 
   const steps = [
     {
@@ -29,15 +29,15 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
       description: 'Создайте свою или выберите первую колоду и начните путь к знаниям',
       image: '🚀',
     },
-  ];
+  ]
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep(currentStep + 1)
     } else {
-      onComplete();
+      onComplete()
     }
-  };
+  }
 
   return (
     <div className={styles.page}>
@@ -63,7 +63,7 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
               {currentStep === 1 && (
                 <div className={styles.demo}>
                   <div className={styles.levelList}>
-                    {[0, 1, 2, 3].map((level) => (
+                    {[0, 1, 2, 3].map(level => (
                       <div key={level} className={styles.levelRow}>
                         <span className={styles.levelLabel}>Уровень {level}</span>
                         <LevelIndicator currentLevel={level as 0 | 1 | 2 | 3} size="medium" />
@@ -96,5 +96,5 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
         </div>
       </div>
     </div>
-  );
+  )
 }

@@ -1,49 +1,49 @@
-import React, { useEffect, useState } from 'react';
-import { Download, X } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import React, { useEffect, useState } from 'react'
+import { Download, X } from 'lucide-react'
+import { AnimatePresence, motion } from 'motion/react'
 
 export function InstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showPrompt, setShowPrompt] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [showPrompt, setShowPrompt] = useState(false)
 
   useEffect(() => {
     const handler = (e: Event) => {
       // Предотвращаем стандартный браузерный промпт
-      e.preventDefault();
+      e.preventDefault()
       // Сохраняем событие для использования позже
-      setDeferredPrompt(e);
+      setDeferredPrompt(e)
       // Показываем наш кастомный промпт
-      setShowPrompt(true);
-    };
+      setShowPrompt(true)
+    }
 
-    window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('beforeinstallprompt', handler)
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-    };
-  }, []);
+      window.removeEventListener('beforeinstallprompt', handler)
+    }
+  }, [])
 
   const handleInstall = async () => {
     if (!deferredPrompt) {
-      return;
+      return
     }
 
     // Показываем промпт установки
-    deferredPrompt.prompt();
+    deferredPrompt.prompt()
 
     // Ждем выбора пользователя
-    const { outcome } = await deferredPrompt.userChoice;
+    const { outcome } = await deferredPrompt.userChoice
 
-    console.log(`User response: ${outcome}`);
+    console.log(`User response: ${outcome}`)
 
     // Очищаем сохраненный промпт
-    setDeferredPrompt(null);
-    setShowPrompt(false);
-  };
+    setDeferredPrompt(null)
+    setShowPrompt(false)
+  }
 
   const handleDismiss = () => {
-    setShowPrompt(false);
-  };
+    setShowPrompt(false)
+  }
 
   return (
     <AnimatePresence>
@@ -87,5 +87,5 @@ export function InstallPrompt() {
         </motion.div>
       )}
     </AnimatePresence>
-  );
+  )
 }

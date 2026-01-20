@@ -1,8 +1,10 @@
 from datetime import datetime
-from pydantic import BaseModel, Field
-from app.core.enums import ReviewRating
 from typing import Optional
 from uuid import UUID
+
+from pydantic import BaseModel, Field
+
+from app.core.enums import ReviewRating
 
 
 class CardForReview(BaseModel):
@@ -31,6 +33,7 @@ class ReviewRequest(BaseModel):
     class Config:
         extra = "forbid"
         allow_population_by_field_name = True
+
 
 class ReviewResponse(BaseModel):
     card_id: UUID

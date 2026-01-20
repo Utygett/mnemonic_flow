@@ -1,1 +1,1 @@
-export { StudySession } from './StudySession';
+export { StudySession } from './StudySession'

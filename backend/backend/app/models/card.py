@@ -1,12 +1,14 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import String, Integer, ForeignKey, func, DateTime
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import DateTime, ForeignKey, Integer, String, func
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
 from .card_card_tag import CardCardTag
+from .card_tag import CardTag  # noqa: F401 - needed for SQLAlchemy relationship
 
 
 class Card(Base):

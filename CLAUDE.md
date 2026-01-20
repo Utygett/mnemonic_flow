@@ -166,19 +166,28 @@ def test_login_success(client, test_user):
 
 ### CI/CD
 
-**GitHub Actions** - Automated CI on Pull Requests to `main` branch.
+**GitHub Actions** - Automated CI on Pull Requests to `main` and `develop` branches.
 
-**Workflows:**
+**Pipeline stages (in order):**
 
-1. **`.github/workflows/validate-commits.yml`** - Runs on all PRs
-   - Validates VERSION file format (xx.xx.xx)
-   - Validates commit messages follow Conventional Commits
-   - Must pass before CI build runs
+1. **`.github/workflows/validate-commits.yml`** - Validates PR metadata
+   - VERSION file format (xx.xx.xx)
+   - Commit messages follow Conventional Commits
 
-2. **`.github/workflows/ci.yml`** - Runs on PRs to `main`
-   - Frontend container build
-   - Backend container build
-   - All services build via `docker compose -f compose.dev.yml build`
+2. **`.github/workflows/code-style.yml`** - Code quality checks
+   - Runs pre-commit hooks on all files
+   - Python: Black, isort, Flake8
+   - TypeScript/JS: Prettier formatting
+   - YAML/TOML/JSON validation
+
+3. **`.github/workflows/build-all.yml`** - Build containers
+   - Frontend image
+   - Backend image
+   - Docker Compose build validation
+
+4. **`.github/workflows/test-all.yml`** - Run tests
+   - Backend pytest tests
+   - Frontend vitest tests
 
 **Trigger:** Any PR targeting `main` branch
 
@@ -387,7 +396,98 @@ import { DeleteCardButton } from '@/features/card-delete/ui/DeleteCardButton';  
 - `app/core/` - Core functionality (security, config, database)
 - `app/alembic/` - Database migrations
 
+**API Routes:**
+| Route | Description | Auth Required |
+|-------|-------------|---------------|
+| `/api/auth/*` | Registration, login, token refresh | No |
+| `/api/cards/*` | Card CRUD operations | Yes |
+| `/api/decks/*` | Deck CRUD operations | Yes |
+| `/api/groups/*` | Study group operations | Yes |
+| `/api/stats/dashboard` | Dashboard statistics | Yes |
+
+**Statistics Endpoint (`GET /api/stats/dashboard`):**
+Returns user statistics for the dashboard:
+- `cards_studied_today`: Number of cards reviewed today
+- `time_spent_today`: Time spent studying today (minutes)
+- `current_streak`: Consecutive days with reviews
+- `total_cards`: Total cards owned by user
+
+**Important:** When working with time calculations, note that `CardReviewHistory.interval_minutes` is the SM-2 algorithm's interval until next review, NOT study time. For actual study time, use `reviewed_at - reveal_at` (time from answer reveal to user rating).
+
 **Documentation:** See `backend/README.md` for detailed backend documentation including testing, migrations, and environment configuration.
+
+## Code Style & Quality
+
+### Python (Backend)
+
+**Pre-commit hooks** — автоматическая проверка перед коммитом:
+
+```bash
+# Install pre-commit
+pip install pre-commit
+cd /path/to/repo
+pre-commit install
+
+# Run on all files
+pre-commit run --all-files
+
+# Run specific hook manually
+pre-commit run black --all-files
+pre-commit run mypy --all-files --hook-stage manual
+```
+
+**Tools configured in `.pre-commit-config.yaml`:**
+| Tool | Purpose | Config |
+|------|---------|--------|
+| **Black** | Code formatter | `preview` mode, 100 char line |
+| **isort** | Import sorting | black-compatible profile |
+| **Flake8** | Linting | via `Flake8-pyproject` |
+| **mypy** | Type checking | manual stage only |
+
+**Manual commands:**
+```bash
+cd backend
+black .                 # Format code
+isort .                 # Sort imports
+flake8 .                # Check style
+mypy backend/app        # Type check
+```
+
+**Configuration files:**
+- `backend/pyproject.toml` — Black, isort, Flake8, mypy settings
+- `.pre-commit-config.yaml` — All pre-commit hooks
+
+### TypeScript (Frontend)
+
+**Linting & formatting:**
+```bash
+cd frontend
+
+# Lint
+npm run lint            # Check
+npm run lint:fix        # Fix auto-fixable issues
+
+# Format (Prettier)
+npm run format          # Format all files
+npm run format:check    # Check formatting
+```
+
+**Tools:**
+- **ESLint 9** — Flat config format (`eslint.config.js`)
+- **Prettier** — Code formatter (`.prettierrc`)
+- **typescript-eslint** — TypeScript-specific rules
+
+**Configuration files:**
+- `frontend/eslint.config.js` — ESLint flat config
+- `frontend/.prettierrc` — Prettier settings
+
+### CI/CD Integration
+
+Code style checks run automatically in CI for all PRs to `main` and `develop`. The pipeline:
+
+1. Validates commits → 2. Checks code style → 3. Builds containers → 4. Runs tests
+
+**Tip:** Run `pre-commit run --all-files` locally before pushing to catch issues early.
 
 ## Environment Configuration
 
