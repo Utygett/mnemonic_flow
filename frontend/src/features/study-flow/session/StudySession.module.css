@@ -1,113 +1,45 @@
-/* Study session screen styles (restored)
-   This file intentionally defines the utility-like classes used by StudySession.tsx,
-   because the project does not include Tailwind/utility framework.
-*/
+/* Study session screen styles */
 
-:root {
-  --study-bg: #0b1220;
-  --study-surface: rgba(79, 114, 172, 0.18);
-  --study-border: rgba(30, 41, 59, 0.9);
-  --study-text: #e8eaf0;
-  --study-muted: rgba(232, 234, 240, 0.72);
-}
-
-/* --- small utilities used in StudySession markup --- */
-
-.flex {
-  display: flex;
-}
-
-.items-center {
-  align-items: center;
-}
-
-.justify-between {
-  justify-content: space-between;
-}
-
-.justify-center {
-  justify-content: center;
-}
-
-.mb-4 {
-  margin-bottom: 16px;
-}
-
-.py-4 {
-  padding-top: 16px;
-  padding-bottom: 16px;
-}
-
-.text-sm {
-  font-size: 12px;
-}
-
-.text-xs {
-  font-size: 10px;
-}
-
-.text-white {
-  color: #fff;
-}
-
-.text-muted {
-  color: var(--study-muted);
-}
-
-.transition-all {
-  transition: all 200ms ease;
-}
-
-.duration-200 {
-  transition-duration: 200ms;
-}
-
-.shadow-md {
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
-}
-
-/* --- layout --- */
-
-.study-page {
+.studyPage {
   min-height: 100vh;
-  background: var(--study-bg);
-  color: var(--study-text);
+  background: #0b1220;
+  color: #e8eaf0;
   display: flex;
   flex-direction: column;
 }
 
-.page__header {
+.pageHeader {
   position: sticky;
   top: 0;
   z-index: 5;
-  background: color-mix(in srgb, var(--study-bg) 90%, transparent);
+  background: color-mix(in srgb, #0b1220 90%, transparent);
   backdrop-filter: blur(8px);
 }
 
-.page__header-inner {
+.pageHeaderInner {
   max-width: 390px;
   margin: 0 auto;
   padding: 0 16px;
 }
 
-.icon-btn {
+.iconBtn {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  border: 1px solid var(--study-border);
+  border: 1px solid rgba(30, 41, 59, 0.9);
   background: rgba(255, 255, 255, 0.06);
-  color: var(--study-text);
+  color: #e8eaf0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
 }
 
-.icon-btn:hover {
+.iconBtn:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 
-.study__card-area {
+.studyCardArea {
   flex: 1;
   display: flex;
   align-items: center;
@@ -115,20 +47,18 @@
   padding: 16px;
 }
 
-.study__actions {
+.studyActions {
   padding: 0 16px 16px 16px;
   max-width: 390px;
   margin: 0 auto;
   width: 100%;
 }
 
-.study__actions-inner {
+.studyActionsInner {
   width: 100%;
 }
 
-/* --- flip card --- */
-
-.flipcard-container {
+.flipcardContainer {
   width: 100%;
   max-width: 520px;
 }
@@ -138,18 +68,18 @@
   cursor: pointer;
 }
 
-.flipcard__inner {
+.flipcardInner {
   position: relative;
   width: 100%;
   min-height: 320px;
   transform-style: preserve-3d;
 }
 
-.flipcard__side {
+.flipcardSide {
   position: absolute;
   inset: 0;
   border-radius: 14px;
-  border: 2px solid var(--study-border);
+  border: 2px solid rgba(30, 41, 59, 0.9);
   background: rgba(79, 114, 172, 0.22);
   padding: 16px;
   backface-visibility: hidden;
@@ -158,15 +88,15 @@
   gap: 12px;
 }
 
-.flipcard__front {
+.flipcardFront {
   transform: rotateY(0deg);
 }
 
-.flipcard__back {
+.flipcardBack {
   transform: rotateY(180deg);
 }
 
-.flipcard__text {
+.flipcardText {
   flex: 1;
   display: flex;
   align-items: center;
@@ -176,41 +106,39 @@
   overflow: auto;
 }
 
-.flipcard__hint {
+.flipcardHint {
   font-size: 12px;
-  color: var(--study-muted);
+  color: rgba(232, 234, 240, 0.72);
   text-align: center;
 }
 
-.flipcard__level-controls {
+.flipcardLevelControls {
   display: flex;
   justify-content: space-between;
   gap: 12px;
 }
 
-.flipcard__level-btn {
-  border: 1px solid var(--study-border);
+.flipcardLevelBtn {
+  border: 1px solid rgba(30, 41, 59, 0.9);
   background: rgba(255, 255, 255, 0.06);
-  color: var(--study-text);
+  color: #e8eaf0;
   border-radius: 999px;
   padding: 8px 12px;
   font-size: 12px;
   cursor: pointer;
 }
 
-.flipcard__level-btn:hover {
+.flipcardLevelBtn:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* --- rating buttons --- */
-
-.rating-row {
+.ratingRow {
   display: flex;
   justify-content: space-between;
   gap: 10px;
 }
 
-.rating-button {
+.ratingButton {
   width: 56px;
   height: 56px;
   border-radius: 999px;
@@ -218,72 +146,100 @@
   cursor: pointer;
 }
 
-.rating-button:hover {
+.ratingButton:hover {
   transform: translateY(-1px);
 }
-
-/* --- mcq --- */
 
 .mcq {
   width: 100%;
 }
 
-.mcq-question {
+.mcqQuestion {
   margin-bottom: 12px;
 }
 
-.mcq-options {
+.mcqOptions {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.mcq-option {
+.mcqOption {
   width: 100%;
   text-align: left;
   border-radius: 12px;
-  border: 1px solid var(--study-border);
+  border: 1px solid rgba(30, 41, 59, 0.9);
   background: rgba(255, 255, 255, 0.06);
-  color: var(--study-text);
+  color: #e8eaf0;
   padding: 12px;
   cursor: pointer;
 }
 
-.mcq-option:disabled {
+.mcqOption:disabled {
   opacity: 0.95;
   cursor: default;
 }
 
-.mcq-option--correct {
+.mcqOptionCorrect {
   border-color: rgba(56, 161, 105, 0.9);
   background: rgba(56, 161, 105, 0.22);
 }
 
-.mcq-option--wrong {
+.mcqOptionWrong {
   border-color: rgba(229, 62, 62, 0.9);
   background: rgba(229, 62, 62, 0.18);
 }
 
-.mcq-timer {
+.mcqTimer {
   margin-top: 12px;
 }
 
-.mcq-timer-text {
+.mcqTimerText {
   font-size: 12px;
-  color: var(--study-muted);
+  color: rgba(232, 234, 240, 0.72);
   margin-bottom: 6px;
 }
 
-.mcq-timer-bar {
+.mcqTimerBar {
   height: 10px;
   border-radius: 999px;
-  border: 1px solid var(--study-border);
+  border: 1px solid rgba(30, 41, 59, 0.9);
   background: rgba(255, 255, 255, 0.06);
   overflow: hidden;
 }
 
-.mcq-timer-fill {
+.mcqTimerFill {
   height: 100%;
   background: rgba(57, 142, 105, 0.55);
   transition: width 200ms linear;
+}
+
+/* Utility classes for layout */
+.row {
+  display: flex;
+}
+
+.rowCentered {
+  align-items: center;
+}
+
+.rowSpaceBetween {
+  justify-content: space-between;
+}
+
+.marginBottom {
+  margin-bottom: 16px;
+}
+
+.textSmall {
+  font-size: 14px;
+}
+
+.textMuted {
+  color: rgba(232, 234, 240, 0.72);
+}
+
+.headerPadding {
+  padding-top: 16px;
+  padding-bottom: 16px;
 }

@@ -1,0 +1,83 @@
+/* FlipCard styles */
+
+.flipcardContainer {
+  width: 100%;
+  max-width: 520px;
+}
+
+.flipcard {
+  width: 100%;
+  cursor: pointer;
+}
+
+.flipcardInner {
+  position: relative;
+  width: 100%;
+  min-height: 320px;
+  transform-style: preserve-3d;
+}
+
+.flipcardSide {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  padding: 16px;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.flipcardFront {
+  transform: rotateY(0deg);
+}
+
+.flipcardBack {
+  transform: rotateY(180deg);
+}
+
+.flipcardText {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: left;
+  width: 100%;
+  overflow: auto;
+}
+
+.flipcardHint {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.flipcardLevelControls {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.flipcardLevelBtn {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.flipcardLevelBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.flipcardLevelBtnLeft {
+  composes: flipcardLevelBtn;
+}
+
+.flipcardLevelBtnRight {
+  composes: flipcardLevelBtn;
+}

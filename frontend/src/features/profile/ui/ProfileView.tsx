@@ -3,6 +3,8 @@ import { Settings, User, Shield, LogOut } from 'lucide-react';
 
 import type { ProfileViewProps } from '../model/types';
 
+import styles from './ProfileView.module.css';
+
 export function ProfileView(props: ProfileViewProps) {
   const { apiHealth, isPWA } = props;
 
@@ -30,7 +32,7 @@ export function ProfileView(props: ProfileViewProps) {
   }, [open]);
 
   return (
-    <div className="min-h-screen bg-dark pb-24">
+    <div className={styles.page}>
       <header className="page__header">
         <div className="page__header-inner profileHeader">
           <h1 className="page__title">Профиль</h1>
@@ -86,7 +88,7 @@ export function ProfileView(props: ProfileViewProps) {
         </div>
       </header>
 
-      <div className="p-4 container-centered max-w-390">
+      <div className={`${styles.main} container-centered`}>
         <div className="card">
           <div className="profileCard">
             <div className="avatar avatar--xl avatar--accent">{props.initials}</div>

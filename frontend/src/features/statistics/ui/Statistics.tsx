@@ -10,6 +10,8 @@ import {
 import { getStatsOverview } from '../../../shared/api';
 import type { StatsOverview, StatsPeriod } from '../model/statisticsTypes';
 
+import styles from './Statistics.module.css';
+
 type Period = StatsPeriod;
 
 type StatCard = {
@@ -211,7 +213,7 @@ export function Statistics() {
         </div>
       </div>
 
-      <div className="p-4 py-6 container-centered stats__content">
+      <div className={`${styles.content} container-centered`}>
         {loading ? (
           <div className="card statsBlock">
             <div className="statsBlock__head">

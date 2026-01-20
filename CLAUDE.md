@@ -468,7 +468,7 @@ docker compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards 
 
 **Frontend:**
 - Build: Vite 6.3.5 with SWC compiler (not Babel)
-- UI: Radix UI primitives + Tailwind CSS
+- UI: Radix UI primitives + CSS Modules for component styling
 - State: React hooks, react-hook-form
 - Math: KaTeX for mathematical content in flashcards
 - Charts: Recharts for statistics visualization

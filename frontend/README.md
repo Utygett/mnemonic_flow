@@ -72,7 +72,7 @@ src/
 ## 🛠️ Технологии
 
 - **Build:** Vite 6 с SWC
-- **UI:** Radix UI + Tailwind CSS
+- **UI:** Radix UI + CSS Modules
 - **State:** React hooks, react-hook-form
 - **Math:** KaTeX
 - **Charts:** Recharts
