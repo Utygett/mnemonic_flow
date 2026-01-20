@@ -387,6 +387,24 @@ import { DeleteCardButton } from '@/features/card-delete/ui/DeleteCardButton';  
 - `app/core/` - Core functionality (security, config, database)
 - `app/alembic/` - Database migrations
 
+**API Routes:**
+| Route | Description | Auth Required |
+|-------|-------------|---------------|
+| `/api/auth/*` | Registration, login, token refresh | No |
+| `/api/cards/*` | Card CRUD operations | Yes |
+| `/api/decks/*` | Deck CRUD operations | Yes |
+| `/api/groups/*` | Study group operations | Yes |
+| `/api/stats/dashboard` | Dashboard statistics | Yes |
+
+**Statistics Endpoint (`GET /api/stats/dashboard`):**
+Returns user statistics for the dashboard:
+- `cards_studied_today`: Number of cards reviewed today
+- `time_spent_today`: Time spent studying today (minutes)
+- `current_streak`: Consecutive days with reviews
+- `total_cards`: Total cards owned by user
+
+**Important:** When working with time calculations, note that `CardReviewHistory.interval_minutes` is the SM-2 algorithm's interval until next review, NOT study time. For actual study time, use `reviewed_at - reveal_at` (time from answer reveal to user rating).
+
 **Documentation:** See `backend/README.md` for detailed backend documentation including testing, migrations, and environment configuration.
 
 ## Environment Configuration
