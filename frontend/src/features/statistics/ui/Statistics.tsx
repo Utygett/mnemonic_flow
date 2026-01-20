@@ -1,123 +1,116 @@
-import React from 'react';
+import React from 'react'
 
-import {
-  Flame,
-  Timer,
-  Sparkles,
-  Layers,
-} from 'lucide-react';
+import { Flame, Timer, Sparkles, Layers } from 'lucide-react'
 
-import { getStatsOverview } from '../../../shared/api';
-import type { StatsOverview, StatsPeriod } from '../model/statisticsTypes';
+import { getStatsOverview } from '../../../shared/api'
+import type { StatsOverview, StatsPeriod } from '../model/statisticsTypes'
 
-import styles from './Statistics.module.css';
+import styles from './Statistics.module.css'
 
-type Period = StatsPeriod;
+type Period = StatsPeriod
 
 type StatCard = {
-  label: string;
-  value: string;
-  hint: string;
-  icon: React.ReactNode;
-};
-
-function safeNumber(v: unknown): number {
-  const n = typeof v === 'number' ? v : Number(v);
-  return Number.isFinite(n) ? n : 0;
+  label: string
+  value: string
+  hint: string
+  icon: React.ReactNode
 }
 
-const DOW_RU_MON0 = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] as const;
+function safeNumber(v: unknown): number {
+  const n = typeof v === 'number' ? v : Number(v)
+  return Number.isFinite(n) ? n : 0
+}
+
+const DOW_RU_MON0 = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] as const
 
 function buildSparkPath(series: number[], width: number, height: number) {
-  const values = series.map(safeNumber);
-  const max = Math.max(...values, 1);
-  const min = Math.min(...values, 0);
-  const range = Math.max(max - min, 1);
+  const values = series.map(safeNumber)
+  const max = Math.max(...values, 1)
+  const min = Math.min(...values, 0)
+  const range = Math.max(max - min, 1)
 
-  const step = values.length > 1 ? width / (values.length - 1) : width;
+  const step = values.length > 1 ? width / (values.length - 1) : width
 
   return values
     .map((v, i) => {
-      const x = i * step;
-      const y = height - ((v - min) / range) * height;
-      return `${i === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
+      const x = i * step
+      const y = height - ((v - min) / range) * height
+      return `${i === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`
     })
-    .join(' ');
+    .join(' ')
 }
 
 function dateToDowLabel(dateStr: string) {
   // dateStr: YYYY-MM-DD
-  const d = new Date(`${dateStr}T00:00:00`);
-  const js = d.getDay(); // 0=Sun..6=Sat
-  const mon0 = (js + 6) % 7;
-  return DOW_RU_MON0[mon0];
+  const d = new Date(`${dateStr}T00:00:00`)
+  const js = d.getDay() // 0=Sun..6=Sat
+  const mon0 = (js + 6) % 7
+  return DOW_RU_MON0[mon0]
 }
 
 export function Statistics() {
-  const [period, setPeriod] = React.useState<Period>('week');
-  const [data, setData] = React.useState<StatsOverview | null>(null);
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const [period, setPeriod] = React.useState<Period>('week')
+  const [data, setData] = React.useState<StatsOverview | null>(null)
+  const [loading, setLoading] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    let cancelled = false;
+    let cancelled = false
 
-    (async () => {
+    ;(async () => {
       try {
-        setLoading(true);
-        setError(null);
-        const res = await getStatsOverview(period);
-        if (cancelled) return;
-        setData(res);
+        setLoading(true)
+        setError(null)
+        const res = await getStatsOverview(period)
+        if (cancelled) return
+        setData(res)
       } catch (e: any) {
-        if (cancelled) return;
-        setError(e?.message ?? 'Не удалось загрузить статистику');
-        setData(null);
+        if (cancelled) return
+        setError(e?.message ?? 'Не удалось загрузить статистику')
+        setData(null)
       } finally {
-        if (cancelled) return;
-        setLoading(false);
+        if (cancelled) return
+        setLoading(false)
       }
-    })();
+    })()
 
     return () => {
-      cancelled = true;
-    };
-  }, [period]);
+      cancelled = true
+    }
+  }, [period])
 
-  const learnedRate = data?.overall?.learnedRatePct ?? 0;
+  const learnedRate = data?.overall?.learnedRatePct ?? 0
 
-  const weekly = data?.activity?.last7Days ?? [];
-  const weeklyMax = Math.max(...weekly.map((d) => safeNumber(d.reviews)), 1);
-  const weeklySum = weekly.reduce((a, b) => a + safeNumber(b.reviews), 0);
+  const weekly = data?.activity?.last7Days ?? []
+  const weeklyMax = Math.max(...weekly.map(d => safeNumber(d.reviews)), 1)
+  const weeklySum = weekly.reduce((a, b) => a + safeNumber(b.reviews), 0)
 
   // Pace sparkline from API series if present, fallback to reviews/time
   const paceSeries = React.useMemo(() => {
-    const series = data?.pace?.series ?? [];
-    if (series.length > 0) return series.map((s) => safeNumber(s.cardsPerMin));
+    const series = data?.pace?.series ?? []
+    if (series.length > 0) return series.map(s => safeNumber(s.cardsPerMin))
 
     // fallback: compute per-day from last7Days using avgPerReview totalMs
-    const avgTotalMs = data?.time?.avgPerReviewMs?.totalMs ?? 0;
-    if (!avgTotalMs) return weekly.map(() => 0);
+    const avgTotalMs = data?.time?.avgPerReviewMs?.totalMs ?? 0
+    if (!avgTotalMs) return weekly.map(() => 0)
 
-    return weekly.map((d) => {
-      const reviews = safeNumber(d.reviews);
-      const totalMs = reviews * avgTotalMs;
-      return totalMs > 0 ? reviews / (totalMs / 60000) : 0;
-    });
-  }, [data, weekly]);
+    return weekly.map(d => {
+      const reviews = safeNumber(d.reviews)
+      const totalMs = reviews * avgTotalMs
+      return totalMs > 0 ? reviews / (totalMs / 60000) : 0
+    })
+  }, [data, weekly])
 
   const paceAvg =
     paceSeries.length > 0
       ? paceSeries.reduce((a, b) => a + safeNumber(b), 0) / Math.max(paceSeries.length, 1)
-      : 0;
+      : 0
 
   const paceCaption =
-    period === 'week'
-      ? 'Карточки/мин за последние 7 дней'
-      : 'Карточки/мин за период';
+    period === 'week' ? 'Карточки/мин за последние 7 дней' : 'Карточки/мин за период'
 
-  const streakDays = data?.activity?.streakDays ?? 0;
-  const todayTotalMin = Math.round((data?.time?.today?.totalMs ?? 0) / 60000);
+  const streakDays = data?.activity?.streakDays ?? 0
+  const todayTotalMin = Math.round((data?.time?.today?.totalMs ?? 0) / 60000)
 
   const statCards: StatCard[] = [
     {
@@ -144,11 +137,11 @@ export function Statistics() {
       hint: 'Карточки, достигшие порога difficulty (порог хранится в профиле).',
       icon: <Layers size={18} />,
     },
-  ];
+  ]
 
-  const sparkW = 320;
-  const sparkH = 90;
-  const sparkPath = buildSparkPath(paceSeries, sparkW, sparkH);
+  const sparkW = 320
+  const sparkH = 90
+  const sparkPath = buildSparkPath(paceSeries, sparkW, sparkH)
 
   return (
     <div className="stats-page">
@@ -237,7 +230,11 @@ export function Statistics() {
           </div>
 
           <div className="spark" aria-label="График нагрузки">
-            <svg className="spark__svg" viewBox={`0 0 ${sparkW} ${sparkH}`} preserveAspectRatio="none">
+            <svg
+              className="spark__svg"
+              viewBox={`0 0 ${sparkW} ${sparkH}`}
+              preserveAspectRatio="none"
+            >
               <path d={sparkPath} className="spark__line" fill="none" />
             </svg>
           </div>
@@ -246,7 +243,7 @@ export function Statistics() {
 
         {/* Quick metrics */}
         <div className="statsGrid">
-          {statCards.map((c) => (
+          {statCards.map(c => (
             <div key={c.label} className="card statCard" title={c.hint}>
               <div className="statCard__top">
                 <div className="statCard__icon">{c.icon}</div>
@@ -266,10 +263,10 @@ export function Statistics() {
           </div>
 
           <div className="statsBars">
-            {weekly.map((d) => {
-              const value = safeNumber(d.reviews);
-              const height = (value / weeklyMax) * 100;
-              const day = dateToDowLabel(d.date);
+            {weekly.map(d => {
+              const value = safeNumber(d.reviews)
+              const height = (value / weeklyMax) * 100
+              const day = dateToDowLabel(d.date)
 
               return (
                 <div key={d.date} className="statsBars__col">
@@ -281,11 +278,11 @@ export function Statistics() {
                     <span className="statsBars__val">{value}</span>
                   </div>
                 </div>
-              );
+              )
             })}
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

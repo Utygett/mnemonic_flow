@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'
 
 export function useIsPWA() {
-  const [isPWA, setIsPWA] = useState(false);
+  const [isPWA, setIsPWA] = useState(false)
 
   useEffect(() => {
     const checkPWA = () => {
@@ -10,12 +10,12 @@ export function useIsPWA() {
         (window.navigator as any).standalone ||
         document.referrer.includes('android-app://')
       ) {
-        setIsPWA(true);
+        setIsPWA(true)
       }
-    };
+    }
 
-    checkPWA();
-  }, []);
+    checkPWA()
+  }, [])
 
-  return isPWA;
+  return isPWA
 }

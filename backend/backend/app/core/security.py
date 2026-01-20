@@ -1,18 +1,17 @@
 # backend/app/core/security.py
 from uuid import UUID
 
-from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import jwt, JWTError
-from app.models.user import User
-from app.db.session import SessionLocal
-from app.core.config import settings
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
+
 from app.auth.jwt import decode_access_token  # добавь импорт
+from app.db.session import SessionLocal
+from app.models.user import User
 
 security = HTTPBearer()  # читает заголовок Authorization: Bearer <token>
+
 
 def get_db():
     db = SessionLocal()
@@ -32,6 +31,7 @@ def hash_password(password: str) -> str:
     safe_password = password.encode("utf-8")[:72].decode("utf-8", errors="ignore")
     return pwd_context.hash(safe_password)
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     if not isinstance(plain_password, str):
         plain_password = str(plain_password)
@@ -40,8 +40,8 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def get_current_user(
-        credentials: HTTPAuthorizationCredentials = Depends(security),
-        db: Session = Depends(get_db),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
 ) -> User:
     token = credentials.credentials
 

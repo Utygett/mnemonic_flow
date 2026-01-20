@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field, ConfigDict, conint, root_validator
-from typing import List, Dict, Optional, Union, Any
-from uuid import UUID
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field, conint, root_validator
 
 
 class CardLevelContent(BaseModel):
@@ -42,6 +43,7 @@ class CreateCardLevelOption(BaseModel):
     id: str
     text: str
 
+
 class CreateCardLevelRequest(BaseModel):
     question: str
 
@@ -53,6 +55,7 @@ class CreateCardLevelRequest(BaseModel):
     correctOptionId: Optional[str] = None
     explanation: Optional[str] = None
     timerSec: Optional[conint(ge=1, le=3600)] = None
+
 
 class CreateCardRequest(BaseModel):
     deck_id: str
@@ -135,6 +138,7 @@ class DeckCreate(BaseModel):
     description: str | None = None
     color: str | None = None
 
+
 class CreateCardResponse(BaseModel):
     card_id: UUID
     deck_id: UUID
@@ -145,6 +149,7 @@ class DeckUpdate(BaseModel):
     description: Optional[str] = None
     color: Optional[str] = Field(default=None, min_length=1)  # опционально: regex под HEX
     is_public: Optional[bool] = None
+
 
 class DeckDetail(BaseModel):
     deck_id: UUID = Field(validation_alias="id", serialization_alias="deck_id")

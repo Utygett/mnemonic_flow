@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 
 def create_listing(output_file="listing.txt"):
@@ -12,9 +11,38 @@ def create_listing(output_file="listing.txt"):
     folders = ["tests"]
 
     # Папки и файлы для исключения
-    exclude_dirs = {"__pycache__", ".git", ".idea", ".vscode", "node_modules", "venv", "env", ".pytest_cache"}
-    exclude_extensions = {".pyc", ".pyo", ".pyd", ".so", ".dll", ".exe", ".bin", ".jpg", ".jpeg", ".png",
-                          ".gif", ".pdf", ".zip", ".tar", ".gz", ".log", ".tmp", ".swp", ".DS_Store", ".sh"}
+    exclude_dirs = {
+        "__pycache__",
+        ".git",
+        ".idea",
+        ".vscode",
+        "node_modules",
+        "venv",
+        "env",
+        ".pytest_cache",
+    }
+    exclude_extensions = {
+        ".pyc",
+        ".pyo",
+        ".pyd",
+        ".so",
+        ".dll",
+        ".exe",
+        ".bin",
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".pdf",
+        ".zip",
+        ".tar",
+        ".gz",
+        ".log",
+        ".tmp",
+        ".swp",
+        ".DS_Store",
+        ".sh",
+    }
 
     # Открываем файл для записи
     with open(output_file, "w", encoding="utf-8") as out_file:
@@ -60,7 +88,7 @@ def create_listing(output_file="listing.txt"):
                     out_file.write(content)
 
                     # Добавляем разделитель между файлами
-                    if not content.endswith('\n'):
+                    if not content.endswith("\n"):
                         out_file.write("\n")
                     out_file.write("=" * 50 + "\n\n")
 
@@ -69,17 +97,17 @@ def create_listing(output_file="listing.txt"):
                 except UnicodeDecodeError:
                     # Пробуем другую кодировку
                     try:
-                        with open(full_path, "r", encoding="cp1251", errors='ignore') as f:
+                        with open(full_path, "r", encoding="cp1251", errors="ignore") as f:
                             content = f.read()
 
                         out_file.write(f"=== Файл: {relative_path} ===\n")
                         out_file.write(content)
-                        if not content.endswith('\n'):
+                        if not content.endswith("\n"):
                             out_file.write("\n")
                         out_file.write("=" * 50 + "\n\n")
                         print(f"  - Добавлен (другая кодировка): {relative_path}")
 
-                    except:
+                    except BaseException:
                         # Пропускаем бинарные файлы
                         print(f"  - Пропущен (бинарный файл): {relative_path}")
 

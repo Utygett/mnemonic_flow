@@ -1,2 +1,2 @@
 // Compatibility stub (was introduced before moving auth pages).
-export { ResetPasswordPage } from './ResetPasswordPage.tsx';
+export { ResetPasswordPage } from './ResetPasswordPage.tsx'

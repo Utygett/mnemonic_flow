@@ -1,23 +1,23 @@
-import React from 'react';
+import React from 'react'
 
-import type { PublicDeckSummary } from '../model/types';
+import type { PublicDeckSummary } from '../model/types'
 
-import styles from './DeckCard.module.css';
+import styles from './DeckCard.module.css'
 
 type Props = {
-  deck: PublicDeckSummary;
-  onClick: () => void;
-};
+  deck: PublicDeckSummary
+  onClick: () => void
+}
 
 export function DeckCard({ deck, onClick }: Props) {
-  const description = deck.description?.trim();
+  const description = deck.description?.trim()
 
-  const totalCards = Number(deck.cards_count ?? 0);
-  const completedCards = Number(deck.completed_cards_count ?? 0);
-  const repetitionsCount = Number(deck.count_repeat ?? 0);
-  const forRepetition = Number(deck.count_for_repeat ?? 0);
+  const totalCards = Number(deck.cards_count ?? 0)
+  const completedCards = Number(deck.completed_cards_count ?? 0)
+  const repetitionsCount = Number(deck.count_repeat ?? 0)
+  const forRepetition = Number(deck.count_for_repeat ?? 0)
 
-  const progress = totalCards > 0 ? Math.round((completedCards / totalCards) * 100) : 0;
+  const progress = totalCards > 0 ? Math.round((completedCards / totalCards) * 100) : 0
 
   return (
     <div className={styles.root}>
@@ -27,7 +27,9 @@ export function DeckCard({ deck, onClick }: Props) {
         </div>
 
         <div className={styles.descriptionBox}>
-          <div className={styles.description}>{description ? description : 'Описание отсутствует'}</div>
+          <div className={styles.description}>
+            {description ? description : 'Описание отсутствует'}
+          </div>
         </div>
 
         <div className={styles.statsRow}>
@@ -46,5 +48,5 @@ export function DeckCard({ deck, onClick }: Props) {
         </div>
       </button>
     </div>
-  );
+  )
 }
