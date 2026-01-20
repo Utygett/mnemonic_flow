@@ -1,0 +1,57 @@
+/* MnemonicRootSwitch styles */
+
+.loadingContainer {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingContent {
+  text-align: center;
+}
+
+.errorContainer {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.errorCard {
+  text-align: center;
+}
+
+.pwaBadge {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 30;
+}
+
+.tabPage {
+  min-height: 100vh;
+  background: var(--bg);
+  padding-bottom: 96px;
+}
+
+.tabMain {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 390px;
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
+
+.emptyState {
+  text-align: center;
+  padding-top: 48px;
+  padding-bottom: 48px;
+}
+
+.pwaTip {
+  margin-top: 32px;
+}
