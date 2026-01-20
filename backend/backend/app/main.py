@@ -2,7 +2,7 @@ from fastapi import FastAPI, APIRouter
 from app.api.routes import cards, groups
 from app.api.routes import auth
 from starlette.middleware.cors import CORSMiddleware
-from app.api.routes import decks
+from app.api.routes import decks, stats
 from app.db.init_db import init_db
 from app.core.version import __version__
 
@@ -30,6 +30,7 @@ api.include_router(cards.router,  prefix="/cards",  tags=["cards"])
 api.include_router(groups.router, prefix="/groups", tags=["groups"])
 api.include_router(auth.router,   prefix="/auth",   tags=["auth"])
 api.include_router(decks.router,  prefix="/decks",  tags=["decks"])
+api.include_router(stats.router,  prefix="/stats",  tags=["stats"])
 
 app.include_router(api)
 
