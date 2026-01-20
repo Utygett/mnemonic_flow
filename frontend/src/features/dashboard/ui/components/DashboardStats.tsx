@@ -1,6 +1,6 @@
 import React from 'react';
 import { Clock, BookOpen, Flame } from 'lucide-react';
-import type { Statistics } from '../../../../types';
+import type { Statistics } from '@/entities/statistics';
 
 import styles from './DashboardStats.module.css';
 
