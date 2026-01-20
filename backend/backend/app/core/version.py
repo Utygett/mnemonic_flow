@@ -1,4 +1,5 @@
 """Версия приложения, читается из переменной окружения или VERSION файла."""
+
 import os
 from pathlib import Path
 

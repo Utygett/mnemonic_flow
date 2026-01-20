@@ -1,12 +1,12 @@
-import React from 'react';
+import React from 'react'
 
-import type { EditDeckViewModel } from '../model/useEditDeckModel';
+import type { EditDeckViewModel } from '../model/useEditDeckModel'
 
-import styles from './EditDeckView.module.css';
+import styles from './EditDeckView.module.css'
 
 type Props = EditDeckViewModel & {
-  onCancel: () => void;
-};
+  onCancel: () => void
+}
 
 export function EditDeckView(props: Props) {
   const {
@@ -22,14 +22,14 @@ export function EditDeckView(props: Props) {
     canSubmit,
     submit,
     onCancel,
-  } = props;
+  } = props
 
   if (loading) {
     return (
       <div className={styles.loadingPage}>
         <div className={styles.loadingText}>Загрузка…</div>
       </div>
-    );
+    )
   }
 
   return (
@@ -43,7 +43,7 @@ export function EditDeckView(props: Props) {
             <input
               className={styles.input}
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={e => setTitle(e.target.value)}
               placeholder="Название колоды"
               maxLength={60}
               disabled={saving}
@@ -55,7 +55,7 @@ export function EditDeckView(props: Props) {
               className={styles.checkbox}
               type="checkbox"
               checked={isPublic}
-              onChange={(e) => setIsPublic(e.target.checked)}
+              onChange={e => setIsPublic(e.target.checked)}
               disabled={saving}
             />
             <span>Сделать колоду публичной</span>
@@ -66,7 +66,7 @@ export function EditDeckView(props: Props) {
             <textarea
               className={styles.textarea}
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               placeholder="Краткое описание (опционально)"
               disabled={saving}
             />
@@ -90,5 +90,5 @@ export function EditDeckView(props: Props) {
         </div>
       </div>
     </div>
-  );
+  )
 }

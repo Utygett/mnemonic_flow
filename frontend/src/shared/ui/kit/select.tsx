@@ -1,42 +1,36 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import * as SelectPrimitive from "@radix-ui/react-select";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import * as React from 'react'
+import * as SelectPrimitive from '@radix-ui/react-select'
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react'
 
-import { cn } from "./utils";
+import { cn } from './utils'
 
-function Select({
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />;
+function Select({ ...props }: React.ComponentProps<typeof SelectPrimitive.Root>) {
+  return <SelectPrimitive.Root data-slot="select" {...props} />
 }
 
-function SelectGroup({
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Group>) {
-  return <SelectPrimitive.Group data-slot="select-group" {...props} />;
+function SelectGroup({ ...props }: React.ComponentProps<typeof SelectPrimitive.Group>) {
+  return <SelectPrimitive.Group data-slot="select-group" {...props} />
 }
 
-function SelectValue({
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Value>) {
-  return <SelectPrimitive.Value data-slot="select-value" {...props} />;
+function SelectValue({ ...props }: React.ComponentProps<typeof SelectPrimitive.Value>) {
+  return <SelectPrimitive.Value data-slot="select-value" {...props} />
 }
 
 function SelectTrigger({
   className,
-  size = "default",
+  size = 'default',
   children,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
-  size?: "sm" | "default";
+  size?: 'sm' | 'default'
 }) {
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-size={size}
-      className={cn("select__trigger", className)}
+      className={cn('select__trigger', className)}
       {...props}
     >
       {children}
@@ -44,13 +38,13 @@ function SelectTrigger({
         <ChevronDownIcon className="icon icon--sm icon--muted" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
-  );
+  )
 }
 
 function SelectContent({
   className,
   children,
-  position = "popper",
+  position = 'popper',
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
   return (
@@ -58,39 +52,33 @@ function SelectContent({
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
-          "select__content",
-          position === "popper" && "select__content--popper",
-          className,
+          'select__content',
+          position === 'popper' && 'select__content--popper',
+          className
         )}
         position={position}
         {...props}
       >
         <SelectScrollUpButton />
         <SelectPrimitive.Viewport
-          className={cn(
-            "select__viewport",
-            position === "popper" && "select__viewport--popper",
-          )}
+          className={cn('select__viewport', position === 'popper' && 'select__viewport--popper')}
         >
           {children}
         </SelectPrimitive.Viewport>
         <SelectScrollDownButton />
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
-  );
+  )
 }
 
-function SelectLabel({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Label>) {
+function SelectLabel({ className, ...props }: React.ComponentProps<typeof SelectPrimitive.Label>) {
   return (
     <SelectPrimitive.Label
       data-slot="select-label"
-      className={cn("select__label", className)}
+      className={cn('select__label', className)}
       {...props}
     />
-  );
+  )
 }
 
 function SelectItem({
@@ -101,7 +89,7 @@ function SelectItem({
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
-      className={cn("select__item", className)}
+      className={cn('select__item', className)}
       {...props}
     >
       <span className="select__item-indicator">
@@ -111,7 +99,7 @@ function SelectItem({
       </span>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
     </SelectPrimitive.Item>
-  );
+  )
 }
 
 function SelectSeparator({
@@ -121,10 +109,10 @@ function SelectSeparator({
   return (
     <SelectPrimitive.Separator
       data-slot="select-separator"
-      className={cn("select__separator", className)}
+      className={cn('select__separator', className)}
       {...props}
     />
-  );
+  )
 }
 
 function SelectScrollUpButton({
@@ -134,12 +122,12 @@ function SelectScrollUpButton({
   return (
     <SelectPrimitive.ScrollUpButton
       data-slot="select-scroll-up-button"
-      className={cn("select__scroll-button", className)}
+      className={cn('select__scroll-button', className)}
       {...props}
     >
       <ChevronUpIcon className="icon icon--sm" />
     </SelectPrimitive.ScrollUpButton>
-  );
+  )
 }
 
 function SelectScrollDownButton({
@@ -149,12 +137,12 @@ function SelectScrollDownButton({
   return (
     <SelectPrimitive.ScrollDownButton
       data-slot="select-scroll-down-button"
-      className={cn("select__scroll-button", className)}
+      className={cn('select__scroll-button', className)}
       {...props}
     >
       <ChevronDownIcon className="icon icon--sm" />
     </SelectPrimitive.ScrollDownButton>
-  );
+  )
 }
 
 export {
@@ -168,4 +156,4 @@ export {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-};
+}

@@ -1,9 +1,9 @@
-import React from 'react';
+import React from 'react'
 
 interface ProgressBarProps {
-  progress: number; // 0-100
-  color?: string;
-  height?: string;
+  progress: number // 0-100
+  color?: string
+  height?: string
 }
 
 export function ProgressBar({ progress, color = '#4A6FA5', height = '8px' }: ProgressBarProps) {
@@ -17,5 +17,5 @@ export function ProgressBar({ progress, color = '#4A6FA5', height = '8px' }: Pro
         }}
       />
     </div>
-  );
+  )
 }

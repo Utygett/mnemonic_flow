@@ -1,24 +1,24 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react-swc';
-import path from 'path';
-import { VitePWA } from 'vite-plugin-pwa';
-import fs from 'fs';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react-swc'
+import path from 'path'
+import { VitePWA } from 'vite-plugin-pwa'
+import fs from 'fs'
 
 // Читаем VERSION из переменной окружения (Docker) или из файла (локально)
 const getVersion = () => {
   // Docker: версия передаётся через ARG при сборке
   if (process.env.APP_VERSION) {
-    return process.env.APP_VERSION;
+    return process.env.APP_VERSION
   }
   // Локальная разработка: читаем из файла
   try {
-    return fs.readFileSync('../VERSION', 'utf-8').trim();
+    return fs.readFileSync('../VERSION', 'utf-8').trim()
   } catch {
-    return '0.0.0';
+    return '0.0.0'
   }
-};
+}
 
-const version = getVersion();
+const version = getVersion()
 
 export default defineConfig({
   // Передаём версию в приложение через define
@@ -44,20 +44,20 @@ export default defineConfig({
           {
             src: 'pwa-192x192.png',
             sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
           },
           {
             src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
-          }
-        ]
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable',
+          },
+        ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
@@ -69,12 +69,12 @@ export default defineConfig({
               cacheName: 'google-fonts-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
               },
               cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
+                statuses: [0, 200],
+              },
+            },
           },
           {
             urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
@@ -83,20 +83,20 @@ export default defineConfig({
               cacheName: 'gstatic-fonts-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
               },
               cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ]
+                statuses: [0, 200],
+              },
+            },
+          },
+        ],
       },
       devOptions: {
         enabled: true,
-        type: 'module'
-      }
-    })
+        type: 'module',
+      },
+    }),
   ],
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
@@ -159,4 +159,4 @@ export default defineConfig({
       },
     },
   },
-});
+})

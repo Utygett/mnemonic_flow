@@ -15,7 +15,10 @@
   flex-direction: column;
   gap: 6px;
 
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
 }
 
 .deckCard:hover {
@@ -25,7 +28,9 @@
 
 .deckCard:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent), var(--shadow);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent),
+    var(--shadow);
 }
 
 .title {

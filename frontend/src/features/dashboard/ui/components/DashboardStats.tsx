@@ -1,12 +1,12 @@
-import React from 'react';
-import { Clock, BookOpen, Flame } from 'lucide-react';
-import type { Statistics } from '../../../../types';
+import React from 'react'
+import { Clock, BookOpen, Flame } from 'lucide-react'
+import type { Statistics } from '@/entities/statistics'
 
-import styles from './DashboardStats.module.css';
+import styles from './DashboardStats.module.css'
 
 type Props = {
-  statistics: Statistics;
-};
+  statistics: Statistics
+}
 
 export function DashboardStats({ statistics }: Props) {
   return (
@@ -35,5 +35,5 @@ export function DashboardStats({ statistics }: Props) {
         <p className={styles.value}>{statistics.currentStreak}</p>
       </div>
     </div>
-  );
+  )
 }

@@ -1,3 +1,3 @@
-import { cn } from "../../lib/cn";
+import { cn } from '../../lib/cn'
 
-export { cn };
+export { cn }

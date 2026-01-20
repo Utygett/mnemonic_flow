@@ -1,35 +1,35 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Settings, User, Shield, LogOut } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react'
+import { Settings, User, Shield, LogOut } from 'lucide-react'
 
-import type { ProfileViewProps } from '../model/types';
+import type { ProfileViewProps } from '../model/types'
 
-import styles from './ProfileView.module.css';
+import styles from './ProfileView.module.css'
 
 export function ProfileView(props: ProfileViewProps) {
-  const { apiHealth, isPWA } = props;
+  const { apiHealth, isPWA } = props
 
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
+  const [open, setOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
-      if (!open) return;
-      const target = e.target as Node;
-      if (!menuRef.current) return;
-      if (!menuRef.current.contains(target)) setOpen(false);
-    };
+      if (!open) return
+      const target = e.target as Node
+      if (!menuRef.current) return
+      if (!menuRef.current.contains(target)) setOpen(false)
+    }
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
+      if (e.key === 'Escape') setOpen(false)
+    }
 
-    document.addEventListener('mousedown', onDocClick);
-    document.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', onDocClick)
+    document.addEventListener('keydown', onKey)
     return () => {
-      document.removeEventListener('mousedown', onDocClick);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
+      document.removeEventListener('mousedown', onDocClick)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
 
   return (
     <div className={styles.page}>
@@ -44,7 +44,7 @@ export function ProfileView(props: ProfileViewProps) {
               aria-label="Настройки"
               aria-haspopup="menu"
               aria-expanded={open}
-              onClick={() => setOpen((v) => !v)}
+              onClick={() => setOpen(v => !v)}
             >
               <Settings size={18} />
             </button>
@@ -103,7 +103,9 @@ export function ProfileView(props: ProfileViewProps) {
 
             <div className="profileRow">
               <span className="profileRow__label">API статус</span>
-              <span className={`profileRow__value ${apiHealth === 'healthy' ? 'text-ok' : 'text-bad'}`}>
+              <span
+                className={`profileRow__value ${apiHealth === 'healthy' ? 'text-ok' : 'text-bad'}`}
+              >
                 {apiHealth === 'healthy' ? '✓ Работает' : '✗ Ошибка'}
               </span>
             </div>
@@ -130,5 +132,5 @@ export function ProfileView(props: ProfileViewProps) {
         </div>
       </div>
     </div>
-  );
+  )
 }

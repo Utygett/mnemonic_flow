@@ -1,18 +1,18 @@
-import React from 'react';
-import { Trash2 } from 'lucide-react';
-import type { Group } from '../../../../types';
+import React from 'react'
+import { Trash2 } from 'lucide-react'
+import type { Group } from '../../../../types'
 
-import { useGroupsCarousel } from '../../model/useGroupsCarousel';
+import { useGroupsCarousel } from '../../model/useGroupsCarousel'
 
-import styles from './GroupsBar.module.css';
+import styles from './GroupsBar.module.css'
 
 type Props = {
-  groups: Group[];
-  activeGroupId: string | null;
-  onGroupChange: (id: string) => void;
-  onCreateGroup: () => void;
-  onDeleteActiveGroup: () => void;
-};
+  groups: Group[]
+  activeGroupId: string | null
+  onGroupChange: (id: string) => void
+  onCreateGroup: () => void
+  onDeleteActiveGroup: () => void
+}
 
 export function GroupsBar({
   groups,
@@ -21,27 +21,28 @@ export function GroupsBar({
   onCreateGroup,
   onDeleteActiveGroup,
 }: Props) {
-  const { carouselRef, onWheelCarousel, onMouseDown, onMouseMove, onMouseUpOrLeave } = useGroupsCarousel();
+  const { carouselRef, onWheelCarousel, onMouseDown, onMouseMove, onMouseUpOrLeave } =
+    useGroupsCarousel()
 
-  const safeGroups = groups ?? [];
+  const safeGroups = groups ?? []
 
   // Прокручиваем к активной группе при её изменении
   React.useEffect(() => {
-    if (!activeGroupId || !carouselRef.current) return;
+    if (!activeGroupId || !carouselRef.current) return
 
-    const activeIndex = safeGroups.findIndex((g) => g.id === activeGroupId);
-    if (activeIndex === -1) return;
+    const activeIndex = safeGroups.findIndex(g => g.id === activeGroupId)
+    if (activeIndex === -1) return
 
-    const activeButton = carouselRef.current.children[activeIndex] as HTMLElement;
-    if (!activeButton) return;
+    const activeButton = carouselRef.current.children[activeIndex] as HTMLElement
+    if (!activeButton) return
 
     // Прокручиваем так, чтобы кнопка была в центре видимой области
     activeButton.scrollIntoView({
       behavior: 'smooth',
       block: 'nearest',
       inline: 'center',
-    });
-  }, [activeGroupId, safeGroups]);
+    })
+  }, [activeGroupId, safeGroups])
 
   return (
     <div className={styles.section}>
@@ -63,11 +64,13 @@ export function GroupsBar({
               onMouseUp={onMouseUpOrLeave}
               onMouseLeave={onMouseUpOrLeave}
             >
-              {safeGroups.map((g) => (
+              {safeGroups.map(g => (
                 <button
                   key={g.id}
                   type="button"
-                  className={g.id === activeGroupId ? `${styles.pill} ${styles.pillActive}` : styles.pill}
+                  className={
+                    g.id === activeGroupId ? `${styles.pill} ${styles.pillActive}` : styles.pill
+                  }
                   onClick={() => onGroupChange(g.id)}
                 >
                   {g.title}
@@ -88,5 +91,5 @@ export function GroupsBar({
         </button>
       </div>
     </div>
-  );
+  )
 }

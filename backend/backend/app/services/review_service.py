@@ -5,6 +5,7 @@ from app.domain.review.dto import LearningSettingsSnapshot
 from app.domain.review.entities import CardLevelProgressState
 from app.domain.review.policy import ReviewPolicy
 
+
 class ReviewService:
     @staticmethod
     def review(*, progress, rating: str, settings, rated_at: datetime) -> CardLevelProgressState:

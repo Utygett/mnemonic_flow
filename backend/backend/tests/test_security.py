@@ -1,5 +1,4 @@
 """Тесты для модуля app.core.security."""
-import uuid
 
 from app.core.security import hash_password, verify_password
 
