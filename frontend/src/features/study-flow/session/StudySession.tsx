@@ -14,7 +14,7 @@ import { MarkdownView } from '@/shared/ui/MarkdownView';
 
 import { X, SkipForward, Trash2 } from 'lucide-react';
 
-import './StudySession.css';
+import styles from './StudySession.module.css';
 
 function getLevelIndex(l: any): number {
   return typeof l?.level_index === 'number' ? l.level_index : l?.levelindex;
@@ -54,8 +54,10 @@ export function StudySession({
 
   if (!currentCard) {
     return (
-      <div className="study-page flex items-center justify-center">
-        <div className="text-muted">Карточки закончились</div>
+      <div className={styles.studyPage}>
+        <div className={`${styles.row} ${styles.rowCentered} ${styles.rowSpaceBetween}`}>
+          <div className={styles.textMuted}>Карточки закончились</div>
+        </div>
       </div>
     );
   }
@@ -166,31 +168,31 @@ export function StudySession({
         : 100;
 
     return (
-      <div className="mcq">
-        <div className="mcq-question">
+      <div className={styles.mcq}>
+        <div className={styles.mcqQuestion}>
           <MarkdownView value={String(c.question ?? '')} />
         </div>
 
-        <div className="mcq-options">
+        <div className={styles.mcqOptions}>
           {(c.options ?? []).map((opt: any) => {
             const optId = String(opt.id);
 
             const isSelected = selectedOptionId === optId;
             const isCorrect = optId === correctId;
 
-            const className = [
-              'mcq-option',
-              showResult && isCorrect ? 'mcq-option--correct' : '',
-              showResult && isSelected && !isCorrect ? 'mcq-option--wrong' : '',
+            const optionClasses = [
+              styles.mcqOption,
+              showResult && isCorrect ? styles.mcqOptionCorrect : '',
+              showResult && isSelected && !isCorrect ? styles.mcqOptionWrong : '',
             ]
-              .join(' ')
-              .trim();
+              .filter(Boolean)
+              .join(' ');
 
             return (
               <button
                 key={optId}
                 type="button"
-                className={className}
+                className={optionClasses}
                 disabled={isFlipped}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -206,10 +208,10 @@ export function StudySession({
         </div>
 
         {timerSec > 0 ? (
-          <div className="mcq-timer">
-            <div className="mcq-timer-text">⏳ {leftSec}s</div>
-            <div className="mcq-timer-bar">
-              <div className="mcq-timer-fill" style={{ width: `${progressPct}%` }} />
+          <div className={styles.mcqTimer}>
+            <div className={styles.mcqTimerText}>⏳ {leftSec}s</div>
+            <div className={styles.mcqTimerBar}>
+              <div className={styles.mcqTimerFill} style={{ width: `${progressPct}%` }} />
             </div>
           </div>
         ) : null}
@@ -249,26 +251,26 @@ export function StudySession({
   };
 
   return (
-    <div className="study-page">
-      <div className="page__header py-4">
-        <div className="page__header-inner">
-          <div className="flex justify-between items-center mb-4">
-            <button onClick={onClose} className="icon-btn" aria-label="Закрыть сессию" type="button">
+    <div className={styles.studyPage}>
+      <div className={`${styles.pageHeader} ${styles.headerPadding}`}>
+        <div className={styles.pageHeaderInner}>
+          <div className={`${styles.row} ${styles.rowSpaceBetween} ${styles.rowCentered} ${styles.marginBottom}`}>
+            <button onClick={onClose} className={styles.iconBtn} aria-label="Закрыть сессию" type="button">
               <X size={18} />
             </button>
 
-            <span className="text-sm text-muted">
+            <span className={`${styles.textSmall} ${styles.textMuted}`}>
               {currentIndex + 1} / {cards.length}
             </span>
 
-            <div className="flex items-center" style={{ columnGap: 32 }}>
-              <button onClick={handleSkip} className="icon-btn" aria-label="Пропустить карточку" type="button">
+            <div className={`${styles.row} ${styles.rowCentered}`} style={{ columnGap: 32 }}>
+              <button onClick={handleSkip} className={styles.iconBtn} aria-label="Пропустить карточку" type="button">
                 <SkipForward size={18} />
               </button>
 
               <button
                 onClick={handleRemoveFromProgress}
-                className="icon-btn"
+                className={styles.iconBtn}
                 aria-label="Удалить прогресс карточки"
                 type="button"
               >
@@ -281,7 +283,7 @@ export function StudySession({
         </div>
       </div>
 
-      <div className="study__card-area">
+      <div className={styles.studyCardArea}>
         {isMultipleChoice(currentCard) ? (
           <FlipCard
             card={currentCard}
@@ -307,14 +309,14 @@ export function StudySession({
         )}
       </div>
 
-      <div className="study__actions">
+      <div className={styles.studyActions}>
         {!isFlipped ? (
           <Button onClick={handleFlip} variant="primary" size="large" fullWidth>
             Показать ответ
           </Button>
         ) : (
-          <div className="study__actions-inner">
-            <div className="rating-row">
+          <div className={styles.studyActionsInner}>
+            <div className={styles.ratingRow}>
               <RatingButton rating="again" label="Снова" onClick={() => submitReview('again')} />
               <RatingButton rating="hard" label="Трудно" onClick={() => submitReview('hard')} />
               <RatingButton rating="good" label="Хорошо" onClick={() => submitReview('good')} />
