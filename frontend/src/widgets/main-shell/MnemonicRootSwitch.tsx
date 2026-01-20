@@ -11,12 +11,14 @@ import { HomeTabContainer } from '../../features/dashboard';
 
 import type { MnemonicRootSwitchProps } from './mnemonicRootSwitch.types';
 
+import styles from './MnemonicRootSwitch.module.css';
+
 export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
   // loading
   if (props.status.decksLoading || props.status.statsLoading) {
     return (
-      <div className="min-h-screen bg-dark flex items-center justify-center">
-        <div className="text-center">
+      <div className={styles.loadingContainer}>
+        <div className={styles.loadingContent}>
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
           <p className="text-[#9CA3AF]">Загрузка данных...</p>
         </div>
@@ -27,8 +29,8 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
   // error
   if (props.status.decksError || props.status.statsError) {
     return (
-      <div className="min-h-screen bg-dark flex items-center justify-center p-4">
-        <div className="card text-center">
+      <div className={styles.errorContainer}>
+        <div className={`card ${styles.errorCard}`}>
           <div className="text-4xl mb-4">⚠️</div>
           <h2 className="text-[#E8EAF0] mb-2">Ошибка загрузки</h2>
           <p className="text-[#9CA3AF] mb-4">{String(props.status.decksError ?? props.status.statsError)}</p>
@@ -99,7 +101,7 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
   return (
     <>
       {props.isPWA && (
-        <div className="fixed top-4 left-4 z-30">
+        <div className={styles.pwaBadge}>
           <div className="pwa-badge">PWA</div>
         </div>
       )}
@@ -127,15 +129,15 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
       )}
 
       {props.activeTab === 'study' && (
-        <div className="min-h-screen bg-dark pb-24">
+        <div className={styles.tabPage}>
           <header className="page__header">
             <div className="page__header-inner">
               <h1 className="page__title">Обучение</h1>
             </div>
           </header>
 
-          <main className="container-centered max-w-390 py-6">
-            <div className="text-center py-12">
+          <main className={`container-centered max-w-390 ${styles.tabMain}`}>
+            <div className={styles.emptyState}>
               <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📖</div>
               <h2 style={{ marginBottom: '1rem', color: '#E8EAF0' }}>Создайте свою первую карточку</h2>
               <p style={{ color: '#9CA3AF', marginBottom: '1.5rem' }}>
@@ -157,7 +159,7 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
               </div>
 
               {!props.isPWA && (
-                <div className="mt-8 card">
+                <div className={`card ${styles.pwaTip}`}>
                   <p style={{ color: '#9CA3AF', marginBottom: '0.5rem' }}>
                     💡 Установите приложение для работы офлайн
                   </p>

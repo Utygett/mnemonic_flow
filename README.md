@@ -107,7 +107,7 @@ npm run dev    # http://localhost:3000
 
 | Слой | Технологии |
 |------|-----------|
-| **Frontend** | React 18, TypeScript, Vite, FSD v2, Radix UI, Tailwind |
+| **Frontend** | React 18, TypeScript, Vite, FSD v2, Radix UI, CSS Modules |
 | **Backend** | FastAPI, Python 3.11, PostgreSQL 16, SQLAlchemy 2.0 |
 | **Infrastructure** | Docker, Docker Compose, Nginx |
 | **CI/CD** | GitHub Actions |

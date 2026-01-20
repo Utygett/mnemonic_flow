@@ -8,3 +8,5 @@ export type { StudyMode, StudyCard, CardLevel } from './model/studyCardTypes';
 export { isMultipleChoice } from './model/studyCardTypes';
 
 export { ResumeSessionCard } from './ui/ResumeSession';
+export { FlipCard } from './ui/FlipCard';
+export { StudySession } from './session/StudySession';

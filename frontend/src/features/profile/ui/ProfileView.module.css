@@ -1,0 +1,14 @@
+/* ProfileView styles */
+
+.page {
+  min-height: 100vh;
+  background: var(--bg);
+  padding-bottom: 96px;
+}
+
+.main {
+  padding: 16px;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 390px;
+}
