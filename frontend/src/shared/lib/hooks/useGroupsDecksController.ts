@@ -1,83 +1,87 @@
 // src/shared/lib/hooks/useGroupsDecksController.ts
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 
-import { useDecks } from './useDecks';
-import { getUserGroups, deleteGroup } from '@/entities/group';
-import type { Group } from '@/entities/group';
+import { useDecks } from './useDecks'
+import { getUserGroups, deleteGroup } from '@/entities/group'
+import type { Group } from '@/entities/group'
 
-type UseDecksReturn = ReturnType<typeof useDecks>;
+type UseDecksReturn = ReturnType<typeof useDecks>
 
 export type GroupsDecksController = {
-  groups: Group[];
-  activeGroupId: string | null;
-  setActiveGroupId: Dispatch<SetStateAction<string | null>>;
+  groups: Group[]
+  activeGroupId: string | null
+  setActiveGroupId: Dispatch<SetStateAction<string | null>>
 
-  decks: UseDecksReturn['decks'];
-  decksLoading: UseDecksReturn['loading'];
-  decksError: UseDecksReturn['error'];
-  refreshDecks: UseDecksReturn['refresh'];
+  decks: UseDecksReturn['decks']
+  decksLoading: UseDecksReturn['loading']
+  decksError: UseDecksReturn['error']
+  refreshDecks: UseDecksReturn['refresh']
 
-  refreshGroups: () => Promise<void>;
-  deleteActiveGroup: () => Promise<void>;
+  refreshGroups: () => Promise<void>
+  deleteActiveGroup: () => Promise<void>
 
-  currentGroupDeckIds: string[];
-};
+  currentGroupDeckIds: string[]
+}
 
 export function useGroupsDecksController(): GroupsDecksController {
   const [activeGroupId, setActiveGroupId] = useState<string | null>(() => {
-    const v = localStorage.getItem('active_group_id');
-    if (!v || v === 'null' || v === 'undefined' || v.trim() === '') return null;
-    return v;
-  });
+    const v = localStorage.getItem('active_group_id')
+    if (!v || v === 'null' || v === 'undefined' || v.trim() === '') return null
+    return v
+  })
 
-  const [groups, setGroups] = useState<Group[]>([]);
+  const [groups, setGroups] = useState<Group[]>([])
 
   const refreshGroups = useCallback(async (): Promise<void> => {
-    const gs = await getUserGroups();
-    setGroups(gs);
+    const gs = await getUserGroups()
+    setGroups(gs)
 
-    setActiveGroupId((prev) => {
-      if (prev && gs.some((g) => g.id === prev)) return prev;
+    setActiveGroupId(prev => {
+      if (prev && gs.some(g => g.id === prev)) return prev
 
-      const stored = localStorage.getItem('active_group_id');
-      if (stored && gs.some((g) => g.id === stored)) return stored;
+      const stored = localStorage.getItem('active_group_id')
+      if (stored && gs.some(g => g.id === stored)) return stored
 
-      return gs[0]?.id ?? null;
-    });
-  }, []);
-
-  useEffect(() => {
-    refreshGroups().catch(console.error);
-  }, [refreshGroups]);
+      return gs[0]?.id ?? null
+    })
+  }, [])
 
   useEffect(() => {
-    if (activeGroupId) localStorage.setItem('active_group_id', activeGroupId);
-    else localStorage.removeItem('active_group_id');
-  }, [activeGroupId]);
+    refreshGroups().catch(console.error)
+  }, [refreshGroups])
 
-  const { decks, loading: decksLoading, error: decksError, refresh: refreshDecks } =
-    useDecks(activeGroupId);
+  useEffect(() => {
+    if (activeGroupId) localStorage.setItem('active_group_id', activeGroupId)
+    else localStorage.removeItem('active_group_id')
+  }, [activeGroupId])
 
-  const currentGroupDeckIds = useMemo(() => decks.map((d: any) => d.deck_id), [decks]);
+  const {
+    decks,
+    loading: decksLoading,
+    error: decksError,
+    refresh: refreshDecks,
+  } = useDecks(activeGroupId)
+
+  const currentGroupDeckIds = useMemo(() => decks.map((d: any) => d.deck_id), [decks])
 
   const deleteActiveGroup = useCallback(async (): Promise<void> => {
-    if (!activeGroupId) return;
+    if (!activeGroupId) return
 
-    const g = groups.find((x) => x.id === activeGroupId);
+    const g = groups.find(x => x.id === activeGroupId)
     const ok = window.confirm(
       `Удалить группу "${g?.title ?? 'без названия'}"? Это действие нельзя отменить.`
-    );
-    if (!ok) return;
+    )
+    if (!ok) return
 
     try {
-      await deleteGroup(activeGroupId);
-      await refreshGroups();
+      await deleteGroup(activeGroupId)
+      await refreshGroups()
     } catch (e) {
-      console.error(e);
-      alert('Не удалось удалить группу');
+      console.error(e)
+      alert('Не удалось удалить группу')
     }
-  }, [activeGroupId, groups, refreshGroups]);
+  }, [activeGroupId, groups, refreshGroups])
 
   return {
     groups,
@@ -93,5 +97,5 @@ export function useGroupsDecksController(): GroupsDecksController {
     deleteActiveGroup,
 
     currentGroupDeckIds,
-  };
+  }
 }

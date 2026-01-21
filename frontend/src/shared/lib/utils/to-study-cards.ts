@@ -1,5 +1,5 @@
 // src/shared/lib/utils/to-study-cards.ts
-import type { StudyCard } from '@/entities/card';
+import type { StudyCard } from '@/entities/card'
 
 export const toStudyCards = (items: any[]): StudyCard[] =>
   items.map((c: any) => ({
@@ -9,4 +9,4 @@ export const toStudyCards = (items: any[]): StudyCard[] =>
     type: c.type,
     levels: c.levels ?? [],
     activeLevel: c.active_level ?? 0,
-  }));
+  }))
