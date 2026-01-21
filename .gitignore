@@ -24,6 +24,12 @@ eggs/
 htmlcov/
 *.log
 
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
 # Node
 node_modules/
 npm-debug.log*
@@ -38,6 +44,8 @@ dist-ssr/
 .env
 .env.local
 .env.*.local
+.env.test
+!.envExample.dev
 
 # IDE
 .vscode/
@@ -49,3 +57,11 @@ dist-ssr/
 
 # Docker
 *.log
+
+# Coverage
+coverage/
+*.lcov
+
+# Misc
+*.tgz
+.cache/
