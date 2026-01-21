@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 
 import type { CardReviewInput, DifficultyRating, StudyCard } from '@/entities/card'
 import { reviewCardWithMeta } from '@/entities/card'
@@ -14,10 +14,12 @@ type Result = {
 
 export function useStudySession(deckCards: StudyCard[], initialIndex: number): Result {
   const [currentIndex, setCurrentIndex] = useState<number>(initialIndex ?? 0)
+  const prevDeckCardsRef = useRef(deckCards)
 
-  useEffect(() => {
+  if (prevDeckCardsRef.current !== deckCards && deckCards.length > 0) {
+    prevDeckCardsRef.current = deckCards
     setCurrentIndex(initialIndex ?? 0)
-  }, [initialIndex])
+  }
 
   const cards = useMemo(() => deckCards ?? [], [deckCards])
 
