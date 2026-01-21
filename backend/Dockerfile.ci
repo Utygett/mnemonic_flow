@@ -1,0 +1,19 @@
+# CI-оптимизированный Dockerfile для тестов
+# Слои с зависимостями кешируются отдельно от исходного кода
+
+FROM python:3.13-slim AS base
+WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Сначала устанавливаем зависимости (этот слой кешируется)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Затем исходный код (этот слой часто меняется)
+COPY . .
+
+ENV PYTHONPATH=/app/backend
+
+# Этот target используется в compose.ci.yml
+CMD ["pytest"]
