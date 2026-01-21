@@ -55,6 +55,9 @@ npm install
 npm run dev    # Runs on port 3000, proxies /api to localhost:8000
 npm run build  # Production build
 npm run preview  # Preview production build
+
+# PWA assets
+npm run generate-pwa-assets  # Generate PWA icons and manifest
 ```
 
 ### Testing
@@ -399,11 +402,26 @@ import { DeleteCardButton } from '@/features/card-delete/ui/DeleteCardButton';  
 **API Routes:**
 | Route | Description | Auth Required |
 |-------|-------------|---------------|
+| `/version` | Get application version | No |
 | `/api/auth/*` | Registration, login, token refresh | No |
 | `/api/cards/*` | Card CRUD operations | Yes |
 | `/api/decks/*` | Deck CRUD operations | Yes |
 | `/api/groups/*` | Study group operations | Yes |
 | `/api/stats/dashboard` | Dashboard statistics | Yes |
+
+**Version Endpoint (`GET /version`):**
+Returns the current application version:
+```json
+{"version": "0.0.99"}
+```
+
+Version is read from the `VERSION` file in the project root and is automatically injected during Docker build.
+
+**In code:**
+```python
+from app.core.version import get_version
+version = get_version()  # "0.0.99"
+```
 
 **Statistics Endpoint (`GET /api/stats/dashboard`):**
 Returns user statistics for the dashboard:
