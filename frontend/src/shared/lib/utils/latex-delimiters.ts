@@ -5,13 +5,13 @@ export function convertBracketLatexToDollar(src: string): string {
   let text = src
 
   // Блочные формулы: \\[ ... \\] -> $$ ... $$
-  text = text.replace(/\\\[(.*?)\\\]/gs, (_match, inner) => {
-    return `$$\n${inner}\n$$`
+  text = text.replace(/\\\[\s*\n?(.*?)\n?\s*\\\]/gs, (_match, inner) => {
+    return `$$\n${inner.trim()}\n$$`
   })
 
   // Инлайн-формулы: \\( ... \\) -> $...$
-  text = text.replace(/\\\((.*?)\\\)/g, (_match, inner) => {
-    return `$${inner}$`
+  text = text.replace(/\\\(\s*(.*?)\s*\\\)/g, (_match, inner) => {
+    return `$${inner.trim()}$`
   })
 
   return text
