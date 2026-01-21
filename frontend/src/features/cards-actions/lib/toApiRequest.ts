@@ -2,15 +2,15 @@
 // Matches backend CreateCardRequest schema
 
 export type CardData = {
-  deckId: string;
-  term: string;
-  type: string;
-  levels: Array<{ level_index?: number; content?: any } | any>;
-};
+  deckId: string
+  term: string
+  type: string
+  levels: Array<{ level_index?: number; content?: any } | any>
+}
 
 function transformLevel(level: any) {
   // Extract content from nested { level_index, content } structure
-  const content = level.content || level;
+  const content = level.content || level
   return {
     question: content.question || '',
     answer: content.answer,
@@ -18,7 +18,7 @@ function transformLevel(level: any) {
     correctOptionId: content.correctOptionId,
     explanation: content.explanation,
     timerSec: content.timerSec,
-  };
+  }
 }
 
 export function toApiRequest(cardData: CardData) {
@@ -27,5 +27,5 @@ export function toApiRequest(cardData: CardData) {
     title: cardData.term,
     type: cardData.type,
     levels: cardData.levels.map(transformLevel),
-  };
+  }
 }
