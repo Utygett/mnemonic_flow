@@ -1,14 +1,31 @@
 services:
+  # Контейнер для pre-commit проверок
+  pre-commit:
+    build:
+      context: .
+      dockerfile: .pre-commit/Dockerfile
+      cache_from:
+        - ghcr.io/${GITHUB_REPOSITORY:-your-org/your-repo}/pre-commit:cache
+    working_dir: /repo
+    volumes:
+      - .:/repo
+      - pre-commit-cache:/root/.cache/pre-commit
+
   # Контейнер для тестов фронтенда
   test-frontend:
     build:
-      context: ../frontend
-      dockerfile: Dockerfile.ci
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: build
+      args:
+        VERSION: ${VERSION:-0.0.0}
+      cache_from:
+        - ghcr.io/${GITHUB_REPOSITORY:-your-org/your-repo}/frontend:cache
     command: npm test -- --run
     environment:
       - CI=true
     volumes:
-      - ../frontend:/app
+      - ./frontend:/app
       - /app/node_modules
 
   # Контейнер для тестов бэкенда
@@ -26,8 +43,12 @@ services:
 
   test-backend:
     build:
-      context: ../backend
-      dockerfile: Dockerfile.ci
+      context: .
+      dockerfile: backend/Dockerfile
+      args:
+        VERSION: ${VERSION:-0.0.0}
+      cache_from:
+        - ghcr.io/${GITHUB_REPOSITORY:-your-org/your-repo}/backend:cache
     command: pytest
     environment:
       DATABASE_URL: postgresql+psycopg2://test_user:test_password@db:5432/flashcards_test
@@ -38,4 +59,7 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ../backend:/app
+      - ./backend:/app
+
+volumes:
+  pre-commit-cache:

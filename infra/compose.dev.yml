@@ -18,9 +18,12 @@ services:
 
   backend:
     build:
-      context: ../backend
+      context: .
+      dockerfile: backend/Dockerfile
       args:
         VERSION: ${VERSION:-0.0.0}
+      cache_from:
+        - ghcr.io/${GITHUB_REPOSITORY:-your-org/your-repo}/backend:cache
     restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL}
@@ -33,9 +36,11 @@ services:
 
   frontend:
     build:
-      context: ../frontend
+      context: ./frontend
       args:
         VERSION: ${VERSION:-0.0.0}
+      cache_from:
+        - ghcr.io/${GITHUB_REPOSITORY:-your-org/your-repo}/frontend:cache
     restart: unless-stopped
 
   nginx:

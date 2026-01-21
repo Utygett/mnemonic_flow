@@ -26,11 +26,11 @@ jobs:
 
       - name: Build backend image
         run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           cd backend
           docker build \
             --build-arg VERSION="${{ steps.version.outputs.version }}" \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --cache-from ghcr.io/${{ github.repository }}/backend:cache \
+            --cache-from ghcr.io/${REPO_LOWER}/backend:cache \
             -t mnemonicflow-backend:test .
 
       - name: Verify backend build
@@ -59,11 +59,11 @@ jobs:
 
       - name: Build frontend image
         run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           cd frontend
           docker build \
             --build-arg VERSION="${{ steps.version.outputs.version }}" \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --cache-from ghcr.io/${{ github.repository }}/frontend:cache \
+            --cache-from ghcr.io/${REPO_LOWER}/frontend:cache \
             -t mnemonicflow-frontend:test .
 
       - name: Verify frontend build
@@ -102,15 +102,13 @@ jobs:
           ALGORITHM=HS256
           ACCESS_TOKEN_EXPIRE_MINUTES=30
           VERSION=${{ steps.version.outputs.version }}
+          GITHUB_REPOSITORY=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')
           EOF
 
       - name: Build all containers
         run: |
           cd infra
-          docker compose -f compose.dev.yml build \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --cache-from ghcr.io/${{ github.repository }}/backend:cache \
-            --cache-from ghcr.io/${{ github.repository }}/frontend:cache
+          docker compose -f compose.dev.yml build
 
       - name: Verify containers built
         run: |

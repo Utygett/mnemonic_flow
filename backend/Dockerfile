@@ -8,15 +8,19 @@ ENV PYTHONUNBUFFERED=1
 ARG VERSION=0.0.0
 ENV APP_VERSION=${VERSION}
 
+# Копируем requirements.txt из корня проекта
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY backend ./backend
+# Копируем код бэкенда
+COPY backend/ ./backend/
 
-# Alembic файлы (лежат рядом с Dockerfile)
-COPY alembic.ini .
-COPY migrations ./migrations
-COPY entrypoint.sh ./entrypoint.sh
+# Alembic файлы
+COPY backend/alembic.ini ./alembic.ini
+COPY backend/migrations/ ./migrations/
+
+# EntryPoint
+COPY backend/entrypoint.sh ./entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 ENV PYTHONPATH=/app/backend

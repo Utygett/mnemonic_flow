@@ -26,14 +26,11 @@ jobs:
 
       - name: Build and test backend
         run: |
-          cd infra
           export VERSION="${{ steps.version.outputs.version }}"
-          docker compose -f compose.ci.yml build \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --cache-from ghcr.io/${{ github.repository }}/backend:cache \
-            test-backend
-          docker compose -f compose.ci.yml up -d db
-          docker compose -f compose.ci.yml run --rm test-backend
+          export GITHUB_REPOSITORY="$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
+          docker compose -f infra/compose.ci.yml build test-backend
+          docker compose -f infra/compose.ci.yml up -d db
+          docker compose -f infra/compose.ci.yml run --rm test-backend
 
   test-frontend:
     runs-on: ubuntu-latest
@@ -57,10 +54,7 @@ jobs:
 
       - name: Build and test frontend
         run: |
-          cd infra
           export VERSION="${{ steps.version.outputs.version }}"
-          docker compose -f compose.ci.yml build \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --cache-from ghcr.io/${{ github.repository }}/frontend:cache \
-            test-frontend
-          docker compose -f compose.ci.yml run --rm test-frontend
+          export GITHUB_REPOSITORY="$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
+          docker compose -f infra/compose.ci.yml build test-frontend
+          docker compose -f infra/compose.ci.yml run --rm test-frontend
