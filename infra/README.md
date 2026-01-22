@@ -186,6 +186,18 @@ docker compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards
 docker compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards -c "SELECT * FROM users;"
 ```
 
+### Полезные команды
+
+**Верификация email всех пользователей (обход подтверждения):**
+```bash
+docker compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards -c "UPDATE users SET is_email_verified = true;"
+```
+
+**Верификация конкретного пользователя по email:**
+```bash
+docker compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards -c "UPDATE users SET is_email_verified = true WHERE email = 'user@example.com';"
+```
+
 ### Резервное копирование
 
 ```bash
