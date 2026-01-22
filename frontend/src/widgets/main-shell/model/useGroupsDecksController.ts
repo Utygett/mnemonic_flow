@@ -42,7 +42,6 @@ export function useGroupsDecksController() {
   const refreshGroups = useCallback(async () => {
     const groups = await getUserGroups()
     setState(s => {
-      // если активная группа пропала (удалили/нет доступа) — сбрасываем
       const stillExists = s.activeGroupId ? groups.some(g => g.id === s.activeGroupId) : true
       const activeGroupId = stillExists ? s.activeGroupId : null
       if (!activeGroupId) localStorage.removeItem(LS_KEY)
@@ -55,58 +54,44 @@ export function useGroupsDecksController() {
     setState(s => ({ ...s, decksLoading: true, decksError: null }))
 
     try {
-      // ВАЖНО:
-      // - /groups/:id/decks/summary отдаёт корректные счетчики (repeat/for_repeat/completed/etc)
-      // - /decks/ иногда возвращает "плоский" список без этих счетчиков (или с нулями)
-      // Поэтому для дашборда при выбранной группе грузим summary по группе.
-      const decks = state.activeGroupId
-        ? await getGroupDecksSummary(state.activeGroupId)
-        : await getUserDecks()
-
-      setState(s => ({ ...s, decks, decksLoading: false, decksError: null }))
+      if (state.activeGroupId) {
+        const decks = await getGroupDecksSummary(state.activeGroupId)
+        setState(s => ({
+          ...s,
+          decks,
+          currentGroupDeckIds: decks.map(d => d.deck_id),
+          decksLoading: false,
+          decksError: null,
+        }))
+      } else {
+        const decks = await getUserDecks()
+        setState(s => ({
+          ...s,
+          decks,
+          currentGroupDeckIds: [],
+          decksLoading: false,
+          decksError: null,
+        }))
+      }
     } catch (e) {
-      setState(s => ({ ...s, decks: [], decksLoading: false, decksError: e }))
+      setState(s => ({
+        ...s,
+        decks: [],
+        currentGroupDeckIds: [],
+        decksLoading: false,
+        decksError: e,
+      }))
     }
   }, [state.activeGroupId])
 
-  // initial load
   useEffect(() => {
     void refreshGroups()
     void refreshDecks()
   }, [refreshDecks, refreshGroups])
 
-  // reload decks when active group changes (so we can switch between /decks/ and /groups/:id/decks/summary)
   useEffect(() => {
     void refreshDecks()
   }, [state.activeGroupId, refreshDecks])
-
-  // load deck ids for active group (used for filtering/highlighting)
-  useEffect(() => {
-    let cancelled = false
-
-    async function run() {
-      const groupId = state.activeGroupId
-      if (!groupId) {
-        setState(s => ({ ...s, currentGroupDeckIds: [] }))
-        return
-      }
-
-      try {
-        const groupDecks = await getGroupDecksSummary(groupId)
-        if (cancelled) return
-        setState(s => ({ ...s, currentGroupDeckIds: groupDecks.map(d => d.deck_id) }))
-      } catch {
-        // не блокируем UI — просто считаем, что для группы нет данных
-        if (cancelled) return
-        setState(s => ({ ...s, currentGroupDeckIds: [] }))
-      }
-    }
-
-    void run()
-    return () => {
-      cancelled = true
-    }
-  }, [state.activeGroupId])
 
   const deleteActiveGroup = useCallback(async () => {
     const groupId = state.activeGroupId
@@ -115,7 +100,6 @@ export function useGroupsDecksController() {
     await deleteGroupApi(groupId)
     setActiveGroupId(null)
     await refreshGroups()
-    // decks сами по себе не меняются, но обновить можно при желании
   }, [refreshGroups, setActiveGroupId, state.activeGroupId])
 
   const result = useMemo(
