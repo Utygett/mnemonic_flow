@@ -15,7 +15,12 @@ import styles from './MnemonicRootSwitch.module.css'
 
 export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
   // loading
-  if (props.status.decksLoading || props.status.statsLoading) {
+  // IMPORTANT: don't unmount current UI during background refresh (e.g. when AddDeck triggers refreshDecks).
+  // Otherwise HomeTabContainer resets its local view state and user is "kicked out" of AddDeck screen.
+  const isInitialDecksLoading = props.status.decksLoading && (props.data.decks?.length ?? 0) === 0
+  const isInitialStatsLoading = props.status.statsLoading && !props.data.statistics
+
+  if (isInitialDecksLoading || isInitialStatsLoading) {
     return (
       <div className={styles.loadingContainer}>
         <div className={styles.loadingContent}>

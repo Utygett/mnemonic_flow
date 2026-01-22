@@ -1,42 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, Search, Trash2 } from 'lucide-react'
 
 import { Button } from '@/shared/ui/Button/Button'
-import { apiRequest, ApiError } from '@/shared/api'
 import { useAuth } from '@/app/providers/auth/AuthContext'
 import { searchPublicDecks } from '@/entities/deck'
+import { addDeckToGroup, removeDeckFromGroup } from '@/entities/group'
 import type { PublicDeckSummary } from '@/entities/deck'
 
 import type { AddDeckProps } from '../model/types'
 
 import styles from './AddDeck.module.css'
-
-async function addDeckToGroupCompat(groupId: string, deckId: string): Promise<void> {
-  // Try common REST shapes.
-  try {
-    await apiRequest<void>(`/groups/${groupId}/decks/${deckId}`, { method: 'POST' })
-    return
-  } catch (e: any) {
-    if (!(e instanceof ApiError) || e.status !== 404) throw e
-  }
-
-  await apiRequest<void>(`/groups/${groupId}/decks`, {
-    method: 'POST',
-    body: JSON.stringify({ deck_id: deckId }),
-  })
-}
-
-async function removeDeckFromGroupCompat(groupId: string, deckId: string): Promise<void> {
-  try {
-    await apiRequest<void>(`/groups/${groupId}/decks/${deckId}`, { method: 'DELETE' })
-    return
-  } catch (e: any) {
-    if (!(e instanceof ApiError) || e.status !== 404) throw e
-  }
-
-  const qs = new URLSearchParams({ deck_id: deckId })
-  await apiRequest<void>(`/groups/${groupId}/decks?${qs.toString()}`, { method: 'DELETE' })
-}
 
 export const AddDeck = ({
   groupId,
@@ -54,7 +27,11 @@ export const AddDeck = ({
   const limit = 20
   const [hasMore, setHasMore] = useState(true)
 
+  const madeLocalChanges = useRef(false)
+
   const [groupDeckIds, setGroupDeckIds] = useState<Set<string>>(() => new Set(initialGroupDeckIds))
+
+  const [pendingDeckIds, setPendingDeckIds] = useState<Set<string>>(new Set())
 
   const { currentUser } = useAuth()
 
@@ -63,22 +40,21 @@ export const AddDeck = ({
     [decks, currentUser]
   )
 
-  // если родитель может менять initialGroupDeckIds (например, после рефреша группы)
-  useEffect(() => {
-    setGroupDeckIds(new Set(initialGroupDeckIds))
-  }, [initialGroupDeckIds])
+  const initialIdsKey = JSON.stringify(initialGroupDeckIds.slice().sort())
 
-  // debounce
+  useEffect(() => {
+    if (madeLocalChanges.current) return
+    setGroupDeckIds(new Set(initialGroupDeckIds))
+  }, [initialIdsKey])
+
   useEffect(() => {
     const t = setTimeout(() => {
       setDebouncedQuery(searchQuery)
       setHasMore(true)
     }, 400)
-
     return () => clearTimeout(t)
   }, [searchQuery])
 
-  // загрузка
   useEffect(() => {
     let cancelled = false
 
@@ -106,7 +82,6 @@ export const AddDeck = ({
     }
 
     void run()
-
     return () => {
       cancelled = true
     }
@@ -119,12 +94,10 @@ export const AddDeck = ({
       setLoading(true)
       setError(null)
 
-      const currentOffset = decks.length
-
       const data = await searchPublicDecks({
         q: debouncedQuery,
         limit,
-        offset: currentOffset,
+        offset: decks.length,
       })
 
       setDecks(prev => [...prev, ...data])
@@ -137,26 +110,58 @@ export const AddDeck = ({
   }
 
   const handleAdd = async (deckId: string) => {
+    if (pendingDeckIds.has(deckId)) return
+
+    setPendingDeckIds(prev => new Set(prev).add(deckId))
+
     try {
-      await addDeckToGroupCompat(groupId, deckId)
-      setGroupDeckIds(prev => new Set(prev).add(deckId))
-      onChanged?.(deckId, 'added')
+      await addDeckToGroup(groupId, deckId)
+
+      madeLocalChanges.current = true
+
+      setGroupDeckIds(prev => {
+        const next = new Set(prev)
+        next.add(deckId)
+        return next
+      })
+
+      await onChanged?.(deckId, 'added')
     } catch (e: any) {
       alert(`Ошибка: ${e?.message ?? 'не удалось добавить колоду в группу'}`)
+    } finally {
+      setPendingDeckIds(prev => {
+        const next = new Set(prev)
+        next.delete(deckId)
+        return next
+      })
     }
   }
 
   const handleRemove = async (deckId: string) => {
+    if (pendingDeckIds.has(deckId)) return
+
+    setPendingDeckIds(prev => new Set(prev).add(deckId))
+
     try {
-      await removeDeckFromGroupCompat(groupId, deckId)
+      await removeDeckFromGroup(groupId, deckId)
+
+      madeLocalChanges.current = true
+
       setGroupDeckIds(prev => {
         const next = new Set(prev)
         next.delete(deckId)
         return next
       })
-      onChanged?.(deckId, 'removed')
+
+      await onChanged?.(deckId, 'removed')
     } catch (e: any) {
       alert(`Ошибка: ${e?.message ?? 'не удалось удалить колоду из группы'}`)
+    } finally {
+      setPendingDeckIds(prev => {
+        const next = new Set(prev)
+        next.delete(deckId)
+        return next
+      })
     }
   }
 
@@ -191,6 +196,7 @@ export const AddDeck = ({
           <>
             {filteredDecks.map(deck => {
               const inGroup = groupDeckIds.has(deck.deck_id)
+              const isPending = pendingDeckIds.has(deck.deck_id)
 
               return (
                 <div key={deck.deck_id} className={styles.card}>
@@ -202,18 +208,24 @@ export const AddDeck = ({
                   </div>
 
                   {!inGroup ? (
-                    <Button onClick={() => handleAdd(deck.deck_id)} variant="primary" size="small">
+                    <Button
+                      onClick={() => handleAdd(deck.deck_id)}
+                      variant="primary"
+                      size="small"
+                      disabled={isPending}
+                    >
                       <Plus size={16} />
-                      Добавить
+                      {isPending ? 'Добавление...' : 'Добавить'}
                     </Button>
                   ) : (
                     <Button
                       onClick={() => handleRemove(deck.deck_id)}
                       variant="secondary"
                       size="small"
+                      disabled={isPending}
                     >
                       <Trash2 size={16} />
-                      Удалить
+                      {isPending ? 'Удаление...' : 'Удалить'}
                     </Button>
                   )}
                 </div>
