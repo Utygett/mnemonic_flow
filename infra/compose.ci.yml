@@ -1,4 +1,14 @@
 services:
+  # Контейнер для pre-commit проверок
+  pre-commit:
+    image: ghcr.io/utygett/mnemonic_flow/pre-commit:latest
+    build:
+      context: .
+      dockerfile: .pre-commit/Dockerfile
+    working_dir: /repo
+    volumes:
+      - .:/repo
+
   # Контейнер для тестов фронтенда
   test-frontend:
     build:
