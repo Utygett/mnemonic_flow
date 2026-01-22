@@ -55,6 +55,7 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
 
   const [importBusy, setImportBusy] = useState(false)
   const [importReport, setImportReport] = useState<string | null>(null)
+  const [saveBusy, setSaveBusy] = useState(false)
 
   const scrollToReport = () => {
     setTimeout(() => reportRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
@@ -67,13 +68,23 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
     deckId &&
     (cardType === 'flashcard' ? cleanedLevelsQA.length > 0 : cleanedLevelsMCQ.length > 0)
 
-  const handleSave = () => {
-    if (!canSave) return
+  const handleSave = async () => {
+    if (!canSave || saveBusy) return
 
-    if (cardType === 'flashcard') {
-      onSave({ deckId, term: safeTerm.trim(), type: 'flashcard', levels: cleanedLevelsQA })
-    } else {
-      onSave({ deckId, term: safeTerm.trim(), type: 'multiple_choice', levels: cleanedLevelsMCQ })
+    setSaveBusy(true)
+    try {
+      if (cardType === 'flashcard') {
+        await onSave({ deckId, term: safeTerm.trim(), type: 'flashcard', levels: cleanedLevelsQA })
+      } else {
+        await onSave({
+          deckId,
+          term: safeTerm.trim(),
+          type: 'multiple_choice',
+          levels: cleanedLevelsMCQ,
+        })
+      }
+    } finally {
+      setSaveBusy(false)
     }
   }
 
@@ -418,7 +429,7 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
             variant="secondary"
             size="large"
             fullWidth
-            disabled={!deckId || importBusy}
+            disabled={!deckId || importBusy || saveBusy}
           >
             <span className={styles.buttonIconRow}>
               <Upload size={16} />
@@ -431,7 +442,7 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
             variant="secondary"
             size="large"
             fullWidth
-            disabled={importBusy}
+            disabled={importBusy || saveBusy}
           >
             Отмена
           </Button>
@@ -441,9 +452,9 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
             variant="primary"
             size="large"
             fullWidth
-            disabled={!canSave || importBusy}
+            disabled={!canSave || importBusy || saveBusy}
           >
-            Сохранить
+            {saveBusy ? 'Сохранение...' : 'Сохранить'}
           </Button>
         </div>
 
