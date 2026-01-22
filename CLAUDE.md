@@ -20,6 +20,9 @@ MnemonicFlow is a full-stack web application for flashcard-based learning and me
 cd infra
 docker compose -f compose.dev.yml up -d
 
+# Production deployment
+docker compose -f compose.prod.yml up -d
+
 # View logs
 docker compose -f compose.dev.yml logs -f
 docker compose -f compose.dev.yml logs backend --tail=50  # specific service
@@ -45,7 +48,7 @@ cd infra
 docker compose -f compose.pre-commit.yml run --rm pre-commit
 ```
 
-Uses cached image from `ghcr.io/utygett/mnemonic_flow/pre-commit:latest` with all hooks pre-installed.
+Uses cached image from `ghcr.io/<owner>/mnemonic_flow/pre-commit:latest` with all hooks pre-installed.
 
 ### Local Development (Without Docker)
 
@@ -81,7 +84,10 @@ pytest -x                           # Stop on first failure
 pytest --cov=backend/app            # With coverage (requires pytest-cov)
 ```
 
-Configuration in `backend/pyproject.toml` - sets `pythonpath = "backend"` for correct imports.
+Configuration in `backend/pyproject.toml`:
+- Sets `pythonpath = "backend"` for correct imports
+- Contains Black, isort, Flake8, mypy settings
+- Defines pytest configuration and test paths
 
 **Frontend tests:**
 ```bash
@@ -180,40 +186,42 @@ def test_login_success(client, test_user):
 
 **GitHub Actions** - Automated CI on Pull Requests to `main` and `develop` branches.
 
-**Pipeline stages (in order):**
+**Main Pipeline (`.github/workflows/ci.yml`)** - Orchestrates all stages:
 
-1. **`.github/workflows/validate-commits.yml`** - Validates PR metadata
+1. **validate-commits** - Validates PR metadata
    - VERSION file format (xx.xx.xx)
    - Commit messages follow Conventional Commits
 
-2. **`.github/workflows/code-style.yml`** - Code quality checks
+2. **code-style** - Code quality checks
    - Runs pre-commit hooks on all files
    - Uses Docker registry cache for faster builds
    - Python: Black, isort, Flake8
    - TypeScript/JS: Prettier formatting
    - YAML/TOML/JSON validation
 
-3. **`.github/workflows/build-all.yml`** - Build containers
+3. **build-all** - Build containers
    - Frontend image with registry cache
    - Backend image with registry cache
    - Docker Compose build validation
 
-4. **`.github/workflows/test-all.yml`** - Run tests
+4. **test-all** - Run tests
    - Backend pytest tests
    - Frontend vitest tests
 
-5. **`.github/workflows/push-images.yml`** - Push images to registry
+**Push Images Pipeline (`.github/workflows/push-images.yml`)** - Separate workflow for image publishing:
    - Triggered on push to `main`/`develop` or manual dispatch
-   - Pushes `backend`, `frontend`, `pre-commit` images to `ghcr.io/utygett/mnemonic_flow/`
+   - Pushes `backend`, `frontend`, `pre-commit` images to `ghcr.io/<owner>/mnemonic_flow/`
    - Images used as cache for CI builds
 
 **Docker Registry Caching:**
 - Images are stored in GitHub Container Registry (ghcr.io)
-- CI workflows use `--cache-from=type=registry` to speed up builds
+- CI workflows use BuildKit with registry caching to speed up builds
 - Pre-commit image has all hooks pre-installed and cached in layers
 - Local development uses registry images as fallback if build fails
 
-**Trigger:** Any PR targeting `main` branch
+**Registry URL format:** `ghcr.io/<repository_owner>/mnemonic_flow/<image>:latest`
+
+**Trigger:** Any PR targeting `main` or `develop` branches
 
 **Note:** CI uses `docker compose` (v2 syntax), not `docker-compose` (v1). Local development can use either.
 
@@ -406,19 +414,39 @@ import { DeleteCardButton } from '@/features/card-delete/ui/DeleteCardButton';  
 ## Backend Architecture
 
 **Structure:**
+```
+backend/
+├── backend/
+│   ├── app/
+│   │   ├── api/          # FastAPI routers (routes/)
+│   │   ├── auth/         # Authentication logic
+│   │   ├── core/         # Config, security, database
+│   │   ├── db/           # Database initialization
+│   │   ├── domain/       # Domain services
+│   │   ├── models/       # SQLAlchemy models
+│   │   ├── schemas/      # Pydantic schemas
+│   │   └── services/     # Business logic
+│   └── tests/            # Test suite
+├── migrations/           # Alembic migrations
+├── pyproject.toml        # Python project config
+└── requirements.txt      # Python dependencies
+```
+
+**Key Technologies:**
 - FastAPI with automatic OpenAPI docs at `/docs` and `/redoc`
-- SQLAlchemy ORM with async support
+- SQLAlchemy 2.0 ORM with async support
 - JWT authentication with refresh token rotation
-- Alembic for database migrations
-- PostgreSQL database
+- Alembic for database migrations (currently using custom init)
+- PostgreSQL 16 database
 
 **Key Files:**
-- `app/main.py` - FastAPI application entry point
-- `app/models/` - SQLAlchemy models
-- `app/schemas/` - Pydantic schemas
-- `app/api/` - API route handlers
-- `app/core/` - Core functionality (security, config, database)
-- `app/alembic/` - Database migrations
+- `backend/backend/app/main.py` - FastAPI application entry point
+- `backend/backend/app/models/` - SQLAlchemy models
+- `backend/backend/app/schemas/` - Pydantic schemas
+- `backend/backend/app/api/routes/` - API route handlers
+- `backend/backend/app/core/` - Core functionality (security, config, database)
+- `backend/migrations/` - Database migrations
+- `backend/pyproject.toml` - Project configuration with tool settings
 
 **API Routes:**
 | Route | Description | Auth Required |
@@ -438,10 +466,16 @@ Returns the current application version:
 
 Version is read from the `VERSION` file in the project root and is automatically injected during Docker build.
 
-**In code:**
+**In code (backend):**
 ```python
 from app.core.version import get_version
 version = get_version()  # "0.0.99"
+```
+
+**In code (frontend):**
+```typescript
+import { APP_VERSION } from '@/shared/lib/version';
+console.log(APP_VERSION);  // "0.0.99"
 ```
 
 **Statistics Endpoint (`GET /api/stats/dashboard`):**
