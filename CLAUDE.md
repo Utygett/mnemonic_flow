@@ -38,6 +38,15 @@ docker compose -f compose.dev.yml down -v
 
 **Note:** `docker compose` (v2) is the modern syntax. `docker-compose` (v1) also works but is deprecated.
 
+### Pre-commit via Docker
+
+```bash
+cd infra
+docker compose -f compose.pre-commit.yml run --rm pre-commit
+```
+
+Uses cached image from `ghcr.io/utygett/mnemonic_flow/pre-commit:latest` with all hooks pre-installed.
+
 ### Local Development (Without Docker)
 
 **Backend (FastAPI):**
@@ -179,18 +188,30 @@ def test_login_success(client, test_user):
 
 2. **`.github/workflows/code-style.yml`** - Code quality checks
    - Runs pre-commit hooks on all files
+   - Uses Docker registry cache for faster builds
    - Python: Black, isort, Flake8
    - TypeScript/JS: Prettier formatting
    - YAML/TOML/JSON validation
 
 3. **`.github/workflows/build-all.yml`** - Build containers
-   - Frontend image
-   - Backend image
+   - Frontend image with registry cache
+   - Backend image with registry cache
    - Docker Compose build validation
 
 4. **`.github/workflows/test-all.yml`** - Run tests
    - Backend pytest tests
    - Frontend vitest tests
+
+5. **`.github/workflows/push-images.yml`** - Push images to registry
+   - Triggered on push to `main`/`develop` or manual dispatch
+   - Pushes `backend`, `frontend`, `pre-commit` images to `ghcr.io/utygett/mnemonic_flow/`
+   - Images used as cache for CI builds
+
+**Docker Registry Caching:**
+- Images are stored in GitHub Container Registry (ghcr.io)
+- CI workflows use `--cache-from=type=registry` to speed up builds
+- Pre-commit image has all hooks pre-installed and cached in layers
+- Local development uses registry images as fallback if build fails
 
 **Trigger:** Any PR targeting `main` branch
 

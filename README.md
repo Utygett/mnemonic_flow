@@ -32,11 +32,18 @@ MnemonicFlow/
 │   ├── deploy/
 │   │   └── nginx/         # Nginx конфигурация
 │   ├── compose.dev.yml    # Docker Compose для разработки
+│   ├── compose.ci.yml     # Docker Compose для CI
+│   ├── compose.pre-commit.yml  # Docker Compose для pre-commit
+│   ├── Dockerfile.pre-commit  # Dockerfile для pre-commit образа
 │   └── .envExample.dev    # Шаблон переменных окружения
 │
 └── .github/
     └── workflows/
-        └── ci.yml         # GitHub Actions CI
+        ├── validate-commits.yml  # Валидация коммитов
+        ├── code-style.yml        # Проверка код стиля
+        ├── build-all.yml         # Сборка образов
+        ├── test-all.yml          # Запуск тестов
+        └── push-images.yml       # Публикация образов в registry
 ```
 
 ## 🏗️ Архитектура фронтенда (FSD)
@@ -85,6 +92,13 @@ docker compose -f compose.dev.yml up -d
 
 # 3. Приложение доступно по адресу
 http://localhost:80
+```
+
+**Использование pre-commit через Docker:**
+```bash
+# Запуск pre-commit проверок
+cd infra
+docker compose -f compose.pre-commit.yml run --rm pre-commit
 ```
 
 ### Локальная разработка
