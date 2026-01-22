@@ -12,6 +12,7 @@ from app.core.config import settings
 from app.core.email import build_password_reset_email, build_verification_email, send_email
 from app.core.security import get_current_user, get_db, hash_password, verify_password
 from app.models.user import User
+from app.models.user_study_group import UserStudyGroup
 from app.schemas.auth import (
     LoginRequest,
     RegisterRequest,
@@ -64,6 +65,17 @@ async def register(data: RegisterRequest, db: Session = Depends(get_db)):
         email_verification_expires=verification_expires,
     )
     db.add(user)
+    db.flush()
+
+    # Создаём личную группу "Мои колоды" сразу при регистрации
+    personal_group = UserStudyGroup(
+        user_id=user.id,
+        source_group_id=None,
+        title_override=None,
+        parent_id=None,
+    )
+    db.add(personal_group)
+
     db.commit()
     db.refresh(user)
 
