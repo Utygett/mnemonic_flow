@@ -1,0 +1,23 @@
+# Dockerfile для pre-commit hooks
+# Включает Python и Node.js для всех проверок
+# Хуки кэшируются в слоях образа для быстрого запуска
+
+FROM node:20-alpine
+
+# Устанавливаем Python и pip
+RUN apk add --no-cache python3 py3-pip git bash
+
+WORKDIR /repo
+
+# Устанавливаем pre-commit (с --break-system-packages для Alpine)
+RUN pip install --no-cache-dir --break-system-packages pre-commit
+
+# Копируем конфиг pre-commit для установки хуков
+COPY .pre-commit-config.yaml .
+
+# Устанавливаем и кэшируем все окружения хуков в слое образа
+# Это предотвратит скачивание при каждом запуске контейнера
+RUN pre-commit install-hooks --install-hooks
+
+# По умолчанию запускаем все проверки
+CMD ["pre-commit", "run", "--all-files"]
