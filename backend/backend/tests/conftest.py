@@ -111,6 +111,7 @@ def test_user(db):
         username="testuser",
         email=f"test_{uuid_lib.uuid4()}@example.com",
         password_hash=hash_password("password123"),
+        is_email_verified=True,  # Подтверждён email для тестов
     )
     db.add(user)
     db.commit()
