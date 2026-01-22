@@ -19,8 +19,14 @@ jobs:
 
       - name: Build backend image
         run: |
+          REPO_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           cd backend
-          docker build --build-arg VERSION="${{ steps.version.outputs.version }}" -t mnemonicflow-backend:test .
+          docker buildx build \
+            --build-arg VERSION="${{ steps.version.outputs.version }}" \
+            --tag mnemonicflow-backend:test \
+            --cache-from type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/backend:latest \
+            -f Dockerfile \
+            .
 
       - name: Verify backend build
         run: |
@@ -41,8 +47,14 @@ jobs:
 
       - name: Build frontend image
         run: |
+          REPO_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           cd frontend
-          docker build --build-arg VERSION="${{ steps.version.outputs.version }}" -t mnemonicflow-frontend:test .
+          docker buildx build \
+            --build-arg VERSION="${{ steps.version.outputs.version }}" \
+            --tag mnemonicflow-frontend:test \
+            --cache-from type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/frontend:latest \
+            -f Dockerfile \
+            .
 
       - name: Verify frontend build
         run: |
