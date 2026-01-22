@@ -30,6 +30,22 @@ type Props = {
   children: (api: StudyController) => React.ReactNode
 }
 
+export type RatingCounts = Record<DifficultyRating, number>
+
+export type SessionStats = {
+  startedAtMs: number | null
+  finishedAtMs: number | null
+  ratedCount: number
+  ratingCounts: RatingCounts
+}
+
+const emptyRatingCounts = (): RatingCounts => ({
+  again: 0,
+  hard: 0,
+  good: 0,
+  easy: 0,
+})
+
 export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Props) {
   const [isStudying, setIsStudying] = React.useState(false)
   const [loadingDeckCards, setLoadingDeckCards] = React.useState(false)
@@ -41,6 +57,12 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
 
   const [deckCards, setDeckCards] = React.useState<StudyCard[]>([])
   const [sessionIndex, setSessionIndex] = React.useState(0)
+
+  // Session statistics state
+  const [sessionStartedAtMs, setSessionStartedAtMs] = React.useState<number | null>(null)
+  const [sessionFinishedAtMs, setSessionFinishedAtMs] = React.useState<number | null>(null)
+  const [ratingCounts, setRatingCounts] = React.useState<RatingCounts>(emptyRatingCounts())
+  const [ratedCount, setRatedCount] = React.useState(0)
 
   const { cards, currentIndex, isCompleted, rateCard, skipCard, resetSession } = useStudySession(
     deckCards,
@@ -88,10 +110,32 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
     restartDeckSession: onRestartDeckSession,
   } = useStudyLauncher(launcherInput)
 
+  // Initialize session start time when study begins
+  React.useEffect(() => {
+    if (!showStudy) return
+    if (loadingDeckCards) return
+    if (deckCards.length === 0) return
+    if (sessionStartedAtMs != null) return
+
+    setSessionStartedAtMs(Date.now())
+    setSessionFinishedAtMs(null)
+    setRatingCounts(emptyRatingCounts())
+    setRatedCount(0)
+  }, [showStudy, loadingDeckCards, deckCards.length, sessionStartedAtMs])
+
   React.useEffect(() => {
     if (!isStudying) return
     setSessionIndex(currentIndex)
   }, [currentIndex, isStudying])
+
+  // Mark session as finished when completed
+  React.useEffect(() => {
+    if (!isStudying) return
+    if (!isCompleted) return
+    if (sessionFinishedAtMs != null) return
+
+    setSessionFinishedAtMs(Date.now())
+  }, [isCompleted, isStudying, sessionFinishedAtMs])
 
   React.useEffect(() => {
     if (!isStudying) return
@@ -100,12 +144,9 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
     clearSession(sessionKey)
     setResumeCandidate(null)
 
-    setIsStudying(false)
-    setDeckCards([])
-    setSessionIndex(0)
-    resetSession()
-    onExitToHome()
-  }, [isCompleted, isStudying, sessionKey, resetSession, onExitToHome, setResumeCandidate])
+    // Don't reset stats here - they will be shown on completion screen
+    // Stats will be reset when starting a new session
+  }, [isCompleted, isStudying, sessionKey, setResumeCandidate])
 
   const handleLevelUp = async () => {
     const card = cards[currentIndex]
@@ -133,8 +174,20 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
   }
 
   const handleRate = async (review: CardReviewInput) => {
+    // Update rating statistics
+    const rating = review.rating as DifficultyRating
+    setRatingCounts(prev => ({ ...prev, [rating]: (prev[rating] ?? 0) + 1 }))
+    setRatedCount(prev => prev + 1)
+
     await rateCard(review)
     onRated()
+  }
+
+  const resetStats = () => {
+    setSessionStartedAtMs(null)
+    setSessionFinishedAtMs(null)
+    setRatingCounts(emptyRatingCounts())
+    setRatedCount(0)
   }
 
   const handleCloseStudy = () => {
@@ -156,7 +209,24 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
     setDeckCards([])
     setSessionIndex(0)
     resetSession()
+    resetStats()
     onExitToHome()
+  }
+
+  const handleBackToHome = () => {
+    setIsStudying(false)
+    setDeckCards([])
+    setSessionIndex(0)
+    resetSession()
+    resetStats()
+    onExitToHome()
+  }
+
+  const sessionStats: SessionStats = {
+    startedAtMs: sessionStartedAtMs,
+    finishedAtMs: sessionFinishedAtMs,
+    ratedCount,
+    ratingCounts,
   }
 
   return (
@@ -175,7 +245,8 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
           onSkip={skipCard}
           onRemoveFromProgress={handleRemoveFromProgress}
           onClose={handleCloseStudy}
-          onBackToHome={handleCloseStudy}
+          onBackToHome={handleBackToHome}
+          sessionStats={sessionStats}
         />
       ) : (
         children({
