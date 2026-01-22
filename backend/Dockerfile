@@ -15,6 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Копируем весь код бэкенда
 COPY . .
 
-ENV PYTHONPATH=/app
+# PYTHONPATH должен указывать на директорию backend, где находится пакет app
+ENV PYTHONPATH=/app/backend
 
 CMD ["/app/entrypoint.sh"]
