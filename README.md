@@ -18,20 +18,29 @@ MnemonicFlow/
 │   └── package.json
 │
 ├── backend/               # FastAPI + Python бэкенд
-│   ├── app/
-│   │   ├── api/           # API эндпоинты
-│   │   ├── core/          # Конфигурация, безопасность, БД
-│   │   ├── models/        # SQLAlchemy модели
-│   │   ├── schemas/       # Pydantic схемы
-│   │   └── services/      # Бизнес-логика
+│   ├── backend/
+│   │   ├── app/           # Основное приложение
+│   │   │   ├── api/       # API эндпоинты (routes)
+│   │   │   ├── auth/      # Аутентификация
+│   │   │   ├── core/      # Конфигурация, безопасность, БД
+│   │   │   ├── db/        # Инициализация БД
+│   │   │   ├── domain/    # Domain сервисы
+│   │   │   ├── models/    # SQLAlchemy модели
+│   │   │   ├── schemas/   # Pydantic схемы
+│   │   │   └── services/  # Бизнес-логика
+│   │   └── tests/         # Тесты
+│   ├── migrations/        # Alembic миграции
 │   ├── Dockerfile
+│   ├── Dockerfile.ci      # Dockerfile для CI
 │   ├── entrypoint.sh      # Скрипт инициализации
+│   ├── pyproject.toml     # Python конфигурация
 │   └── requirements.txt
 │
 ├── infra/                 # Инфраструктура
 │   ├── deploy/
 │   │   └── nginx/         # Nginx конфигурация
 │   ├── compose.dev.yml    # Docker Compose для разработки
+│   ├── compose.prod.yml   # Docker Compose для продакшна
 │   ├── compose.ci.yml     # Docker Compose для CI
 │   ├── compose.pre-commit.yml  # Docker Compose для pre-commit
 │   ├── Dockerfile.pre-commit  # Dockerfile для pre-commit образа
@@ -39,6 +48,7 @@ MnemonicFlow/
 │
 └── .github/
     └── workflows/
+        ├── ci.yml                # Основной CI пайплайн (объединяет все этапы)
         ├── validate-commits.yml  # Валидация коммитов
         ├── code-style.yml        # Проверка код стиля
         ├── build-all.yml         # Сборка образов
@@ -76,7 +86,7 @@ MnemonicFlow/
 ## 🚀 Быстрый старт
 
 ### Требования
-- Docker и Docker Compose
+- Docker и Docker Compose v2
 - Node.js 20+ (для локальной разработки)
 - Python 3.11+ (для локальной разработки)
 
@@ -175,8 +185,8 @@ curl http://localhost:8000/version
 # {"version": "0.0.99"}
 
 # В коде
-from app.core.version import __version__
-print(__version__)  # "0.0.99"
+from app.core.version import get_version
+print(get_version())  # "0.0.99"
 ```
 
 **Frontend:**
@@ -207,3 +217,18 @@ console.log(APP_VERSION);  // "0.0.99"
 3. Создайте git tag: `git tag vX.Y.Z`
 4. Запушьте тег: `git push origin vX.Y.Z`
 5. Создайте Release на GitHub на основе тега
+
+## 🔧 CI/CD
+
+Автоматический CI запускается для всех PR в ветки `main` и `develop` через единый пайплайн `ci.yml`:
+
+1. **validate-commits** — Валидация формата VERSION и Conventional Commits
+2. **code-style** — Проверка код стиля (pre-commit hooks)
+3. **build-all** — Сборка Docker образов с кешированием
+4. **test-all** — Запуск тестов (pytest + vitest)
+
+**Публикация образов** (`push-images.yml`) — Отдельный workflow, запускается:
+- При пуше в ветки `main` или `develop`
+- Вручную через `workflow_dispatch`
+
+**Docker Registry:** `ghcr.io/<username>/mnemonic_flow/` (замените `<username>` на вашего владельца репозитория)
