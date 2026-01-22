@@ -104,6 +104,16 @@ def create_card(
     if not payload.levels:
         raise HTTPException(status_code=422, detail="At least 1 level is required")
 
+    # 4) check for duplicate card title in the same deck
+    existing_card = (
+        db.query(Card).filter(Card.deck_id == payload.deck_id, Card.title == title).first()
+    )
+    if existing_card:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Card with title '{title}' already exists in this deck",
+        )
+
     # 4) create card (ORM uses deckid/maxlevel) [file:151]
     card = Card(
         deck_id=payload.deck_id,
