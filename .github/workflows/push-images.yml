@@ -31,6 +31,8 @@ jobs:
           REPO_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           docker buildx build \
             --tag ghcr.io/${REPO_LOWER}/mnemonic_flow/backend:latest \
+            --cache-from type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/backend:latest \
+            --cache-to type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/backend:latest,mode=max \
             --push \
             -f backend/Dockerfile \
             backend
@@ -56,6 +58,8 @@ jobs:
           REPO_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           docker buildx build \
             --tag ghcr.io/${REPO_LOWER}/mnemonic_flow/frontend:latest \
+            --cache-from type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/frontend:latest \
+            --cache-to type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/frontend:latest,mode=max \
             --push \
             -f frontend/Dockerfile \
             frontend
@@ -81,6 +85,8 @@ jobs:
           REPO_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           docker buildx build \
             --tag ghcr.io/${REPO_LOWER}/mnemonic_flow/pre-commit:latest \
+            --cache-from type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/pre-commit:latest \
+            --cache-to type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/pre-commit:latest,mode=max \
             --push \
             -f infra/Dockerfile.pre-commit \
             .
