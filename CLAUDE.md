@@ -678,8 +678,11 @@ The backend uses a custom initialization approach in `entrypoint.sh`:
 # Connect to PostgreSQL container
 docker compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards
 
-# Example: Update user email verification
+# Verify email for all users (bypass email verification)
 docker compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards -c "UPDATE users SET is_email_verified = true;"
+
+# Verify email for specific user
+docker compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards -c "UPDATE users SET is_email_verified = true WHERE email = 'user@example.com';"
 ```
 
 **7. Nginx config path:**
