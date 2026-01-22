@@ -1,0 +1,8 @@
+services:
+  pre-commit:
+    image: ghcr.io/utygett/mnemonic_flow/pre-commit:latest
+    working_dir: /repo
+    volumes:
+      - ..:/repo
+    environment:
+      - PRE_COMMIT_HOME=/root/.cache/pre-commit
