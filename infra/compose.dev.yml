@@ -17,6 +17,7 @@ services:
       retries: 10
 
   backend:
+    image: ghcr.io/utygett/mnemonic_flow/backend:latest
     build:
       context: ../backend
       args:
@@ -32,6 +33,7 @@ services:
         condition: service_healthy
 
   frontend:
+    image: ghcr.io/utygett/mnemonic_flow/frontend:latest
     build:
       context: ../frontend
       args:
