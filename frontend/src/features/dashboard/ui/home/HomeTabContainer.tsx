@@ -12,14 +12,14 @@ import { AddDeck } from '../../../../features/deck-add'
 import { HomeTab } from './HomeTab'
 
 type Props = {
-  // РґР°РЅРЅС‹Рµ home
+  // данные home
   statistics: Statistics
   decks: Deck[]
   groups: Group[]
   activeGroupId: string | null
   setActiveGroupId: (id: string | null) => void
 
-  // РёР· С‚РІРѕРµРіРѕ useGroupsDecksController
+  // из твоего useGroupsDecksController
   refreshGroups: () => Promise<void>
   refreshDecks: () => Promise<void>
   currentGroupDeckIds: string[]
@@ -30,13 +30,13 @@ type Props = {
   onResume: () => void
   onDiscardResume: () => void
 
-  // РґРµР№СЃС‚РІРёСЏ, РєРѕС‚РѕСЂС‹Рµ Р·Р°РїСѓСЃРєР°СЋС‚ study (РѕСЃС‚Р°СЋС‚СЃСЏ РІ App)
+  // действия, которые запускают study (остаются в App)
   onStartReviewStudy: () => Promise<void>
   onStartDeckStudy: (deckId: string, mode: StudyMode, limit?: number) => Promise<void>
   onResumeDeckSession: (saved: PersistedSession) => void
   onRestartDeckSession: (deckId: string) => void
 
-  // РїРѕРєР° РѕСЃС‚Р°РІР»СЏРµРј СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РєРѕР»РѕРґС‹ РіР»РѕР±Р°Р»СЊРЅС‹Рј
+  // пока оставляем редактирование колоды глобальным
   onOpenEditDeck: (deckId: string) => void
 }
 
@@ -47,16 +47,16 @@ type HomeView =
   | { kind: 'deckDetails'; deckId: string }
 
 function mapDeckToPublicSummary(deck: Deck): PublicDeckSummary {
-  // NOTE: СЌС‚Рѕ fallback-Р°РґР°РїС‚РµСЂ РґР»СЏ СЃС‚Р°СЂРѕРіРѕ С‚РёРїР° Deck (РёР· '../../../../types').
-  // РџСЂР°РІРёР»СЊРЅС‹Р№ РёСЃС‚РѕС‡РЅРёРє РґР»СЏ dashboard вЂ” API summary /decks/ (PublicDeckSummary).
+  // NOTE: это fallback-адаптер для старого типа Deck (из '../../../../types').
+  // Правильный источник для dashboard — API summary /decks/ (PublicDeckSummary).
   return {
     deck_id: deck.id,
     title: deck.name,
     description: deck.description ?? null,
     color: deck.color ?? null,
 
-    // Р­С‚Рё РїРѕР»СЏ РІ СЃС‚Р°СЂРѕРј С‚РёРїРµ Deck РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‚ вЂ” РїРѕРґСЃС‚Р°РІР»СЏРµРј Р±РµР·РѕРїР°СЃРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ,
-    // С‡С‚РѕР±С‹ DeckCard РјРѕРі РєРѕСЂСЂРµРєС‚РЅРѕ СЂРёСЃРѕРІР°С‚СЊСЃСЏ.
+    // Эти поля в старом типе Deck отсутствуют — подставляем безопасные значения,
+    // чтобы DeckCard мог корректно рисоваться.
     owner_id: '',
     is_public: false,
     can_edit: false,
@@ -77,7 +77,7 @@ export function HomeTabContainer(props: Props) {
     }
   }, [view.kind, props.activeGroupId])
 
-  // --- СЌРєСЂР°РЅС‹ home ---
+  // --- экраны home ---
   if (view.kind === 'createGroup') {
     return (
       <CreateGroup
@@ -99,7 +99,9 @@ export function HomeTabContainer(props: Props) {
         groupId={props.activeGroupId}
         initialGroupDeckIds={props.currentGroupDeckIds}
         onClose={() => setView({ kind: 'dashboard' })}
-        onChanged={() => props.refreshDecks()}
+        onChanged={async () => {
+          await props.refreshDecks()
+        }}
       />
     )
   }
@@ -121,14 +123,14 @@ export function HomeTabContainer(props: Props) {
     )
   }
 
-  // --- РѕР±С‹С‡РЅС‹Р№ home (dashboard) ---
-  // Р’РђР–РќРћ: DashboardContainer РѕР¶РёРґР°РµС‚ PublicDeckSummary[] (deck_id, cards_count, count_repeat, ...),
-  // РЅРѕ СЃСЋРґР° historically РїСЂРѕРєРёРґС‹РІР°Р»СЃСЏ Deck[] (id, name, progress...).
-  // Р­С‚Рѕ Рё Р»РѕРјР°Р»Рѕ РѕС‚РѕР±СЂР°Р¶РµРЅРёРµ С†РёС„СЂ (DeckCard С‡РёС‚Р°РµС‚ РїРѕР»СЏ *_count РёР· summary).
+  // --- обычный home (dashboard) ---
+  // ВАЖНО: DashboardContainer ожидает PublicDeckSummary[] (deck_id, cards_count, count_repeat, ...),
+  // но сюда historically прокидывался Deck[] (id, name, progress...).
+  // Это и ломало отображение цифр (DeckCard читает поля *_count из summary).
   const decksForDashboard = (props.decks as unknown as PublicDeckSummary[]).map((d: any) => {
-    // РµСЃР»Рё СЌС‚Рѕ СѓР¶Рµ PublicDeckSummary РёР· API вЂ” РѕСЃС‚Р°РІР»СЏРµРј РєР°Рє РµСЃС‚СЊ
+    // если это уже PublicDeckSummary из API — оставляем как есть
     if (typeof d?.deck_id === 'string') return d as PublicDeckSummary
-    // РёРЅР°С‡Рµ Р°РґР°РїС‚РёСЂСѓРµРј СЃС‚Р°СЂС‹Р№ Deck
+    // иначе адаптируем старый Deck
     return mapDeckToPublicSummary(d as Deck)
   })
 
@@ -149,7 +151,10 @@ export function HomeTabContainer(props: Props) {
       onOpenEditDeck={props.onOpenEditDeck}
       onAddDeck={() => {
         if (!props.activeGroupId) return
-        setView({ kind: 'addDeck' })
+        void (async () => {
+          await props.refreshDecks()
+          setView({ kind: 'addDeck' })
+        })()
       }}
     />
   )
