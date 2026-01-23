@@ -22,7 +22,7 @@ jobs:
           # Extract task ID from PR title in format [MF-xxx] or MF-xxx
           PR_TITLE="${{ github.event.pull_request.title }}"
           TASK_ID=$(echo "$PR_TITLE" | grep -oP '\[?MF-\K[0-9]+' | head -1 || echo "")
-          
+
           if [ -z "$TASK_ID" ]; then
             echo "No YouGile task ID found in PR title"
             echo "task_found=false" >> $GITHUB_OUTPUT
@@ -37,15 +37,15 @@ jobs:
         id: get_task
         run: |
           TASK_NUM="${{ steps.extract.outputs.task_id }}"
-          
+
           # Search for task with MF-{number} in title
           RESPONSE=$(curl -s -X GET "${{ env.YOUGILE_API_URL }}/tasks?boardId=fe1ddd10-a059-454e-9bb2-a0d823ff1e59" \
             -H "Authorization: Bearer ${{ secrets.YOUGILE_API_KEY }}" \
             -H "Content-Type: application/json")
-          
+
           # Find task ID by searching for MF-{number} pattern in title
           TASK_UUID=$(echo "$RESPONSE" | jq -r ".content[] | select(.title | test(\"MF-$TASK_NUM\")) | .id" | head -1)
-          
+
           if [ -z "$TASK_UUID" ] || [ "$TASK_UUID" = "null" ]; then
             echo "Task MF-$TASK_NUM not found in YouGile"
             echo "task_uuid_found=false" >> $GITHUB_OUTPUT
@@ -57,7 +57,7 @@ jobs:
 
       - name: Update Task - PR Opened (Add Link + Move to Review)
         if: |
-          steps.get_task.outputs.task_uuid_found == 'true' && 
+          steps.get_task.outputs.task_uuid_found == 'true' &&
           github.event.action == 'opened'
         run: |
           TASK_UUID="${{ steps.get_task.outputs.task_uuid }}"
@@ -65,78 +65,78 @@ jobs:
           PR_TITLE="${{ github.event.pull_request.title }}"
           PR_AUTHOR="${{ github.event.pull_request.user.login }}"
           PR_NUMBER="${{ github.event.pull_request.number }}"
-          
+
           # Get current task description
           CURRENT_TASK=$(curl -s -X GET "${{ env.YOUGILE_API_URL }}/tasks/$TASK_UUID" \
             -H "Authorization: Bearer ${{ secrets.YOUGILE_API_KEY }}" \
             -H "Content-Type: application/json")
-          
+
           CURRENT_DESC=$(echo "$CURRENT_TASK" | jq -r '.description // ""')
-          
+
           # Prepare new description with PR link
           PR_INFO="\n\n---\n🔗 **GitHub Pull Request #$PR_NUMBER**\n- URL: $PR_URL\n- Author: @$PR_AUTHOR\n- Status: Открыт"
           NEW_DESC="${CURRENT_DESC}${PR_INFO}"
-          
+
           # Update task: add PR link and move to Review column
           curl -s -X PUT "${{ env.YOUGILE_API_URL }}/tasks/$TASK_UUID" \
             -H "Authorization: Bearer ${{ secrets.YOUGILE_API_KEY }}" \
             -H "Content-Type: application/json" \
             -d "$(jq -n --arg desc "$NEW_DESC" --arg col "${{ env.COLUMN_REVIEW }}" '{description: $desc, columnId: $col}')"
-          
+
           echo "✅ Task updated: PR link added, moved to Ревью column"
 
       - name: Update Task - PR Merged (Move to Done)
         if: |
-          steps.get_task.outputs.task_uuid_found == 'true' && 
-          github.event.action == 'closed' && 
+          steps.get_task.outputs.task_uuid_found == 'true' &&
+          github.event.action == 'closed' &&
           github.event.pull_request.merged == true
         run: |
           TASK_UUID="${{ steps.get_task.outputs.task_uuid }}"
           PR_URL="${{ github.event.pull_request.html_url }}"
-          
+
           # Get current task description
           CURRENT_TASK=$(curl -s -X GET "${{ env.YOUGILE_API_URL }}/tasks/$TASK_UUID" \
             -H "Authorization: Bearer ${{ secrets.YOUGILE_API_KEY }}" \
             -H "Content-Type: application/json")
-          
+
           CURRENT_DESC=$(echo "$CURRENT_TASK" | jq -r '.description // ""')
-          
+
           # Update description with merge info
           MERGE_INFO="\n\n✅ **PR merged** $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           NEW_DESC="${CURRENT_DESC}${MERGE_INFO}"
-          
+
           # Move task to Done column
           curl -s -X PUT "${{ env.YOUGILE_API_URL }}/tasks/$TASK_UUID" \
             -H "Authorization: Bearer ${{ secrets.YOUGILE_API_KEY }}" \
             -H "Content-Type: application/json" \
             -d "$(jq -n --arg desc "$NEW_DESC" --arg col "${{ env.COLUMN_DONE }}" '{description: $desc, columnId: $col}')"
-          
+
           echo "✅ Task moved to Готово column"
 
       - name: Update Task - PR Closed without Merge
         if: |
-          steps.get_task.outputs.task_uuid_found == 'true' && 
-          github.event.action == 'closed' && 
+          steps.get_task.outputs.task_uuid_found == 'true' &&
+          github.event.action == 'closed' &&
           github.event.pull_request.merged == false
         run: |
           TASK_UUID="${{ steps.get_task.outputs.task_uuid }}"
           PR_URL="${{ github.event.pull_request.html_url }}"
-          
+
           # Get current task description
           CURRENT_TASK=$(curl -s -X GET "${{ env.YOUGILE_API_URL }}/tasks/$TASK_UUID" \
             -H "Authorization: Bearer ${{ secrets.YOUGILE_API_KEY }}" \
             -H "Content-Type: application/json")
-          
+
           CURRENT_DESC=$(echo "$CURRENT_TASK" | jq -r '.description // ""')
-          
+
           # Update description with closed info
           CLOSE_INFO="\n\n❌ **PR closed without merge** $(date -u +%Y-%m-%dT%H:%M:%SZ)\n$PR_URL"
           NEW_DESC="${CURRENT_DESC}${CLOSE_INFO}"
-          
+
           # Update task description (don't move column - task returns to work)
           curl -s -X PUT "${{ env.YOUGILE_API_URL }}/tasks/$TASK_UUID" \
             -H "Authorization: Bearer ${{ secrets.YOUGILE_API_KEY }}" \
             -H "Content-Type: application/json" \
             -d "$(jq -n --arg desc "$NEW_DESC" '{description: $desc}')"
-          
+
           echo "⚠️ Task updated: PR closed without merge"
