@@ -30,15 +30,15 @@ jobs:
             echo "task_found=false" >> $GITHUB_OUTPUT
           else
             echo "Found Task ID: MF-$TASK_ID"
-            echo "task_id=$TASK_ID" >> $GITHUB_OUTPUT
+            echo "task_id=MF-$TASK_ID" >> $GITHUB_OUTPUT
             echo "task_found=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Get YouGile Task by Title
+      - name: Get YouGile Task by idTaskProject
         if: steps.extract.outputs.task_found == 'true'
         id: get_task
         run: |
-          TASK_NUM="${{ steps.extract.outputs.task_id }}"
+          TASK_PROJECT_ID="${{ steps.extract.outputs.task_id }}"
 
           # Get all tasks from all columns on the board
           TASK_UUID=""
@@ -48,17 +48,18 @@ jobs:
               -H "Content-Type: application/json")
 
             echo "Checking column $COLUMN_ID..."
-            FOUND=$(echo "$RESPONSE" | jq -r ".content[]? | select(.title | test(\"MF-$TASK_NUM\")) | .id" | head -1)
+            # Search by idTaskProject field (e.g., "MF-2")
+            FOUND=$(echo "$RESPONSE" | jq -r ".content[]? | select(.idTaskProject == \"$TASK_PROJECT_ID\") | .id" | head -1)
 
             if [ -n "$FOUND" ] && [ "$FOUND" != "null" ]; then
               TASK_UUID="$FOUND"
-              echo "Found task in column $COLUMN_ID"
+              echo "Found task $TASK_PROJECT_ID in column $COLUMN_ID"
               break
             fi
           done
 
           if [ -z "$TASK_UUID" ] || [ "$TASK_UUID" = "null" ]; then
-            echo "Task MF-$TASK_NUM not found in YouGile"
+            echo "Task $TASK_PROJECT_ID not found in YouGile"
             echo "task_uuid_found=false" >> $GITHUB_OUTPUT
           else
             echo "Found Task UUID: $TASK_UUID"
