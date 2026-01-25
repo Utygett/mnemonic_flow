@@ -5,8 +5,10 @@ on:
     types: [opened, synchronize, closed]
 
 env:
-  YOUGILE_API_URL: https://mnemonicflow.yougile.com/api-v2
+  YOUGILE_API_URL: https://yougile.com/api-v2
+  BOARD_ID: fe1ddd10-a059-454e-9bb2-a0d823ff1e59
   # Column IDs for MnemonicFlow board
+  COLUMN_BACKLOG: af213bb0-9fd9-4b18-b0d2-4c10ed3e89b5
   COLUMN_IN_PROGRESS: cc045d0b-3efe-4191-b829-a350d1f47099
   COLUMN_REVIEW: 0ebd9080-f218-4c3d-908a-2225e3fb0695
   COLUMN_TESTING: 0bea0fdd-5c94-4080-850f-05bd30b980eb
@@ -38,13 +40,22 @@ jobs:
         run: |
           TASK_NUM="${{ steps.extract.outputs.task_id }}"
 
-          # Search for task with MF-{number} in title
-          RESPONSE=$(curl -s -X GET "${{ env.YOUGILE_API_URL }}/tasks?boardId=fe1ddd10-a059-454e-9bb2-a0d823ff1e59" \
-            -H "Authorization: Bearer ${{ secrets.YOUGILE_API_KEY }}" \
-            -H "Content-Type: application/json")
+          # Get all tasks from all columns on the board
+          TASK_UUID=""
+          for COLUMN_ID in "${{ env.COLUMN_BACKLOG }}" "${{ env.COLUMN_IN_PROGRESS }}" "${{ env.COLUMN_REVIEW }}" "${{ env.COLUMN_TESTING }}" "${{ env.COLUMN_DONE }}"; do
+            RESPONSE=$(curl -s -X GET "${{ env.YOUGILE_API_URL }}/tasks?columnId=$COLUMN_ID" \
+              -H "Authorization: Bearer ${{ secrets.YOUGILE_API_KEY }}" \
+              -H "Content-Type: application/json")
 
-          # Find task ID by searching for MF-{number} pattern in title
-          TASK_UUID=$(echo "$RESPONSE" | jq -r ".content[] | select(.title | test(\"MF-$TASK_NUM\")) | .id" | head -1)
+            echo "Checking column $COLUMN_ID..."
+            FOUND=$(echo "$RESPONSE" | jq -r ".content[]? | select(.title | test(\"MF-$TASK_NUM\")) | .id" | head -1)
+
+            if [ -n "$FOUND" ] && [ "$FOUND" != "null" ]; then
+              TASK_UUID="$FOUND"
+              echo "Found task in column $COLUMN_ID"
+              break
+            fi
+          done
 
           if [ -z "$TASK_UUID" ] || [ "$TASK_UUID" = "null" ]; then
             echo "Task MF-$TASK_NUM not found in YouGile"
@@ -62,7 +73,6 @@ jobs:
         run: |
           TASK_UUID="${{ steps.get_task.outputs.task_uuid }}"
           PR_URL="${{ github.event.pull_request.html_url }}"
-          PR_TITLE="${{ github.event.pull_request.title }}"
           PR_AUTHOR="${{ github.event.pull_request.user.login }}"
           PR_NUMBER="${{ github.event.pull_request.number }}"
 
