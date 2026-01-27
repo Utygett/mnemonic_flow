@@ -2,6 +2,7 @@ import React from 'react'
 import type { StudyCard } from '../model/studyCardTypes'
 import { motion } from 'motion/react'
 import { MarkdownView } from '../../../shared/ui/MarkdownView'
+import { ImageWithFallback } from '@/shared/ui/ImageWithFallback'
 
 import styles from './FlipCard.module.css'
 
@@ -38,6 +39,10 @@ export function FlipCard({
   const frontText = (level as any)?.content?.question || (card as any).title || '…'
   const backText = (level as any)?.content?.answer || '…'
 
+  // Use level images if available, otherwise fall back to card images
+  const questionImageUrl = (level as any)?.questionImageUrl || (card as any)?.questionImageUrl
+  const answerImageUrl = (level as any)?.answerImageUrl || (card as any)?.answerImageUrl
+
   const hasPrev = card.levels.some((l: any) => getLevelIndex(l) === card.activeLevel - 1)
   const hasNext = card.levels.some((l: any) => getLevelIndex(l) === card.activeLevel + 1)
 
@@ -60,6 +65,15 @@ export function FlipCard({
         >
           {/* Front */}
           <div className={`${styles.flipcardSide} ${styles.flipcardFront}`}>
+            {questionImageUrl && (
+              <div className={styles.cardImage}>
+                <ImageWithFallback
+                  src={questionImageUrl}
+                  alt="Question image"
+                  className={styles.cardImageElement}
+                />
+              </div>
+            )}
             <div className={styles.flipcardText}>
               {frontContent ?? <MarkdownView value={frontText} />}
             </div>
@@ -68,6 +82,16 @@ export function FlipCard({
 
           {/* Back */}
           <div className={`${styles.flipcardSide} ${styles.flipcardBack}`}>
+            {answerImageUrl && (
+              <div className={styles.cardImage}>
+                <ImageWithFallback
+                  src={answerImageUrl}
+                  alt="Answer image"
+                  className={styles.cardImageElement}
+                />
+              </div>
+            )}
+
             {(canDown || canUp) && (
               <div className={styles.flipcardLevelControls} onClick={e => e.stopPropagation()}>
                 {canDown ? (

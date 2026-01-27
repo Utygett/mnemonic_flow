@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.enums import ReviewRating
 
@@ -21,18 +21,18 @@ class CardForReview(BaseModel):
     difficulty: float
 
     next_review: Optional[datetime]
+    question_image_url: Optional[str] = None
+    answer_image_url: Optional[str] = None
 
 
 class ReviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
     rating: ReviewRating
     shown_at: datetime = Field(..., alias="shownAt")
     revealed_at: Optional[datetime] = Field(None, alias="revealedAt")
     rated_at: datetime = Field(..., alias="ratedAt")
     timezone: Optional[str] = None
-
-    class Config:
-        extra = "forbid"
-        allow_population_by_field_name = True
 
 
 class ReviewResponse(BaseModel):

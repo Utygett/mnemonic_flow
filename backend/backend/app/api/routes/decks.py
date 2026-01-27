@@ -526,7 +526,12 @@ def get_study_cards(
                 "title": c.title,
                 "type": c.type,
                 "levels": [
-                    {"levelIndex": card_level.level_index, "content": card_level.content}
+                    {
+                        "levelIndex": card_level.level_index,
+                        "content": card_level.content,
+                        "questionImageUrl": card_level.question_image_url,
+                        "answerImageUrl": card_level.answer_image_url,
+                    }
                     for card_level in lvls
                 ],
                 "activeLevel": active_level_index_by_card.get(c.id, 0),

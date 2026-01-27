@@ -438,6 +438,7 @@ backend/
 - JWT authentication with refresh token rotation
 - Alembic for database migrations (currently using custom init)
 - PostgreSQL 16 database
+- MinIO/S3 for object storage (images) with boto3
 
 **Key Files:**
 - `backend/backend/app/main.py` - FastAPI application entry point
@@ -453,8 +454,11 @@ backend/
 |-------|-------------|---------------|
 | `/version` | Get application version | No |
 | `/api/auth/*` | Registration, login, token refresh | No |
-| `/api/cards/*` | Card CRUD operations | Yes |
-| `/api/decks/*` | Deck CRUD operations | Yes |
+| `/api/cards/*` | Card CRUD operations + image upload | Yes |
+| `/api/cards/{card_id}/levels/{level_index}/question-image` | Upload/delete question image | Yes |
+| `/api/cards/{card_id}/levels/{level_index}/answer-image` | Upload/delete answer image | Yes |
+| `/api/cards/{card_id}/option-image` | Upload MCQ option image | Yes |
+| `/api/decks/*` | Deck CRUD operations + study cards | Yes |
 | `/api/groups/*` | Study group operations | Yes |
 | `/api/stats/dashboard` | Dashboard statistics | Yes |
 
@@ -486,6 +490,15 @@ Returns user statistics for the dashboard:
 - `total_cards`: Total cards owned by user
 
 **Important:** When working with time calculations, note that `CardReviewHistory.interval_minutes` is the SM-2 algorithm's interval until next review, NOT study time. For actual study time, use `reviewed_at - reveal_at` (time from answer reveal to user rating).
+
+**Image Upload:**
+- Cards support per-level images for question and answer sides
+- MCQ cards support images for options
+- Images are stored in MinIO (S3-compatible object storage)
+- Upload via FormData: `POST /api/cards/{card_id}/levels/{level_index}/question-image`
+- Supported formats: JPEG, PNG, WebP (max 5MB)
+- Images are proxied through Nginx at `/images/`
+- Frontend feature: `features/card-image-upload/`
 
 **Documentation:** See `backend/README.md` for detailed backend documentation including testing, migrations, and environment configuration.
 
@@ -702,6 +715,7 @@ docker compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards 
 **Backend:**
 - FastAPI with uvicorn server
 - PostgreSQL 16 with SQLAlchemy 2.0
+- MinIO/S3 for object storage (images) with boto3
 - Password hashing: bcrypt
 - JWT tokens: python-jose
 

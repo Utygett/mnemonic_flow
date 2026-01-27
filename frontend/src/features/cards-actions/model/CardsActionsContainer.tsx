@@ -5,7 +5,7 @@ import { toApiRequest } from '../lib/toApiRequest'
 import { ApiError } from '@/shared/api'
 
 export type CardsActionsApi = {
-  onCreateCardSave: (cardData: any) => Promise<void>
+  onCreateCardSave: (cardData: any) => Promise<any>
   onCreateCardSaveMany: (
     cards: any[]
   ) => Promise<{ created: number; failed: number; errors: string[] }>
@@ -29,10 +29,11 @@ export function CardsActionsContainer({
 }: Props) {
   const onCreateCardSave = async (cardData: any) => {
     try {
-      await createCard(toApiRequest(cardData))
+      const result = await createCard(toApiRequest(cardData))
       refreshDecks()
       refreshStats()
       closeCreateCard()
+      return result // Return the created card data with card_id
     } catch (e: any) {
       // Handle duplicate card error (409 Conflict)
       if (e instanceof ApiError && e.status === 409) {

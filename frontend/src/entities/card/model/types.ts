@@ -7,6 +7,8 @@ export type DifficultyRating = 'again' | 'hard' | 'good' | 'easy'
 export interface CardLevel {
   levelindex: number
   content: CardContent
+  questionImageUrl?: string
+  answerImageUrl?: string
 }
 
 export interface StudyCard {
@@ -16,6 +18,10 @@ export interface StudyCard {
   type: string
   levels: CardLevel[]
   activeLevel: number
+  questionImageUrl?: string
+  questionImageName?: string
+  answerImageUrl?: string
+  answerImageName?: string
 }
 
 export type StudyCardsResponse = {
@@ -49,7 +55,7 @@ export type ApiReplaceLevelsRequest = {
 export type ApiCreateCardLevelRequest = {
   question: string
   answer?: string // for flashcard
-  options?: Array<{ id: string; text: string }> // for multiple_choice
+  options?: Array<{ id: string; text: string; image_url?: string }> // for multiple_choice
   correctOptionId?: string // for multiple_choice
   explanation?: string // for multiple_choice
   timerSec?: number // for multiple_choice

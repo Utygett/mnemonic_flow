@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -27,6 +27,7 @@ from app.schemas.cards import (
     ReplaceLevelsRequest,
 )
 from app.services.review_service import ReviewService
+from app.services.storage_service import storage_service
 
 router = APIRouter()
 
@@ -237,6 +238,8 @@ def get_cards_for_review(
                 stability=progress.stability,
                 difficulty=progress.difficulty,
                 next_review=progress.next_review,
+                question_image_url=level.question_image_url,
+                answer_image_url=level.answer_image_url,
             )
         )
     return result
@@ -468,7 +471,12 @@ def get_cards_for_review_with_levels(
                 difficulty=progress.difficulty,
                 next_review=progress.next_review,
                 levels=[
-                    CardLevelContent(level_index=card_level.level_index, content=card_level.content)
+                    CardLevelContent(
+                        level_index=card_level.level_index,
+                        content=card_level.content,
+                        question_image_url=card_level.question_image_url,
+                        answer_image_url=card_level.answer_image_url,
+                    )
                     for card_level in levels_by_card.get(card.id, [])
                 ],
             )
@@ -574,7 +582,15 @@ def update_card_levels(
         card_id=card.id,
         title=card.title,
         type=card.type,
-        levels=[CardLevelContent(level_index=r.level_index, content=r.content) for r in new_rows],
+        levels=[
+            CardLevelContent(
+                level_index=r.level_index,
+                content=r.content,
+                question_image_url=r.question_image_url,
+                answer_image_url=r.answer_image_url,
+            )
+            for r in new_rows
+        ],
     )
 
 
@@ -651,7 +667,274 @@ def update_card(
         title=card.title,
         type=card.type,
         levels=[
-            CardLevelContent(level_index=card_level.level_index, content=card_level.content)
+            CardLevelContent(
+                level_index=card_level.level_index,
+                content=card_level.content,
+                question_image_url=card_level.question_image_url,
+                answer_image_url=card_level.answer_image_url,
+            )
             for card_level in levels
         ],
+    )
+
+
+@router.post("/{card_id}/levels/{level_index}/question-image", response_model=CardLevelContent)
+def upload_level_question_image(
+    card_id: UUID,
+    level_index: int,
+    file: UploadFile = File(...),
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Upload an image for the question side of a specific card level."""
+    card = db.get(Card, card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+
+    deck = db.get(Deck, card.deck_id)
+    if not deck or deck.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Card not accessible")
+
+    # Find the card level
+    card_level = db.query(CardLevel).filter_by(card_id=card_id, level_index=level_index).first()
+    if not card_level:
+        raise HTTPException(status_code=404, detail="Card level not found")
+
+    # Read file data
+    file_data = file.file.read()
+
+    # Check if file is empty
+    if len(file_data) == 0:
+        raise HTTPException(status_code=422, detail="File is empty")
+
+    # Upload to storage
+    try:
+        image_url = storage_service.upload_file(
+            file_data=file_data,
+            filename=file.filename or "image.jpg",
+            content_type=file.content_type or "image/jpeg",
+            card_id=f"{card_id}_{level_index}",
+            side="question",
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    # Delete old image if exists
+    if card_level.question_image_url:
+        storage_service.delete_file(card_level.question_image_url)
+
+    # Update card level
+    card_level.question_image_url = image_url
+    card_level.question_image_name = file.filename
+    db.commit()
+    db.refresh(card_level)
+
+    return CardLevelContent(
+        level_index=card_level.level_index,
+        content=card_level.content,
+        question_image_url=card_level.question_image_url,
+        answer_image_url=card_level.answer_image_url,
+    )
+
+
+@router.post("/{card_id}/levels/{level_index}/answer-image", response_model=CardLevelContent)
+def upload_level_answer_image(
+    card_id: UUID,
+    level_index: int,
+    file: UploadFile = File(...),
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Upload an image for the answer side of a specific card level."""
+    card = db.get(Card, card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+
+    deck = db.get(Deck, card.deck_id)
+    if not deck or deck.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Card not accessible")
+
+    # Find the card level
+    card_level = db.query(CardLevel).filter_by(card_id=card_id, level_index=level_index).first()
+    if not card_level:
+        raise HTTPException(status_code=404, detail="Card level not found")
+
+    # Read file data
+    file_data = file.file.read()
+
+    # Upload to storage
+    try:
+        image_url = storage_service.upload_file(
+            file_data=file_data,
+            filename=file.filename or "image.jpg",
+            content_type=file.content_type or "image/jpeg",
+            card_id=f"{card_id}_{level_index}",
+            side="answer",
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    # Delete old image if exists
+    if card_level.answer_image_url:
+        storage_service.delete_file(card_level.answer_image_url)
+
+    # Update card level
+    card_level.answer_image_url = image_url
+    card_level.answer_image_name = file.filename
+    db.commit()
+    db.refresh(card_level)
+
+    return CardLevelContent(
+        level_index=card_level.level_index,
+        content=card_level.content,
+        question_image_url=card_level.question_image_url,
+        answer_image_url=card_level.answer_image_url,
+    )
+
+
+@router.delete(
+    "/{card_id}/levels/{level_index}/question-image", status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_level_question_image(
+    card_id: UUID,
+    level_index: int,
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Delete the question image associated with a specific card level."""
+    card = db.get(Card, card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+
+    deck = db.get(Deck, card.deck_id)
+    if not deck or deck.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Card not accessible")
+
+    card_level = db.query(CardLevel).filter_by(card_id=card_id, level_index=level_index).first()
+    if not card_level:
+        raise HTTPException(status_code=404, detail="Card level not found")
+
+    # Delete from storage
+    if card_level.question_image_url:
+        storage_service.delete_file(card_level.question_image_url)
+
+    # Update card level
+    card_level.question_image_url = None
+    card_level.question_image_name = None
+    db.commit()
+
+    return Response(status_code=204)
+
+
+@router.delete(
+    "/{card_id}/levels/{level_index}/answer-image", status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_level_answer_image(
+    card_id: UUID,
+    level_index: int,
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Delete the answer image associated with a specific card level."""
+    card = db.get(Card, card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+
+    deck = db.get(Deck, card.deck_id)
+    if not deck or deck.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Card not accessible")
+
+    card_level = db.query(CardLevel).filter_by(card_id=card_id, level_index=level_index).first()
+    if not card_level:
+        raise HTTPException(status_code=404, detail="Card level not found")
+
+    # Delete from storage
+    if card_level.answer_image_url:
+        storage_service.delete_file(card_level.answer_image_url)
+
+    # Update card level
+    card_level.answer_image_url = None
+    card_level.answer_image_name = None
+    db.commit()
+
+    return Response(status_code=204)
+
+
+@router.post("/{card_id}/option-image", response_model=CardLevelContent)
+def upload_option_image(
+    card_id: UUID,
+    option_id: str = Form(...),
+    file: UploadFile = File(...),
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Upload an image for an MCQ option. Updates the option's image_url in content."""
+    card = db.get(Card, card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+
+    deck = db.get(Deck, card.deck_id)
+    if not deck or deck.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Card not accessible")
+
+    if card.type != "multiple_choice":
+        raise HTTPException(status_code=400, detail="Card must be multiple choice type")
+
+    # Find the first level (MCQ cards typically have one level)
+    card_level = db.query(CardLevel).filter_by(card_id=card_id, level_index=0).first()
+    if not card_level:
+        raise HTTPException(status_code=404, detail="Card level not found")
+
+    # Check if option_id exists in the content
+    content = dict(card_level.content)
+    options = content.get("options", [])
+    option_found = False
+    for option in options:
+        if option.get("id") == option_id:
+            option_found = True
+            break
+
+    if not option_found:
+        raise HTTPException(status_code=404, detail="Option not found")
+
+    # Read file data
+    file_data = file.file.read()
+
+    # Upload to storage
+    try:
+        image_url = storage_service.upload_file(
+            file_data=file_data,
+            filename=file.filename or "image.jpg",
+            content_type=file.content_type or "image/jpeg",
+            card_id=f"{card_id}_{option_id}",
+            side="option",
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    # Update the option's image_url in content
+    for option in options:
+        if option.get("id") == option_id:
+            # Delete old image if exists
+            old_url = option.get("image_url")
+            if old_url:
+                storage_service.delete_file(old_url)
+            option["image_url"] = image_url
+            break
+
+    # Update card level content - SQLAlchemy 2.0 should detect JSONB changes
+    from sqlalchemy import update
+
+    stmt = update(CardLevel).where(CardLevel.id == card_level.id).values(content=content)
+    db.execute(stmt)
+    db.commit()
+    db.refresh(card_level)
+
+    return CardLevelContent(
+        level_index=card_level.level_index,
+        content=card_level.content,
+        question_image_url=card_level.question_image_url,
+        answer_image_url=card_level.answer_image_url,
     )

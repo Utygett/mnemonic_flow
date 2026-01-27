@@ -21,6 +21,18 @@ if "ALGORITHM" not in os.environ:
 if "ACCESS_TOKEN_EXPIRE_MINUTES" not in os.environ:
     os.environ["ACCESS_TOKEN_EXPIRE_MINUTES"] = "360"
 
+# MinIO/S3 config for tests (not actually used in tests, but needed for imports)
+if "MINIO_ENDPOINT" not in os.environ:
+    os.environ["MINIO_ENDPOINT"] = "http://minio:9000"
+if "MINIO_ACCESS_KEY" not in os.environ:
+    os.environ["MINIO_ACCESS_KEY"] = "minioadmin"
+if "MINIO_SECRET_KEY" not in os.environ:
+    os.environ["MINIO_SECRET_KEY"] = "minioadmin"
+if "MINIO_BUCKET_NAME" not in os.environ:
+    os.environ["MINIO_BUCKET_NAME"] = "card-images"
+if "MINIO_USE_SSL" not in os.environ:
+    os.environ["MINIO_USE_SSL"] = "false"
+
 from app.core.security import hash_password
 from app.db.base import Base
 from app.db.session import SessionLocal
@@ -43,6 +55,57 @@ for logger_name in (
     logging.getLogger(logger_name).setLevel(logging.ERROR)
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def mock_storage_service():
+    """Mock StorageService to avoid S3/MinIO connections in tests."""
+    from app.services import storage_service as storage_service_module
+
+    # Create a mock storage service that doesn't require boto3
+    class MockStorageService:
+        ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
+        MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+        def validate_file(self, filename: str, content_type: str, file_size: int) -> None:
+            """Validate file before upload."""
+            if content_type not in self.ALLOWED_MIME_TYPES:
+                raise ValueError(
+                    f"Invalid file type: {content_type}. "
+                    f"Allowed: {', '.join(self.ALLOWED_MIME_TYPES)}"
+                )
+            if file_size > self.MAX_FILE_SIZE:
+                raise ValueError(
+                    f"File too large: {file_size} bytes. "
+                    f"Max size: {self.MAX_FILE_SIZE} bytes (5MB)"
+                )
+
+        def generate_object_key(self, card_id: str, side: str, original_filename: str) -> str:
+            """Generate unique object key for uploaded file."""
+            ext = (
+                original_filename.rsplit(".", 1)[-1].lower() if "." in original_filename else "jpg"
+            )
+            unique_id = str(uuid.uuid4())
+            return f"cards/{card_id[:8]}/{card_id}_{side}_{unique_id}.{ext}"
+
+        def upload_file(self, file_data, filename, content_type, card_id, side):
+            """Mock upload that returns a fake URL without touching S3."""
+            self.validate_file(filename, content_type, len(file_data))
+            ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else "jpg"
+            unique_id = str(uuid.uuid4())
+            return f"/images/cards/{card_id[:8]}/{card_id}_{side}_{unique_id}.{ext}"
+
+        def delete_file(self, object_url):
+            """Mock delete that does nothing."""
+            pass
+
+    # Replace the singleton instance before any code tries to use it
+    storage_service_module._storage_service_instance = MockStorageService()
+
+    yield
+
+    # Reset after test
+    storage_service_module._storage_service_instance = None
 
 
 @pytest.fixture(scope="function", autouse=True)
