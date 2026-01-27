@@ -2,12 +2,14 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, conint, root_validator
+from pydantic import BaseModel, ConfigDict, Field, conint, model_validator
 
 
 class CardLevelContent(BaseModel):
     level_index: int
     content: Dict
+    question_image_url: Optional[str] = None
+    answer_image_url: Optional[str] = None
 
 
 class CardForReviewWithLevels(BaseModel):
@@ -42,6 +44,7 @@ class CardLevelPayload(BaseModel):
 class CreateCardLevelOption(BaseModel):
     id: str
     text: str
+    image_url: Optional[str] = None
 
 
 class CreateCardLevelRequest(BaseModel):
@@ -72,6 +75,7 @@ class QaContentIn(BaseModel):
 class McqOptionIn(BaseModel):
     id: str
     text: str
+    image_url: Optional[str] = None
 
 
 class McqContentIn(BaseModel):
@@ -89,8 +93,9 @@ class LevelIn(BaseModel):
     level_index: int = Field(ge=0)
     content: ContentIn
 
-    @root_validator(pre=True)
-    def parse_content_union(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    @model_validator(mode="before")
+    @classmethod
+    def parse_content_union(cls, data: Any) -> Any:
         """
         Payload приходит как:
         {
@@ -101,14 +106,15 @@ class LevelIn(BaseModel):
         Так как в content нет discriminator-поля (kind/type),
         определяем тип по наличию ключей options/correctOptionId. [web:2]
         """
-        c = values.get("content") or {}
+        if isinstance(data, dict):
+            c = data.get("content") or {}
 
-        if isinstance(c, dict) and ("options" in c or "correctOptionId" in c):
-            values["content"] = McqContentIn(**c)
-        else:
-            values["content"] = QaContentIn(**c)
+            if isinstance(c, dict) and ("options" in c or "correctOptionId" in c):
+                data["content"] = McqContentIn(**c)
+            else:
+                data["content"] = QaContentIn(**c)
 
-        return values
+        return data
 
 
 class ReplaceLevelsRequest(BaseModel):
@@ -131,6 +137,8 @@ class DeckSessionCard(BaseModel):
     active_level_index: int
 
     levels: List[CardLevelContent]
+    question_image_url: Optional[str] = None
+    answer_image_url: Optional[str] = None
 
 
 class DeckCreate(BaseModel):

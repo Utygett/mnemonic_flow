@@ -16,6 +16,24 @@ services:
       timeout: 5s
       retries: 10
 
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
   backend:
     image: ghcr.io/utygett/mnemonic_flow/backend:latest
     build:
@@ -28,8 +46,17 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       ALGORITHM: ${ALGORITHM}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME:-card-images}
+      MINIO_USE_SSL: ${MINIO_USE_SSL:-false}
     depends_on:
       db:
+        condition: service_healthy
+      minio:
         condition: service_healthy
 
   frontend:
@@ -46,6 +73,7 @@ services:
     depends_on:
       - frontend
       - backend
+      - minio
     ports:
       - "80:80"
     volumes:
@@ -53,3 +81,4 @@ services:
 
 volumes:
   pgdata:
+  minio_data:

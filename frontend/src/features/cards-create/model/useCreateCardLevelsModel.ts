@@ -5,11 +5,18 @@ export type CardType = 'flashcard' | 'multiple_choice'
 export type LevelQA = {
   question: string
   answer: string
+  questionImageFile?: File
+  questionImagePreview?: string
+  answerImageFile?: File
+  answerImagePreview?: string
+  timerSec?: number
 }
 
 export type McqOption = {
   id: string
   text: string
+  imageFile?: File
+  imagePreview?: string
 }
 
 export type LevelMCQ = {
@@ -83,11 +90,16 @@ export type CreateCardLevelsModel = {
   addMcqOption: (levelIndex: number) => void
   removeMcqOption: (levelIndex: number, optionId: string) => void
 
+  // image actions
+  setLevelQuestionImage: (index: number, file: File | null) => void
+  setLevelAnswerImage: (index: number, file: File | null) => void
+  setOptionImage: (levelIndex: number, optionId: string, file: File | null) => void
+
   // cleaned (готово для onSave)
   cleanedLevelsQA: Array<{ question: string; answer: string }>
   cleanedLevelsMCQ: Array<{
     question: string
-    options: Array<{ id: string; text: string }>
+    options: Array<{ id: string; text: string; image_url?: string }>
     correctOptionId: string
     explanation: string
     timerSec?: number
@@ -203,6 +215,100 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
     })
   }
 
+  const setLevelQuestionImage = (index: number, file: File | null) => {
+    setLevelsQA(prev => {
+      const next = [...prev]
+      const lvl = next[index]
+      if (!lvl) return prev
+
+      if (file) {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setLevelsQA(current => {
+            const updated = [...current]
+            updated[index] = {
+              ...updated[index],
+              questionImageFile: file,
+              questionImagePreview: reader.result as string,
+            }
+            return updated
+          })
+        }
+        reader.readAsDataURL(file)
+      } else {
+        next[index] = { ...lvl, questionImageFile: undefined, questionImagePreview: undefined }
+        return next
+      }
+      return prev
+    })
+  }
+
+  const setLevelAnswerImage = (index: number, file: File | null) => {
+    setLevelsQA(prev => {
+      const next = [...prev]
+      const lvl = next[index]
+      if (!lvl) return prev
+
+      if (file) {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setLevelsQA(current => {
+            const updated = [...current]
+            updated[index] = {
+              ...updated[index],
+              answerImageFile: file,
+              answerImagePreview: reader.result as string,
+            }
+            return updated
+          })
+        }
+        reader.readAsDataURL(file)
+      } else {
+        next[index] = { ...lvl, answerImageFile: undefined, answerImagePreview: undefined }
+        return next
+      }
+      return prev
+    })
+  }
+
+  const setOptionImage = (levelIndex: number, optionId: string, file: File | null) => {
+    setLevelsMCQ(prev => {
+      const next = [...prev]
+      const lvl = next[levelIndex]
+      if (!lvl) return prev
+
+      const options = (lvl.options ?? []).map(o => {
+        if (o.id !== optionId) return o
+
+        if (file) {
+          const reader = new FileReader()
+          reader.onloadend = () => {
+            setLevelsMCQ(current => {
+              const updated = [...current]
+              const updatedLevel = updated[levelIndex]
+              if (!updatedLevel) return current
+
+              const updatedOptions = (updatedLevel.options ?? []).map(opt =>
+                opt.id === optionId
+                  ? { ...opt, imageFile: file, imagePreview: reader.result as string }
+                  : opt
+              )
+              updated[levelIndex] = { ...updatedLevel, options: updatedOptions }
+              return updated
+            })
+          }
+          reader.readAsDataURL(file)
+        } else {
+          return { ...o, imageFile: undefined, imagePreview: undefined }
+        }
+        return o
+      })
+
+      next[levelIndex] = { ...lvl, options }
+      return prev
+    })
+  }
+
   const cleanedLevelsQA = useMemo(() => {
     return levelsQA
       .map(l => ({ question: l.question.trim(), answer: l.answer.trim() }))
@@ -214,7 +320,15 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
       .map(l => {
         const question = (l.question ?? '').trim()
         const options = (l.options ?? [])
-          .map(o => ({ id: String(o.id), text: (o.text ?? '').trim() }))
+          .map(o => {
+            const result: { id: string; text: string; image_url?: string } = {
+              id: String(o.id),
+              text: (o.text ?? '').trim(),
+            }
+            // Note: image_url will be filled after upload, not during creation
+            // We include imageFile in the state for upload after card creation
+            return result
+          })
           .filter(o => o.id)
 
         const correctOptionId = String(l.correctOptionId ?? '')
@@ -286,6 +400,10 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
     patchMcqOption,
     addMcqOption,
     removeMcqOption,
+
+    setLevelQuestionImage,
+    setLevelAnswerImage,
+    setOptionImage,
 
     cleanedLevelsQA,
     cleanedLevelsMCQ,
