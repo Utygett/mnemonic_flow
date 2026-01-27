@@ -4,6 +4,7 @@ import { X, Plus, Trash2, ChevronUp, ChevronDown, Pencil } from 'lucide-react'
 
 import { Button } from '../../../shared/ui/Button/Button'
 import { MarkdownField } from '../../../shared/ui/MarkdownField'
+import { CardImageUpload } from '@/features/card-image-upload'
 
 import type { EditCardViewModel } from '../model/useEditCardModel'
 
@@ -387,6 +388,35 @@ export function EditCardView(props: Props) {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Image Upload Section */}
+            <div className={styles.imageUploadSection}>
+              <h3 className={styles.sectionTitle}>Изображения</h3>
+              <div className={styles.imageUploadRow}>
+                <div className={styles.imageUploadColumn}>
+                  <CardImageUpload
+                    cardId={selectedCardId}
+                    side="question"
+                    currentImageUrl={(selectedCard as any)?.questionImageUrl}
+                    onImageChange={() => {
+                      // Image will be uploaded via the component's hook
+                      // The card data will be refreshed on next save
+                    }}
+                  />
+                </div>
+                <div className={styles.imageUploadColumn}>
+                  <CardImageUpload
+                    cardId={selectedCardId}
+                    side="answer"
+                    currentImageUrl={(selectedCard as any)?.answerImageUrl}
+                    onImageChange={() => {
+                      // Image will be uploaded via the component's hook
+                      // The card data will be refreshed on next save
+                    }}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className={styles.bottomActions}>

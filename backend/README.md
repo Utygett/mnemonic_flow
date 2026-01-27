@@ -249,6 +249,11 @@ alembic downgrade -1
 | `SECRET_KEY` | ✅ | JWT секретный ключ | `your-secret-key` |
 | `ALGORITHM` | ✅ | JWT алгоритм | `HS256` |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | ✅ | Время жизни токена (минуты) | `360` |
+| `MINIO_ENDPOINT` | ✅ | MinIO endpoint (с протоколом) | `http://minio:9000` |
+| `MINIO_ACCESS_KEY` | ✅ | MinIO access key | `minioadmin` |
+| `MINIO_SECRET_KEY` | ✅ | MinIO secret key | `minioadmin` |
+| `MINIO_BUCKET_NAME` | ✅ | Имя bucket для изображений | `card-images` |
+| `MINIO_USE_SSL` | ✅ | Использовать HTTPS для MinIO | `false` |
 | `SMTP_*` | ❌ | Конфигурация SMTP для писем | - |
 
 ## 🛠️ Технологический стек
@@ -256,6 +261,8 @@ alembic downgrade -1
 - **FastAPI** — веб-фреймворк с автоматической генерацией OpenAPI
 - **SQLAlchemy 2.0** — ORM с async support
 - **PostgreSQL 16** — база данных
+- **MinIO** — S3-совместимое объектное хранилище для изображений
+- **boto3** — AWS SDK для работы с S3/MinIO
 - **Alembic** — миграции БД
 - **Pydantic** — валидация данных
 - **python-jose** — JWT токены
@@ -281,8 +288,12 @@ alembic downgrade -1
 | `/api/cards` | GET/POST | Список/создание карточек | ✅ |
 | `/api/cards/{id}` | GET/PATCH/DELETE | Операции с карточкой | ✅ |
 | `/api/cards/{id}/review` | POST | Отметить карточку как изученную | ✅ |
+| `/api/cards/{card_id}/levels/{level_index}/question-image` | POST/DELETE | Загрузка/удаление изображения вопроса | ✅ |
+| `/api/cards/{card_id}/levels/{level_index}/answer-image` | POST/DELETE | Загрузка/удаление изображения ответа | ✅ |
+| `/api/cards/{card_id}/option-image` | POST | Загрузка изображения для MCQ опции | ✅ |
 | `/api/decks` | GET/POST | Список/создание колод | ✅ |
 | `/api/decks/{id}` | GET/PATCH/DELETE | Операции с колодой | ✅ |
+| `/api/decks/{deck_id}/study-cards` | GET | Карточки для изучения с изображениями | ✅ |
 | `/api/groups` | GET/POST | Список/создание групп | ✅ |
 | `/api/groups/{id}` | GET/PATCH/DELETE | Операции с группой | ✅ |
 | `/api/stats/dashboard` | GET | Статистика для дашборда | ✅ |
@@ -341,6 +352,7 @@ curl http://localhost:8000/version
 
 **CardLevel** — Уровни сложности карточки
 - card_id, level, question, answer
+- question_image_url, answer_image_url (изображения для уровня)
 - level: 0 (простой), 1 (средний), 2 (сложный)
 
 **StudyGroup** — Учебные группы
@@ -362,11 +374,25 @@ curl http://localhost:8000/version
 app/api/
 ├── __init__.py
 ├── auth.py       # /api/auth/* (register, login, refresh)
-├── cards.py      # /api/cards/* (CRUD + review)
-├── decks.py      # /api/decks/* (CRUD)
+├── cards.py      # /api/cards/* (CRUD + review + image upload)
+├── decks.py      # /api/decks/* (CRUD + study-cards)
 ├── groups.py     # /api/groups/* (CRUD + join/leave)
 └── stats.py      # /api/stats/dashboard
 ```
+
+### Сервисы
+
+```
+app/services/
+├── storage_service.py  # MinIO/S3 хранилище изображений
+└── ...
+```
+
+**StorageService** — управление файлами в MinIO/S3:
+- Валидация: image/jpeg, image/png, image/webp (макс 5MB)
+- Загрузка файлов с генерацией уникальных ключей
+- Удаление файлов
+- Проксирование через Nginx по пути `/images/`
 
 ### Безопасность
 

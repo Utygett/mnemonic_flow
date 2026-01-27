@@ -2,12 +2,13 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { MarkdownField, MarkdownView } from '../../../shared/ui'
 import { Input, Button } from '../../../shared/ui/legacy'
-import { X, Plus, Trash2, Upload } from 'lucide-react'
+import { X, Plus, Trash2, Upload, Image as ImageIcon } from 'lucide-react'
 import { parseCsvNameFrontBack } from '../lib/csv'
 import { LAST_DECK_KEY } from '../model/utils'
 import { useCreateCardModel } from '../model/useCreateCardModel'
 import { useCreateCardLevelsModel } from '../model/useCreateCardLevelsModel'
 import type { CardType, CreateCardProps } from '../model/types'
+import { apiRequest } from '@/shared/api'
 
 import styles from './CreateCard.module.css'
 
@@ -30,6 +31,12 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
     mcqExplanationPreview,
     setMcqExplanationPreview,
 
+    // raw levels state
+    levelsQA,
+    levelsMCQ,
+    setLevelsQA,
+    setLevelsMCQ,
+
     // derived
     levelsCount,
     activeQA,
@@ -44,6 +51,11 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
     addMcqOption,
     removeMcqOption,
 
+    // image actions
+    setLevelQuestionImage,
+    setLevelAnswerImage,
+    setOptionImage,
+
     // cleaned (готово для onSave)
     cleanedLevelsQA,
     cleanedLevelsMCQ,
@@ -56,6 +68,7 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
   const [importBusy, setImportBusy] = useState(false)
   const [importReport, setImportReport] = useState<string | null>(null)
   const [saveBusy, setSaveBusy] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null)
 
   const scrollToReport = () => {
     setTimeout(() => reportRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
@@ -72,20 +85,162 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
     if (!canSave || saveBusy) return
 
     setSaveBusy(true)
+    setUploadProgress(null)
+
     try {
+      let cardId: string | undefined
+
+      // Create card first
       if (cardType === 'flashcard') {
-        await onSave({ deckId, term: safeTerm.trim(), type: 'flashcard', levels: cleanedLevelsQA })
+        const result = (await onSave({
+          deckId,
+          term: safeTerm.trim(),
+          type: 'flashcard',
+          levels: cleanedLevelsQA,
+        })) as any
+        cardId = result?.card_id
       } else {
-        await onSave({
+        const result = (await onSave({
           deckId,
           term: safeTerm.trim(),
           type: 'multiple_choice',
           levels: cleanedLevelsMCQ,
-        })
+        })) as any
+        cardId = result?.card_id
+      }
+
+      // Upload images if card was created
+      if (cardId) {
+        try {
+          if (cardType === 'flashcard') {
+            // Upload level images for flashcard
+            for (let levelIndex = 0; levelIndex < cleanedLevelsQA.length; levelIndex++) {
+              const level = levelsQA[levelIndex]
+              if (!level) continue
+
+              // Upload question image
+              if (level.questionImageFile) {
+                setUploadProgress(`Загрузка изображения вопроса для уровня ${levelIndex + 1}...`)
+                const formData = new FormData()
+                formData.append('file', level.questionImageFile)
+                await apiRequest(`/cards/${cardId}/levels/${levelIndex}/question-image`, {
+                  method: 'POST',
+                  body: formData,
+                })
+              }
+
+              // Upload answer image
+              if (level.answerImageFile) {
+                setUploadProgress(`Загрузка изображения ответа для уровня ${levelIndex + 1}...`)
+                const formData = new FormData()
+                formData.append('file', level.answerImageFile)
+                await apiRequest(`/cards/${cardId}/levels/${levelIndex}/answer-image`, {
+                  method: 'POST',
+                  body: formData,
+                })
+              }
+            }
+          } else {
+            // Upload MCQ option images
+            for (let levelIndex = 0; levelIndex < cleanedLevelsMCQ.length; levelIndex++) {
+              const level = levelsMCQ[levelIndex]
+              if (!level) continue
+
+              for (const option of level.options || []) {
+                if (option.imageFile) {
+                  setUploadProgress(`Загрузка изображения для варианта...`)
+                  const formData = new FormData()
+                  formData.append('file', option.imageFile)
+                  formData.append('option_id', option.id)
+                  await apiRequest(`/cards/${cardId}/option-image`, {
+                    method: 'POST',
+                    body: formData,
+                  })
+                }
+              }
+            }
+          }
+        } catch (uploadError) {
+          console.error('Image upload failed:', uploadError)
+          alert(
+            'Карточка создана, но некоторые изображения не были загружены. Попробуйте добавить их через редактирование.'
+          )
+        }
       }
     } finally {
       setSaveBusy(false)
+      setUploadProgress(null)
     }
+  }
+
+  const handleQuestionImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Пожалуйста, выберите изображение (JPG, PNG, WebP)')
+      return
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Размер файла не должен превышать 5МБ')
+      return
+    }
+
+    setLevelQuestionImage(activeLevel, file)
+  }
+
+  const handleAnswerImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Пожалуйста, выберите изображение (JPG, PNG, WebP)')
+      return
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Размер файла не должен превышать 5МБ')
+      return
+    }
+
+    setLevelAnswerImage(activeLevel, file)
+  }
+
+  const removeQuestionImage = () => {
+    setLevelQuestionImage(activeLevel, null)
+  }
+
+  const removeAnswerImage = () => {
+    setLevelAnswerImage(activeLevel, null)
+  }
+
+  const handleOptionImageSelect =
+    (optionId: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (!file) return
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Пожалуйста, выберите изображение (JPG, PNG, WebP)')
+        return
+      }
+
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Размер файла не должен превышать 5МБ')
+        return
+      }
+
+      setOptionImage(activeLevel, optionId, file)
+    }
+
+  const removeOptionImage = (optionId: string) => () => {
+    setOptionImage(activeLevel, optionId, null)
   }
 
   const handleImportCsv = async (file: File) => {
@@ -272,6 +427,39 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
                   onTogglePreview={() => setQPreview(!qPreview)}
                 />
 
+                {/* Question Image Upload */}
+                <div className={styles.inlineImageUpload}>
+                  {activeQA?.questionImagePreview ? (
+                    <div className={styles.imagePreviewSmall}>
+                      <img
+                        src={activeQA.questionImagePreview}
+                        alt="Question preview"
+                        className={styles.previewImgSmall}
+                      />
+                      <button
+                        type="button"
+                        onClick={removeQuestionImage}
+                        className={styles.removeImageButton}
+                        disabled={saveBusy}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className={styles.inlineUploadButton}>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleQuestionImageSelect}
+                        disabled={saveBusy}
+                        style={{ display: 'none' }}
+                      />
+                      <ImageIcon size={18} />
+                      <span>Добавить изображение</span>
+                    </label>
+                  )}
+                </div>
+
                 <MarkdownField
                   label="Ответ"
                   value={activeQA?.answer ?? ''}
@@ -280,6 +468,39 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
                   onTogglePreview={() => setAPreview(!aPreview)}
                   className={styles.mt4}
                 />
+
+                {/* Answer Image Upload */}
+                <div className={styles.inlineImageUpload}>
+                  {activeQA?.answerImagePreview ? (
+                    <div className={styles.imagePreviewSmall}>
+                      <img
+                        src={activeQA.answerImagePreview}
+                        alt="Answer preview"
+                        className={styles.previewImgSmall}
+                      />
+                      <button
+                        type="button"
+                        onClick={removeAnswerImage}
+                        className={styles.removeImageButton}
+                        disabled={saveBusy}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className={styles.inlineUploadButton}>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleAnswerImageSelect}
+                        disabled={saveBusy}
+                        style={{ display: 'none' }}
+                      />
+                      <ImageIcon size={18} />
+                      <span>Добавить изображение</span>
+                    </label>
+                  )}
+                </div>
 
                 <div className={styles.formRow} style={{ marginTop: '1rem' }}>
                   <label className={styles.formLabel}>Таймер (сек) — опционально</label>
@@ -389,6 +610,39 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
                           preview={mcqOptionsPreview}
                           onTogglePreview={() => setMcqOptionsPreview(!mcqOptionsPreview)}
                         />
+
+                        {/* Option Image Upload */}
+                        <div className={styles.optionImageUpload}>
+                          {opt.imagePreview ? (
+                            <div className={styles.imagePreviewSmall}>
+                              <img
+                                src={opt.imagePreview}
+                                alt={`Option ${idx + 1} preview`}
+                                className={styles.previewImgSmall}
+                              />
+                              <button
+                                type="button"
+                                onClick={removeOptionImage(opt.id)}
+                                className={styles.removeImageButton}
+                                disabled={saveBusy}
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          ) : (
+                            <label className={styles.inlineUploadButton}>
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                onChange={handleOptionImageSelect(opt.id)}
+                                disabled={saveBusy}
+                                style={{ display: 'none' }}
+                              />
+                              <ImageIcon size={16} />
+                              <span>Добавить изображение</span>
+                            </label>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -422,6 +676,8 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
             )}
           </div>
         </div>
+
+        {uploadProgress && <div className={styles.uploadProgress}>{uploadProgress}</div>}
 
         <div className={styles.bottomActions}>
           <Button

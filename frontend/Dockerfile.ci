@@ -9,9 +9,6 @@ ENV CI=true
 COPY package*.json ./
 RUN npm ci
 
-# Кешируем слой с node_modules (используется для тестов)
-RUN npm run build || true  # build может упасть, но node_modules остаются
-
 # Этот target используется в compose.ci.yml
 FROM base AS build
 COPY . .

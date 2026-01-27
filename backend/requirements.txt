@@ -1,6 +1,7 @@
 passlib
 pydantic-settings
 python-jose
+python-multipart
 fastapi
 uvicorn
 sqlalchemy
@@ -12,6 +13,7 @@ pytest
 httpx
 aiosmtplib
 alembic
+boto3
 
 pytest-asyncio       # Для async тестов
 pytest-cov           # Coverage отчёты

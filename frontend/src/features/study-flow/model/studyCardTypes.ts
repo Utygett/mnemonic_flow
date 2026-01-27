@@ -14,6 +14,8 @@ export interface StudyCard {
   type: string
   levels: CardLevel[]
   activeLevel: number
+  questionImageUrl?: string
+  answerImageUrl?: string
 }
 
 // helper’ы (удобно для StudySession/Create/Edit)
