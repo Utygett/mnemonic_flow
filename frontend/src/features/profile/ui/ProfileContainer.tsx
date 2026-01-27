@@ -1,45 +1,41 @@
-import React, { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { ProfileView } from './ProfileView'
-import type { ApiHealth } from '../model/types'
+import type { Theme } from '../model/types'
 
-type ProfileContainerProps = {
-  isPWA: boolean
-}
+export function ProfileContainer() {
+  const [theme, setTheme] = useState<Theme>('dark')
 
-export function ProfileContainer(props: ProfileContainerProps) {
-  const [apiHealth, setApiHealth] = useState<ApiHealth>('checking')
+  const handleLogout = () => {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    window.location.href = '/auth'
+  }
 
-  useEffect(() => {
-    const checkApiHealth = async () => {
-      try {
-        // Health endpoint is public (no auth). Do not use apiRequest here,
-        // because apiRequest can trigger token refresh flow on 401.
-        const res = await fetch('/health', {
-          method: 'GET',
-          cache: 'no-store',
-        })
+  const handleChangePassword = () => {
+    alert('Смена пароля (заглушка)')
+  }
 
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const handleEditUsername = () => {
+    alert('Редактирование имени (заглушка)')
+  }
 
-        setApiHealth('healthy')
-      } catch (error) {
-        setApiHealth('unhealthy')
-        console.warn('API is unavailable, using fallback data')
-      }
-    }
-
-    void checkApiHealth()
-  }, [])
+  const handleThemeChange = (newTheme: Theme) => {
+    setTheme(newTheme)
+    // TODO: persist to localStorage or backend
+  }
 
   return (
     <ProfileView
-      apiHealth={apiHealth}
-      isPWA={props.isPWA}
       initials="У"
       name="АБД"
       email="user@example.com"
-      version="1.0.0"
+      version="0.1.0"
+      theme={theme}
+      onThemeChange={handleThemeChange}
+      onLogout={handleLogout}
+      onChangePassword={handleChangePassword}
+      onEditUsername={handleEditUsername}
     />
   )
 }
