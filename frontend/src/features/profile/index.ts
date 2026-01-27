@@ -1,4 +1,4 @@
 export { ProfileContainer } from './ui/ProfileContainer'
 export { ProfileView } from './ui/ProfileView'
 
-export type { ApiHealth, ProfileViewProps } from './model/types'
+export type { Theme, ProfileViewProps } from './model/types'
