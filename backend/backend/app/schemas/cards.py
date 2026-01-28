@@ -10,6 +10,8 @@ class CardLevelContent(BaseModel):
     content: Dict
     question_image_url: Optional[str] = None
     answer_image_url: Optional[str] = None
+    question_audio_url: Optional[str] = None
+    answer_audio_url: Optional[str] = None
 
 
 class CardForReviewWithLevels(BaseModel):

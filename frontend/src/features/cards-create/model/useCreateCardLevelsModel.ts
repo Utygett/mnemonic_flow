@@ -9,6 +9,10 @@ export type LevelQA = {
   questionImagePreview?: string
   answerImageFile?: File
   answerImagePreview?: string
+  questionAudioFile?: File
+  questionAudioPreview?: string
+  answerAudioFile?: File
+  answerAudioPreview?: string
   timerSec?: number
 }
 
@@ -94,6 +98,10 @@ export type CreateCardLevelsModel = {
   setLevelQuestionImage: (index: number, file: File | null) => void
   setLevelAnswerImage: (index: number, file: File | null) => void
   setOptionImage: (levelIndex: number, optionId: string, file: File | null) => void
+
+  // audio actions
+  setLevelQuestionAudio: (index: number, file: File | null) => void
+  setLevelAnswerAudio: (index: number, file: File | null) => void
 
   // cleaned (готово для onSave)
   cleanedLevelsQA: Array<{ question: string; answer: string }>
@@ -309,6 +317,62 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
     })
   }
 
+  const setLevelQuestionAudio = (index: number, file: File | null) => {
+    setLevelsQA(prev => {
+      const next = [...prev]
+      const lvl = next[index]
+      if (!lvl) return prev
+
+      if (file) {
+        const url = URL.createObjectURL(file)
+        setLevelsQA(current => {
+          const updated = [...current]
+          updated[index] = {
+            ...updated[index],
+            questionAudioFile: file,
+            questionAudioPreview: url,
+          }
+          return updated
+        })
+      } else {
+        if (lvl.questionAudioPreview) {
+          URL.revokeObjectURL(lvl.questionAudioPreview)
+        }
+        next[index] = { ...lvl, questionAudioFile: undefined, questionAudioPreview: undefined }
+        return next
+      }
+      return prev
+    })
+  }
+
+  const setLevelAnswerAudio = (index: number, file: File | null) => {
+    setLevelsQA(prev => {
+      const next = [...prev]
+      const lvl = next[index]
+      if (!lvl) return prev
+
+      if (file) {
+        const url = URL.createObjectURL(file)
+        setLevelsQA(current => {
+          const updated = [...current]
+          updated[index] = {
+            ...updated[index],
+            answerAudioFile: file,
+            answerAudioPreview: url,
+          }
+          return updated
+        })
+      } else {
+        if (lvl.answerAudioPreview) {
+          URL.revokeObjectURL(lvl.answerAudioPreview)
+        }
+        next[index] = { ...lvl, answerAudioFile: undefined, answerAudioPreview: undefined }
+        return next
+      }
+      return prev
+    })
+  }
+
   const cleanedLevelsQA = useMemo(() => {
     return levelsQA
       .map(l => ({ question: l.question.trim(), answer: l.answer.trim() }))
@@ -404,6 +468,9 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
     setLevelQuestionImage,
     setLevelAnswerImage,
     setOptionImage,
+
+    setLevelQuestionAudio,
+    setLevelAnswerAudio,
 
     cleanedLevelsQA,
     cleanedLevelsMCQ,

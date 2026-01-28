@@ -65,11 +65,13 @@ class TestStorageServiceKeyGeneration:
 
     def test_generate_object_key_with_extension(self):
         """Test key generation with file extension."""
+        from app.services.storage_service import FileType
+
         card_id = "12345678-1234-1234-1234-123456789012"
         side = "question"
         filename = "test_image.jpg"
 
-        key = storage_service.generate_object_key(card_id, side, filename)
+        key = storage_service.generate_object_key(card_id, side, FileType.IMAGE, filename)
 
         # Should contain card prefix, side, and unique ID
         assert f"cards/{card_id[:8]}/" in key
@@ -78,22 +80,26 @@ class TestStorageServiceKeyGeneration:
 
     def test_generate_object_key_without_extension(self):
         """Test key generation without file extension defaults to jpg."""
+        from app.services.storage_service import FileType
+
         card_id = "12345678-1234-1234-1234-123456789012"
         side = "answer"
         filename = "no_extension"
 
-        key = storage_service.generate_object_key(card_id, side, filename)
+        key = storage_service.generate_object_key(card_id, side, FileType.IMAGE, filename)
 
         assert key.endswith(".jpg")
 
     def test_generate_object_key_unique(self):
         """Test that each call generates a unique key."""
+        from app.services.storage_service import FileType
+
         card_id = "12345678-1234-1234-1234-123456789012"
         side = "question"
         filename = "test.jpg"
 
-        key1 = storage_service.generate_object_key(card_id, side, filename)
-        key2 = storage_service.generate_object_key(card_id, side, filename)
+        key1 = storage_service.generate_object_key(card_id, side, FileType.IMAGE, filename)
+        key2 = storage_service.generate_object_key(card_id, side, FileType.IMAGE, filename)
 
         # Keys should be different due to unique UUID
         assert key1 != key2
