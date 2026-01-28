@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import uuid
+from typing import Optional
 
-from sqlalchemy import ForeignKey, Integer, UniqueConstraint
+from sqlalchemy import ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -30,6 +31,12 @@ class CardLevel(Base):
 
     level_index: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[dict] = mapped_column(JSONB, nullable=False)
+
+    # Level-specific images
+    question_image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    question_image_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    answer_image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    answer_image_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     card: Mapped[Card] = relationship("Card", back_populates="levels")  # noqa: F821
 

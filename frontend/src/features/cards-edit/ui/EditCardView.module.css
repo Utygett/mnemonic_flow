@@ -303,3 +303,27 @@
   gap: 12px;
   padding-top: 16px;
 }
+
+.imageUploadSection {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 16px;
+}
+
+.sectionTitle {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.imageUploadRow {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.imageUploadColumn {
+  width: 100%;
+}

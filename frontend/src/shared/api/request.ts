@@ -56,11 +56,14 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
   const doFetch = async () => {
     const token = localStorage.getItem('access_token')
 
+    // Don't set Content-Type for FormData - browser will set it with correct boundary
+    const isFormData = init?.body instanceof FormData
+
     return fetch(`/api${path}`, {
       ...init,
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        'Content-Type': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...(init?.headers ?? {}),
       },
     })

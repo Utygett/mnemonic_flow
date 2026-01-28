@@ -290,3 +290,171 @@
   background: var(--surface);
   padding: 12px;
 }
+
+.imageSection {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 16px;
+}
+
+.sectionTitle {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.imageUploadRow {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.imageUploadColumn {
+  width: 100%;
+}
+
+.imageLabel {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.uploadButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 16px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.uploadButton:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface-2));
+}
+
+.uploadButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.uploadButton span {
+  font-size: 14px;
+}
+
+.imagePreview {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.previewImg {
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+  object-fit: contain;
+  display: block;
+}
+
+.removeImageButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.removeImageButton:hover:not(:disabled) {
+  background: rgba(255, 107, 107, 0.8);
+}
+
+.removeImageButton:disabled {
+  cursor: not-allowed;
+}
+
+.imageHint {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.uploadProgress {
+  padding: 12px;
+  background: color-mix(in srgb, var(--primary) 15%, var(--surface));
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-md);
+  color: var(--primary);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Inline image upload styles */
+.inlineImageUpload {
+  margin-top: 12px;
+}
+
+.inlineUploadButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 13px;
+}
+
+.inlineUploadButton:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface-2));
+}
+
+.inlineUploadButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.imagePreviewSmall {
+  position: relative;
+  display: inline-block;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  max-width: 200px;
+}
+
+.previewImgSmall {
+  max-width: 200px;
+  max-height: 150px;
+  object-fit: contain;
+  display: block;
+}
+
+.optionImageUpload {
+  margin-top: 12px;
+}
