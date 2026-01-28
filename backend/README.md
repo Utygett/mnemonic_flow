@@ -261,7 +261,7 @@ alembic downgrade -1
 - **FastAPI** — веб-фреймворк с автоматической генерацией OpenAPI
 - **SQLAlchemy 2.0** — ORM с async support
 - **PostgreSQL 16** — база данных
-- **MinIO** — S3-совместимое объектное хранилище для изображений
+- **MinIO** — S3-совместимое объектное хранилище для изображений и аудио
 - **boto3** — AWS SDK для работы с S3/MinIO
 - **Alembic** — миграции БД
 - **Pydantic** — валидация данных
@@ -290,6 +290,8 @@ alembic downgrade -1
 | `/api/cards/{id}/review` | POST | Отметить карточку как изученную | ✅ |
 | `/api/cards/{card_id}/levels/{level_index}/question-image` | POST/DELETE | Загрузка/удаление изображения вопроса | ✅ |
 | `/api/cards/{card_id}/levels/{level_index}/answer-image` | POST/DELETE | Загрузка/удаление изображения ответа | ✅ |
+| `/api/cards/{card_id}/levels/{level_index}/question-audio` | POST/DELETE | Загрузка/удаление аудио вопроса | ✅ |
+| `/api/cards/{card_id}/levels/{level_index}/answer-audio` | POST/DELETE | Загрузка/удаление аудио ответа | ✅ |
 | `/api/cards/{card_id}/option-image` | POST | Загрузка изображения для MCQ опции | ✅ |
 | `/api/decks` | GET/POST | Список/создание колод | ✅ |
 | `/api/decks/{id}` | GET/PATCH/DELETE | Операции с колодой | ✅ |
@@ -353,6 +355,8 @@ curl http://localhost:8000/version
 **CardLevel** — Уровни сложности карточки
 - card_id, level, question, answer
 - question_image_url, answer_image_url (изображения для уровня)
+- question_audio_url, answer_audio_url (аудио для уровня)
+- question_audio_name, answer_audio_name (имена аудио файлов)
 - level: 0 (простой), 1 (средний), 2 (сложный)
 
 **StudyGroup** — Учебные группы
@@ -389,10 +393,11 @@ app/services/
 ```
 
 **StorageService** — управление файлами в MinIO/S3:
-- Валидация: image/jpeg, image/png, image/webp (макс 5MB)
+- **Изображения**: Валидация: image/jpeg, image/png, image/webp (макс 5MB)
+- **Аудио**: Валидация: audio/mpeg, audio/mp4, audio/wav, audio/webm, audio/ogg (макс 10MB)
 - Загрузка файлов с генерацией уникальных ключей
 - Удаление файлов
-- Проксирование через Nginx по пути `/images/`
+- Проксирование через Nginx по путям `/images/` и `/audio/`
 
 ### Безопасность
 

@@ -9,6 +9,8 @@ export interface CardLevel {
   content: CardContent
   questionImageUrl?: string
   answerImageUrl?: string
+  questionAudioUrl?: string
+  answerAudioUrl?: string
 }
 
 export interface StudyCard {
