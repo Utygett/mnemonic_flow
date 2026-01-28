@@ -27,7 +27,7 @@ from app.schemas.cards import (
     ReplaceLevelsRequest,
 )
 from app.services.review_service import ReviewService
-from app.services.storage_service import storage_service
+from app.services.storage_service import FileType, storage_service
 
 router = APIRouter()
 
@@ -715,6 +715,7 @@ def upload_level_question_image(
             content_type=file.content_type or "image/jpeg",
             card_id=f"{card_id}_{level_index}",
             side="question",
+            file_type=FileType.IMAGE,
         )
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -736,6 +737,8 @@ def upload_level_question_image(
         content=card_level.content,
         question_image_url=card_level.question_image_url,
         answer_image_url=card_level.answer_image_url,
+        question_audio_url=card_level.question_audio_url,
+        answer_audio_url=card_level.answer_audio_url,
     )
 
 
@@ -772,6 +775,7 @@ def upload_level_answer_image(
             content_type=file.content_type or "image/jpeg",
             card_id=f"{card_id}_{level_index}",
             side="answer",
+            file_type=FileType.IMAGE,
         )
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -791,6 +795,8 @@ def upload_level_answer_image(
         content=card_level.content,
         question_image_url=card_level.question_image_url,
         answer_image_url=card_level.answer_image_url,
+        question_audio_url=card_level.question_audio_url,
+        answer_audio_url=card_level.answer_audio_url,
     )
 
 
@@ -910,6 +916,7 @@ def upload_option_image(
             content_type=file.content_type or "image/jpeg",
             card_id=f"{card_id}_{option_id}",
             side="option",
+            file_type=FileType.IMAGE,
         )
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -937,4 +944,224 @@ def upload_option_image(
         content=card_level.content,
         question_image_url=card_level.question_image_url,
         answer_image_url=card_level.answer_image_url,
+        question_audio_url=card_level.question_audio_url,
+        answer_audio_url=card_level.answer_audio_url,
     )
+
+
+@router.post("/{card_id}/levels/{level_index}/question-audio", response_model=CardLevelContent)
+def upload_level_question_audio(
+    card_id: UUID,
+    level_index: int,
+    file: UploadFile = File(...),
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Upload an audio file for the question side of a specific card level."""
+    card = db.get(Card, card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+
+    deck = db.get(Deck, card.deck_id)
+    if not deck or deck.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Card not accessible")
+
+    # Find the card level
+    card_level = db.query(CardLevel).filter_by(card_id=card_id, level_index=level_index).first()
+    if not card_level:
+        raise HTTPException(status_code=404, detail="Card level not found")
+
+    # Validate file type (audio)
+    if file.content_type not in storage_service.AUDIO_ALLOWED_MIME_TYPES:
+        allowed = ", ".join(storage_service.AUDIO_ALLOWED_MIME_TYPES)
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid file type. Allowed: {allowed}",
+        )
+
+    # Read file data
+    file_data = file.file.read()
+
+    # Check if file is empty
+    if len(file_data) == 0:
+        raise HTTPException(status_code=422, detail="File is empty")
+
+    # Upload to storage
+    try:
+        audio_url = storage_service.upload_file(
+            file_data=file_data,
+            filename=file.filename or "audio.mp3",
+            content_type=file.content_type or "audio/mpeg",
+            card_id=f"{card_id}_{level_index}",
+            side="question",
+            file_type=FileType.AUDIO,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    # Delete old audio if exists
+    if card_level.question_audio_url:
+        storage_service.delete_file(card_level.question_audio_url)
+
+    # Update card level
+    card_level.question_audio_url = audio_url
+    card_level.question_audio_name = file.filename
+    db.commit()
+    db.refresh(card_level)
+
+    return CardLevelContent(
+        level_index=card_level.level_index,
+        content=card_level.content,
+        question_image_url=card_level.question_image_url,
+        answer_image_url=card_level.answer_image_url,
+        question_audio_url=card_level.question_audio_url,
+        answer_audio_url=card_level.answer_audio_url,
+    )
+
+
+@router.post("/{card_id}/levels/{level_index}/answer-audio", response_model=CardLevelContent)
+def upload_level_answer_audio(
+    card_id: UUID,
+    level_index: int,
+    file: UploadFile = File(...),
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Upload an audio file for the answer side of a specific card level."""
+    card = db.get(Card, card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+
+    deck = db.get(Deck, card.deck_id)
+    if not deck or deck.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Card not accessible")
+
+    # Find the card level
+    card_level = db.query(CardLevel).filter_by(card_id=card_id, level_index=level_index).first()
+    if not card_level:
+        raise HTTPException(status_code=404, detail="Card level not found")
+
+    # Validate file type (audio)
+    if file.content_type not in storage_service.AUDIO_ALLOWED_MIME_TYPES:
+        allowed = ", ".join(storage_service.AUDIO_ALLOWED_MIME_TYPES)
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid file type. Allowed: {allowed}",
+        )
+
+    # Read file data
+    file_data = file.file.read()
+
+    # Check if file is empty
+    if len(file_data) == 0:
+        raise HTTPException(status_code=422, detail="File is empty")
+
+    # Upload to storage
+    try:
+        audio_url = storage_service.upload_file(
+            file_data=file_data,
+            filename=file.filename or "audio.mp3",
+            content_type=file.content_type or "audio/mpeg",
+            card_id=f"{card_id}_{level_index}",
+            side="answer",
+            file_type=FileType.AUDIO,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    # Delete old audio if exists
+    if card_level.answer_audio_url:
+        storage_service.delete_file(card_level.answer_audio_url)
+
+    # Update card level
+    card_level.answer_audio_url = audio_url
+    card_level.answer_audio_name = file.filename
+    db.commit()
+    db.refresh(card_level)
+
+    return CardLevelContent(
+        level_index=card_level.level_index,
+        content=card_level.content,
+        question_image_url=card_level.question_image_url,
+        answer_image_url=card_level.answer_image_url,
+        question_audio_url=card_level.question_audio_url,
+        answer_audio_url=card_level.answer_audio_url,
+    )
+
+
+@router.delete(
+    "/{card_id}/levels/{level_index}/question-audio", status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_level_question_audio(
+    card_id: UUID,
+    level_index: int,
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Delete audio file from the question side of a card level."""
+    card = db.get(Card, card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+
+    deck = db.get(Deck, card.deck_id)
+    if not deck or deck.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Card not accessible")
+
+    # Find the card level
+    card_level = db.query(CardLevel).filter_by(card_id=card_id, level_index=level_index).first()
+    if not card_level:
+        raise HTTPException(status_code=404, detail="Card level not found")
+
+    if not card_level.question_audio_url:
+        raise HTTPException(status_code=404, detail="No audio file found")
+
+    # Delete from storage
+    storage_service.delete_file(card_level.question_audio_url)
+
+    # Update card level
+    card_level.question_audio_url = None
+    card_level.question_audio_name = None
+    db.commit()
+
+    return Response(status_code=204)
+
+
+@router.delete(
+    "/{card_id}/levels/{level_index}/answer-audio", status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_level_answer_audio(
+    card_id: UUID,
+    level_index: int,
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Delete audio file from the answer side of a card level."""
+    card = db.get(Card, card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+
+    deck = db.get(Deck, card.deck_id)
+    if not deck or deck.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Card not accessible")
+
+    # Find the card level
+    card_level = db.query(CardLevel).filter_by(card_id=card_id, level_index=level_index).first()
+    if not card_level:
+        raise HTTPException(status_code=404, detail="Card level not found")
+
+    if not card_level.answer_audio_url:
+        raise HTTPException(status_code=404, detail="No audio file found")
+
+    # Delete from storage
+    storage_service.delete_file(card_level.answer_audio_url)
+
+    # Update card level
+    card_level.answer_audio_url = None
+    card_level.answer_audio_name = None
+    db.commit()
+
+    return Response(status_code=204)

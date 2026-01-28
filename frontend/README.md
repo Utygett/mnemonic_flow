@@ -52,21 +52,23 @@ src/
 │   └── bottom-nav/   # Нижняя навигация
 │
 ├── features/         # Фичи (use-cases)
-│   ├── cards-actions/    # Действия с карточками
-│   ├── cards-create/     # Создание карточек
-│   ├── cards-edit/       # Редактирование карточек
-│   ├── cards-flow/       # Flow для работы с карточками
-│   ├── deck-add/         # Добавление существующей колоды
-│   ├── deck-create/      # Создание колоды
-│   ├── deck-details/     # Детали колоды
-│   ├── deck-edit/        # Редактирование колоды
-│   ├── decks-actions/    # Действия с колодами
-│   ├── decks-flow/       # Flow для работы с колодами
-│   ├── dashboard/        # Дашборд
-│   ├── group-create/     # Создание группы
-│   ├── profile/          # Профиль пользователя
-│   ├── statistics/       # Статистика
-│   ├── study-flow/       # Flow изучения
+│   ├── card-audio/        # Загрузка аудио для карточек
+│   ├── card-image-upload/ # Загрузка изображений для карточек
+│   ├── cards-actions/     # Действия с карточками
+│   ├── cards-create/      # Создание карточек
+│   ├── cards-edit/        # Редактирование карточек
+│   ├── cards-flow/        # Flow для работы с карточками
+│   ├── deck-add/          # Добавление существующей колоды
+│   ├── deck-create/       # Создание колоды
+│   ├── deck-details/      # Детали колоды
+│   ├── deck-edit/         # Редактирование колоды
+│   ├── decks-actions/     # Действия с колодами
+│   ├── decks-flow/        # Flow для работы с колодами
+│   ├── dashboard/         # Дашборд
+│   ├── group-create/      # Создание группы
+│   ├── profile/           # Профиль пользователя
+│   ├── statistics/        # Статистика
+│   ├── study-flow/        # Flow изучения
 │   └── ...
 │
 ├── entities/         # Сущности (domain models)

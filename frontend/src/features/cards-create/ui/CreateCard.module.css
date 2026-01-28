@@ -455,6 +455,59 @@
   display: block;
 }
 
+.audioPreviewSmall {
+  position: relative;
+  display: inline-block;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  max-width: 300px;
+}
+
+.audioPlayerSmall {
+  max-width: 300px;
+  height: 40px;
+  display: block;
+}
+
 .optionImageUpload {
   margin-top: 12px;
+}
+
+/* Audio buttons row */
+.audioButtonsRow {
+  display: flex;
+  gap: 8px;
+}
+
+/* Recording state */
+.recording {
+  border-color: #ff6b6b !important;
+  background: color-mix(in srgb, #ff6b6b 12%, var(--surface-2)) !important;
+  color: #ff6b6b !important;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.recordingIcon {
+  animation: pulseIcon 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes pulseIcon {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }

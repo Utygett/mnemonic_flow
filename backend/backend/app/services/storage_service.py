@@ -1,7 +1,15 @@
 import uuid
-from typing import Optional
+from enum import Enum
+from typing import Literal, Optional
 
 from app.core.config import settings
+
+
+class FileType(Enum):
+    """File type for validation."""
+
+    IMAGE = "image"
+    AUDIO = "audio"
 
 
 class StorageService:
@@ -10,8 +18,20 @@ class StorageService:
     Uses boto3 for AWS S3 and S3-compatible storage (MinIO).
     """
 
-    ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
-    MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+    # Image settings
+    IMAGE_ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
+    IMAGE_MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+    # Audio settings
+    AUDIO_ALLOWED_MIME_TYPES = {
+        "audio/mpeg",  # mp3
+        "audio/mp4",  # m4a
+        "audio/wav",
+        "audio/webm",
+        "audio/ogg",  # opus
+    }
+    AUDIO_MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB for audio
+
     BUCKET_NAME = settings.MINIO_BUCKET_NAME
 
     def __init__(self) -> None:
@@ -43,24 +63,48 @@ class StorageService:
         except ClientError:
             self._s3_client.create_bucket(Bucket=self.BUCKET_NAME)
 
-    def validate_file(self, filename: str, content_type: str, file_size: int) -> None:
+    def validate_file(
+        self,
+        filename: str,
+        content_type: str,
+        file_size: int,
+        file_type: Literal[FileType.IMAGE, FileType.AUDIO] = FileType.IMAGE,
+    ) -> None:
         """Validate file before upload."""
-        if content_type not in self.ALLOWED_MIME_TYPES:
+        if file_type == FileType.IMAGE:
+            allowed_types = self.IMAGE_ALLOWED_MIME_TYPES
+            max_size = self.IMAGE_MAX_FILE_SIZE
+        else:  # AUDIO
+            allowed_types = self.AUDIO_ALLOWED_MIME_TYPES
+            max_size = self.AUDIO_MAX_FILE_SIZE
+
+        if content_type not in allowed_types:
             raise ValueError(
-                f"Invalid file type: {content_type}. "
-                f"Allowed: {', '.join(self.ALLOWED_MIME_TYPES)}"
+                f"Invalid file type: {content_type}. " f"Allowed: {', '.join(allowed_types)}"
             )
 
-        if file_size > self.MAX_FILE_SIZE:
+        if file_size > max_size:
             raise ValueError(
-                f"File too large: {file_size} bytes. " f"Max size: {self.MAX_FILE_SIZE} bytes (5MB)"
+                f"File too large: {file_size} bytes. "
+                f"Max size: {max_size} bytes ({max_size // (1024*1024)}MB)"
             )
 
-    def generate_object_key(self, card_id: str, side: str, original_filename: str) -> str:
+    def generate_object_key(
+        self,
+        card_id: str,
+        side: str,
+        file_type: Literal[FileType.IMAGE, FileType.AUDIO],
+        original_filename: str,
+    ) -> str:
         """Generate unique object key for uploaded file."""
-        ext = original_filename.rsplit(".", 1)[-1].lower() if "." in original_filename else "jpg"
+        ext = (
+            original_filename.rsplit(".", 1)[-1].lower()
+            if "." in original_filename
+            else ("jpg" if file_type == FileType.IMAGE else "mp3")
+        )
         unique_id = str(uuid.uuid4())
-        return f"cards/{card_id[:8]}/{card_id}_{side}_{unique_id}.{ext}"
+        type_prefix = "audio" if file_type == FileType.AUDIO else "cards"
+        return f"{type_prefix}/{card_id[:8]}/{card_id}_{side}_{unique_id}.{ext}"
 
     def upload_file(
         self,
@@ -69,6 +113,7 @@ class StorageService:
         content_type: str,
         card_id: str,
         side: str,
+        file_type: Literal[FileType.IMAGE, FileType.AUDIO] = FileType.IMAGE,
     ) -> str:
         """
         Upload file to storage and return public URL.
@@ -79,6 +124,7 @@ class StorageService:
             content_type: MIME type
             card_id: Card UUID for organization
             side: Either 'question' or 'answer'
+            file_type: Type of file (image or audio)
 
         Returns:
             Public URL of the uploaded file
@@ -86,9 +132,9 @@ class StorageService:
         self._ensure_bucket_exists()
 
         file_size = len(file_data)
-        self.validate_file(filename, content_type, file_size)
+        self.validate_file(filename, content_type, file_size, file_type)
 
-        object_key = self.generate_object_key(card_id, side, filename)
+        object_key = self.generate_object_key(card_id, side, file_type, filename)
 
         self._s3_client.put_object(
             Bucket=self.BUCKET_NAME,
@@ -98,21 +144,22 @@ class StorageService:
         )
 
         # Return public URL (will be proxied through nginx)
-        return f"/images/{object_key}"
+        url_prefix = "/audio/" if file_type == FileType.AUDIO else "/images/"
+        return f"{url_prefix}{object_key}"
 
     def delete_file(self, object_url: Optional[str]) -> None:
         """
         Delete file from storage.
 
         Args:
-            object_url: Full URL like "/images/cards/abc123/..." or None
+            object_url: Full URL like "/images/cards/abc123/..." or "/audio/..." or None
         """
         if not object_url:
             return
 
-        # object_url comes from DB as "/images/cards/..."
-        # Need to strip the "/images/" prefix
-        storage_key = object_url.replace("/images/", "", 1)
+        # object_url comes from DB as "/images/cards/..." or "/audio/..."
+        # Need to strip the prefix
+        storage_key = object_url.replace("/images/", "", 1).replace("/audio/", "", 1)
 
         from botocore.exceptions import ClientError  # noqa: TCH002 - Third-party import
 

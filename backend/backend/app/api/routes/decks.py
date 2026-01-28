@@ -113,7 +113,14 @@ def list_deck_cards(
     for card in cards:
         levels = db.query(CardLevel).filter(CardLevel.card_id == card.id).all()
         levels_data = [
-            CardLevelContent(level_index=card_level.level_index, content=card_level.content)
+            CardLevelContent(
+                level_index=card_level.level_index,
+                content=card_level.content,
+                question_image_url=card_level.question_image_url,
+                answer_image_url=card_level.answer_image_url,
+                question_audio_url=card_level.question_audio_url,
+                answer_audio_url=card_level.answer_audio_url,
+            )
             for card_level in levels
         ]
         result.append(
@@ -225,7 +232,14 @@ def get_deck_session(
                 active_card_level_id=active_level.id,
                 active_level_index=active_level.level_index,
                 levels=[
-                    CardLevelContent(level_index=card_level.level_index, content=card_level.content)
+                    CardLevelContent(
+                        level_index=card_level.level_index,
+                        content=card_level.content,
+                        question_image_url=card_level.question_image_url,
+                        answer_image_url=card_level.answer_image_url,
+                        question_audio_url=card_level.question_audio_url,
+                        answer_audio_url=card_level.answer_audio_url,
+                    )
                     for card_level in lvls
                 ],
             )
@@ -302,7 +316,14 @@ def get_deck_with_cards(
                 title=card.title,
                 type=card.type,
                 levels=[
-                    CardLevelContent(level_index=card_level.level_index, content=card_level.content)
+                    CardLevelContent(
+                        level_index=card_level.level_index,
+                        content=card_level.content,
+                        question_image_url=card_level.question_image_url,
+                        answer_image_url=card_level.answer_image_url,
+                        question_audio_url=card_level.question_audio_url,
+                        answer_audio_url=card_level.answer_audio_url,
+                    )
                     for card_level in levels
                 ],
             )
@@ -346,7 +367,14 @@ def get_deck_with_cards_ordered(
                 title=c.title,
                 type=c.type,
                 levels=[
-                    CardLevelContent(level_index=card_level.level_index, content=card_level.content)
+                    CardLevelContent(
+                        level_index=card_level.level_index,
+                        content=card_level.content,
+                        question_image_url=card_level.question_image_url,
+                        answer_image_url=card_level.answer_image_url,
+                        question_audio_url=card_level.question_audio_url,
+                        answer_audio_url=card_level.answer_audio_url,
+                    )
                     for card_level in levels
                 ],
             )
@@ -531,6 +559,8 @@ def get_study_cards(
                         "content": card_level.content,
                         "questionImageUrl": card_level.question_image_url,
                         "answerImageUrl": card_level.answer_image_url,
+                        "questionAudioUrl": card_level.question_audio_url,
+                        "answerAudioUrl": card_level.answer_audio_url,
                     }
                     for card_level in lvls
                 ],

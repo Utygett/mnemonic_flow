@@ -38,6 +38,12 @@ class CardLevel(Base):
     answer_image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     answer_image_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
+    # Level-specific audio
+    question_audio_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    question_audio_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    answer_audio_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    answer_audio_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
     card: Mapped[Card] = relationship("Card", back_populates="levels")  # noqa: F821
 
     progress: Mapped[list[CardProgress]] = relationship(  # noqa: F821
