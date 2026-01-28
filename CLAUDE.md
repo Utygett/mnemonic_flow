@@ -438,7 +438,7 @@ backend/
 - JWT authentication with refresh token rotation
 - Alembic for database migrations (currently using custom init)
 - PostgreSQL 16 database
-- MinIO/S3 for object storage (images) with boto3
+- MinIO/S3 for object storage (images, audio) with boto3
 
 **Key Files:**
 - `backend/backend/app/main.py` - FastAPI application entry point
@@ -454,9 +454,11 @@ backend/
 |-------|-------------|---------------|
 | `/version` | Get application version | No |
 | `/api/auth/*` | Registration, login, token refresh | No |
-| `/api/cards/*` | Card CRUD operations + image upload | Yes |
+| `/api/cards/*` | Card CRUD operations + media upload | Yes |
 | `/api/cards/{card_id}/levels/{level_index}/question-image` | Upload/delete question image | Yes |
 | `/api/cards/{card_id}/levels/{level_index}/answer-image` | Upload/delete answer image | Yes |
+| `/api/cards/{card_id}/levels/{level_index}/question-audio` | Upload/delete question audio | Yes |
+| `/api/cards/{card_id}/levels/{level_index}/answer-audio` | Upload/delete answer audio | Yes |
 | `/api/cards/{card_id}/option-image` | Upload MCQ option image | Yes |
 | `/api/decks/*` | Deck CRUD operations + study cards | Yes |
 | `/api/groups/*` | Study group operations | Yes |
@@ -499,6 +501,14 @@ Returns user statistics for the dashboard:
 - Supported formats: JPEG, PNG, WebP (max 5MB)
 - Images are proxied through Nginx at `/images/`
 - Frontend feature: `features/card-image-upload/`
+
+**Audio Upload:**
+- Cards support per-level audio for question and answer sides
+- Audio files are stored in MinIO (S3-compatible object storage)
+- Upload via FormData: `POST /api/cards/{card_id}/levels/{level_index}/question-audio`
+- Supported formats: MP3, M4A, WAV, WebM, OGG/Opus (max 10MB)
+- Audio files are proxied through Nginx at `/audio/`
+- Frontend feature: `features/card-audio/`
 
 **Documentation:** See `backend/README.md` for detailed backend documentation including testing, migrations, and environment configuration.
 
@@ -715,7 +725,7 @@ docker compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards 
 **Backend:**
 - FastAPI with uvicorn server
 - PostgreSQL 16 with SQLAlchemy 2.0
-- MinIO/S3 for object storage (images) with boto3
+- MinIO/S3 for object storage (images, audio) with boto3
 - Password hashing: bcrypt
 - JWT tokens: python-jose
 

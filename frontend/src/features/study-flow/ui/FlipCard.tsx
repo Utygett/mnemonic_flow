@@ -43,6 +43,10 @@ export function FlipCard({
   const questionImageUrl = (level as any)?.questionImageUrl || (card as any)?.questionImageUrl
   const answerImageUrl = (level as any)?.answerImageUrl || (card as any)?.answerImageUrl
 
+  // Use level audio if available
+  const questionAudioUrl = (level as any)?.questionAudioUrl
+  const answerAudioUrl = (level as any)?.answerAudioUrl
+
   const hasPrev = card.levels.some((l: any) => getLevelIndex(l) === card.activeLevel - 1)
   const hasNext = card.levels.some((l: any) => getLevelIndex(l) === card.activeLevel + 1)
 
@@ -74,6 +78,11 @@ export function FlipCard({
                 />
               </div>
             )}
+            {questionAudioUrl && (
+              <div className={styles.cardAudio}>
+                <audio src={questionAudioUrl} controls className={styles.cardAudioElement} />
+              </div>
+            )}
             <div className={styles.flipcardText}>
               {frontContent ?? <MarkdownView value={frontText} />}
             </div>
@@ -89,6 +98,11 @@ export function FlipCard({
                   alt="Answer image"
                   className={styles.cardImageElement}
                 />
+              </div>
+            )}
+            {answerAudioUrl && (
+              <div className={styles.cardAudio}>
+                <audio src={answerAudioUrl} controls className={styles.cardAudioElement} />
               </div>
             )}
 

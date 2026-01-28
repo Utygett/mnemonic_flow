@@ -61,39 +61,86 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 def mock_storage_service():
     """Mock StorageService to avoid S3/MinIO connections in tests."""
     from app.services import storage_service as storage_service_module
+    from app.services.storage_service import FileType
 
     # Create a mock storage service that doesn't require boto3
     class MockStorageService:
-        ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
-        MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+        # Image settings
+        IMAGE_ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
+        IMAGE_MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
-        def validate_file(self, filename: str, content_type: str, file_size: int) -> None:
+        # Audio settings
+        AUDIO_ALLOWED_MIME_TYPES = {
+            "audio/mpeg",  # mp3
+            "audio/mp4",  # m4a
+            "audio/wav",
+            "audio/webm",
+            "audio/ogg",  # opus
+        }
+        AUDIO_MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
+        def validate_file(
+            self,
+            filename: str,
+            content_type: str,
+            file_size: int,
+            file_type: FileType = FileType.IMAGE,
+        ) -> None:
             """Validate file before upload."""
-            if content_type not in self.ALLOWED_MIME_TYPES:
+            if file_type == FileType.IMAGE:
+                allowed_types = self.IMAGE_ALLOWED_MIME_TYPES
+                max_size = self.IMAGE_MAX_FILE_SIZE
+            else:  # AUDIO
+                allowed_types = self.AUDIO_ALLOWED_MIME_TYPES
+                max_size = self.AUDIO_MAX_FILE_SIZE
+
+            if content_type not in allowed_types:
                 raise ValueError(
-                    f"Invalid file type: {content_type}. "
-                    f"Allowed: {', '.join(self.ALLOWED_MIME_TYPES)}"
+                    f"Invalid file type: {content_type}. " f"Allowed: {', '.join(allowed_types)}"
                 )
-            if file_size > self.MAX_FILE_SIZE:
+            if file_size > max_size:
                 raise ValueError(
                     f"File too large: {file_size} bytes. "
-                    f"Max size: {self.MAX_FILE_SIZE} bytes (5MB)"
+                    f"Max size: {max_size} bytes ({max_size // (1024 * 1024)}MB)"
                 )
 
-        def generate_object_key(self, card_id: str, side: str, original_filename: str) -> str:
+        def generate_object_key(
+            self,
+            card_id: str,
+            side: str,
+            file_type: FileType,
+            original_filename: str,
+        ) -> str:
             """Generate unique object key for uploaded file."""
             ext = (
-                original_filename.rsplit(".", 1)[-1].lower() if "." in original_filename else "jpg"
+                original_filename.rsplit(".", 1)[-1].lower()
+                if "." in original_filename
+                else ("jpg" if file_type == FileType.IMAGE else "mp3")
             )
             unique_id = str(uuid.uuid4())
-            return f"cards/{card_id[:8]}/{card_id}_{side}_{unique_id}.{ext}"
+            type_prefix = "audio" if file_type == FileType.AUDIO else "cards"
+            return f"{type_prefix}/{card_id[:8]}/{card_id}_{side}_{unique_id}.{ext}"
 
-        def upload_file(self, file_data, filename, content_type, card_id, side):
+        def upload_file(
+            self,
+            file_data,
+            filename,
+            content_type,
+            card_id,
+            side,
+            file_type: FileType = FileType.IMAGE,
+        ):
             """Mock upload that returns a fake URL without touching S3."""
-            self.validate_file(filename, content_type, len(file_data))
-            ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else "jpg"
+            self.validate_file(filename, content_type, len(file_data), file_type)
+            ext = (
+                filename.rsplit(".", 1)[-1].lower()
+                if "." in filename
+                else "jpg" if file_type == FileType.IMAGE else "mp3"
+            )
             unique_id = str(uuid.uuid4())
-            return f"/images/cards/{card_id[:8]}/{card_id}_{side}_{unique_id}.{ext}"
+            url_prefix = "/audio/" if file_type == FileType.AUDIO else "/images/"
+            type_prefix = "audio" if file_type == FileType.AUDIO else "cards"
+            return f"{url_prefix}{type_prefix}/{card_id[:8]}/{card_id}_{side}_{unique_id}.{ext}"
 
         def delete_file(self, object_url):
             """Mock delete that does nothing."""

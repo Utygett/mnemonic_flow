@@ -97,3 +97,18 @@
   object-fit: contain;
   border-radius: 8px;
 }
+
+.cardAudio {
+  width: 100%;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardAudioElement {
+  width: 100%;
+  max-width: 320px;
+  height: 40px;
+  border-radius: 8px;
+}

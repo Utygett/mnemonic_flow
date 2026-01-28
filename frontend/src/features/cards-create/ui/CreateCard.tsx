@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { MarkdownField, MarkdownView } from '../../../shared/ui'
 import { Input, Button } from '../../../shared/ui/legacy'
-import { X, Plus, Trash2, Upload, Image as ImageIcon } from 'lucide-react'
+import { X, Plus, Trash2, Upload, Image as ImageIcon, Volume2, Mic } from 'lucide-react'
 import { parseCsvNameFrontBack } from '../lib/csv'
 import { LAST_DECK_KEY } from '../model/utils'
 import { useCreateCardModel } from '../model/useCreateCardModel'
@@ -56,6 +56,10 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
     setLevelAnswerImage,
     setOptionImage,
 
+    // audio actions
+    setLevelQuestionAudio,
+    setLevelAnswerAudio,
+
     // cleaned (готово для onSave)
     cleanedLevelsQA,
     cleanedLevelsMCQ,
@@ -69,6 +73,12 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
   const [importReport, setImportReport] = useState<string | null>(null)
   const [saveBusy, setSaveBusy] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<string | null>(null)
+
+  // Recording state
+  const [isRecordingQuestion, setIsRecordingQuestion] = useState(false)
+  const [isRecordingAnswer, setIsRecordingAnswer] = useState(false)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
 
   const scrollToReport = () => {
     setTimeout(() => reportRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
@@ -139,6 +149,28 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
                   body: formData,
                 })
               }
+
+              // Upload question audio
+              if (level.questionAudioFile) {
+                setUploadProgress(`Загрузка аудио вопроса для уровня ${levelIndex + 1}...`)
+                const formData = new FormData()
+                formData.append('file', level.questionAudioFile)
+                await apiRequest(`/cards/${cardId}/levels/${levelIndex}/question-audio`, {
+                  method: 'POST',
+                  body: formData,
+                })
+              }
+
+              // Upload answer audio
+              if (level.answerAudioFile) {
+                setUploadProgress(`Загрузка аудио ответа для уровня ${levelIndex + 1}...`)
+                const formData = new FormData()
+                formData.append('file', level.answerAudioFile)
+                await apiRequest(`/cards/${cardId}/levels/${levelIndex}/answer-audio`, {
+                  method: 'POST',
+                  body: formData,
+                })
+              }
             }
           } else {
             // Upload MCQ option images
@@ -161,9 +193,9 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
             }
           }
         } catch (uploadError) {
-          console.error('Image upload failed:', uploadError)
+          console.error('File upload failed:', uploadError)
           alert(
-            'Карточка создана, но некоторые изображения не были загружены. Попробуйте добавить их через редактирование.'
+            'Карточка создана, но некоторые файлы не были загружены. Попробуйте добавить их через редактирование.'
           )
         }
       }
@@ -217,6 +249,126 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
 
   const removeAnswerImage = () => {
     setLevelAnswerImage(activeLevel, null)
+  }
+
+  const handleQuestionAudioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    const allowedTypes = ['audio/mpeg', 'audio/mp4', 'audio/wav', 'audio/webm', 'audio/ogg']
+    if (!allowedTypes.includes(file.type)) {
+      alert('Пожалуйста, выберите аудиофайл (MP3, M4A, WAV, WebM, OGG)')
+      return
+    }
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Размер файла не должен превышать 10МБ')
+      return
+    }
+
+    setLevelQuestionAudio(activeLevel, file)
+  }
+
+  const handleAnswerAudioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    const allowedTypes = ['audio/mpeg', 'audio/mp4', 'audio/wav', 'audio/webm', 'audio/ogg']
+    if (!allowedTypes.includes(file.type)) {
+      alert('Пожалуйста, выберите аудиофайл (MP3, M4A, WAV, WebM, OGG)')
+      return
+    }
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Размер файла не должен превышать 10МБ')
+      return
+    }
+
+    setLevelAnswerAudio(activeLevel, file)
+  }
+
+  const removeQuestionAudio = () => {
+    setLevelQuestionAudio(activeLevel, null)
+  }
+
+  const removeAnswerAudio = () => {
+    setLevelAnswerAudio(activeLevel, null)
+  }
+
+  const startQuestionRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+      audioChunksRef.current = []
+
+      mediaRecorder.ondataavailable = event => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
+      }
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        const audioFile = new File([audioBlob], 'recording.webm', { type: 'audio/webm' })
+        setLevelQuestionAudio(activeLevel, audioFile)
+
+        stream.getTracks().forEach(track => track.stop())
+        setIsRecordingQuestion(false)
+      }
+
+      mediaRecorder.start()
+      setIsRecordingQuestion(true)
+    } catch (err) {
+      console.error('Microphone access error:', err)
+      alert('Не удалось получить доступ к микрофону')
+    }
+  }
+
+  const stopQuestionRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop()
+    }
+  }
+
+  const startAnswerRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+      audioChunksRef.current = []
+
+      mediaRecorder.ondataavailable = event => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
+      }
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        const audioFile = new File([audioBlob], 'recording.webm', { type: 'audio/webm' })
+        setLevelAnswerAudio(activeLevel, audioFile)
+
+        stream.getTracks().forEach(track => track.stop())
+        setIsRecordingAnswer(false)
+      }
+
+      mediaRecorder.start()
+      setIsRecordingAnswer(true)
+    } catch (err) {
+      console.error('Microphone access error:', err)
+      alert('Не удалось получить доступ к микрофону')
+    }
+  }
+
+  const stopAnswerRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop()
+    }
   }
 
   const handleOptionImageSelect =
@@ -460,6 +612,55 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
                   )}
                 </div>
 
+                {/* Question Audio Upload */}
+                <div className={styles.inlineImageUpload}>
+                  {activeQA?.questionAudioPreview ? (
+                    <div className={styles.audioPreviewSmall}>
+                      <audio
+                        src={activeQA.questionAudioPreview}
+                        controls
+                        className={styles.audioPlayerSmall}
+                      />
+                      <button
+                        type="button"
+                        onClick={removeQuestionAudio}
+                        className={styles.removeImageButton}
+                        disabled={saveBusy}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className={styles.audioButtonsRow}>
+                      <label className={styles.inlineUploadButton}>
+                        <input
+                          type="file"
+                          accept="audio/mpeg,audio/mp4,audio/wav,audio/webm,audio/ogg"
+                          onChange={handleQuestionAudioSelect}
+                          disabled={saveBusy || isRecordingQuestion}
+                          style={{ display: 'none' }}
+                        />
+                        <Volume2 size={18} />
+                        <span>Загрузить</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={
+                          isRecordingQuestion ? stopQuestionRecording : startQuestionRecording
+                        }
+                        disabled={saveBusy}
+                        className={`${styles.inlineUploadButton} ${isRecordingQuestion ? styles.recording : ''}`}
+                      >
+                        <Mic
+                          size={18}
+                          className={isRecordingQuestion ? styles.recordingIcon : ''}
+                        />
+                        <span>{isRecordingQuestion ? 'Стоп' : 'Записать'}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <MarkdownField
                   label="Ответ"
                   value={activeQA?.answer ?? ''}
@@ -499,6 +700,50 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
                       <ImageIcon size={18} />
                       <span>Добавить изображение</span>
                     </label>
+                  )}
+                </div>
+
+                {/* Answer Audio Upload */}
+                <div className={styles.inlineImageUpload}>
+                  {activeQA?.answerAudioPreview ? (
+                    <div className={styles.audioPreviewSmall}>
+                      <audio
+                        src={activeQA.answerAudioPreview}
+                        controls
+                        className={styles.audioPlayerSmall}
+                      />
+                      <button
+                        type="button"
+                        onClick={removeAnswerAudio}
+                        className={styles.removeImageButton}
+                        disabled={saveBusy}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className={styles.audioButtonsRow}>
+                      <label className={styles.inlineUploadButton}>
+                        <input
+                          type="file"
+                          accept="audio/mpeg,audio/mp4,audio/wav,audio/webm,audio/ogg"
+                          onChange={handleAnswerAudioSelect}
+                          disabled={saveBusy || isRecordingAnswer}
+                          style={{ display: 'none' }}
+                        />
+                        <Volume2 size={18} />
+                        <span>Загрузить</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={isRecordingAnswer ? stopAnswerRecording : startAnswerRecording}
+                        disabled={saveBusy}
+                        className={`${styles.inlineUploadButton} ${isRecordingAnswer ? styles.recording : ''}`}
+                      >
+                        <Mic size={18} className={isRecordingAnswer ? styles.recordingIcon : ''} />
+                        <span>{isRecordingAnswer ? 'Стоп' : 'Записать'}</span>
+                      </button>
+                    </div>
                   )}
                 </div>
 
