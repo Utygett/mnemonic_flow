@@ -79,7 +79,7 @@ src/
 │
 ├── shared/           # Переиспользуемый код
 │   ├── api/           # API клиент
-│   ├── lib/           # Утилиты (errors, hooks, latex, utils)
+│   ├── lib/           # Утилиты (errors, hooks, utils)
 │   ├── pwa/           # PWA утилиты
 │   ├── theme/         # Тематизация
 │   ├── types/         # Глобальные типы
