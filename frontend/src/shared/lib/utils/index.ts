@@ -8,4 +8,4 @@ export {
   loadSession,
 } from './session-store'
 export type { PersistedSession, SessionKey } from './session-store'
-export { toStudyCards } from './to-study-cards'
+export { toStudyCards } from './toStudyCards'

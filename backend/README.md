@@ -353,11 +353,11 @@ curl http://localhost:8000/version
 - Связь с CardLevel (one-to-many)
 
 **CardLevel** — Уровни сложности карточки
-- card_id, level, question, answer
+- card_id, level_index, question, answer
 - question_image_url, answer_image_url (изображения для уровня)
 - question_audio_url, answer_audio_url (аудио для уровня)
 - question_audio_name, answer_audio_name (имена аудио файлов)
-- level: 0 (простой), 1 (средний), 2 (сложный)
+- level_index: динамический индекс уровня (от 0 до 10+)
 
 **StudyGroup** — Учебные группы
 - name, description, code (для присоединения)
