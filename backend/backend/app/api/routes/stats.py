@@ -102,12 +102,12 @@ def get_dashboard_stats(
         .scalar()
     )
 
-    # 2. Time spent today - sum of time between reveal_at and reviewed_at (in minutes)
-    # interval_minutes is the SM-2 algorithm interval for next review, NOT study time
+    # 2. Time spent today - sum of time between show_at and reviewed_at (in minutes)
+    # This counts total time with the card (from showing to rating), not just answer viewing
     time_result = (
         db.query(
             func.sum(
-                func.extract("epoch", CardReviewHistory.reviewed_at - CardReviewHistory.reveal_at)
+                func.extract("epoch", CardReviewHistory.reviewed_at - CardReviewHistory.show_at)
                 / 60
             )
         )
