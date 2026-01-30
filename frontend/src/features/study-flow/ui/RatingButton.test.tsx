@@ -9,10 +9,28 @@ describe('RatingButton', () => {
       expect(screen.getByText('Хорошо')).toBeInTheDocument()
     })
 
-    it('должен иметь правильный CSS класс для рейтинга', () => {
+    it('должен иметь правильный цвет для "again" (красный)', () => {
+      const { container } = render(<RatingButton rating="again" label="Снова" onClick={vi.fn()} />)
+      const button = container.querySelector('button') as HTMLButtonElement
+      expect(button.style.background).toBe('#ef4444')
+    })
+
+    it('должен иметь правильный цвет для "hard" (оранжевый)', () => {
+      const { container } = render(<RatingButton rating="hard" label="Трудно" onClick={vi.fn()} />)
+      const button = container.querySelector('button') as HTMLButtonElement
+      expect(button.style.background).toBe('#f97316')
+    })
+
+    it('должен иметь правильный цвет для "good" (зелёный)', () => {
+      const { container } = render(<RatingButton rating="good" label="Хорошо" onClick={vi.fn()} />)
+      const button = container.querySelector('button') as HTMLButtonElement
+      expect(button.style.background).toBe('#22c55e')
+    })
+
+    it('должен иметь правильный цвет для "easy" (синий)', () => {
       const { container } = render(<RatingButton rating="easy" label="Легко" onClick={vi.fn()} />)
-      const button = container.querySelector('button')
-      expect(button).toHaveClass('rating-btn--easy')
+      const button = container.querySelector('button') as HTMLButtonElement
+      expect(button.style.background).toBe('#3b82f6')
     })
 
     it('должен иметь атрибут type="button"', () => {
