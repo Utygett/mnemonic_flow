@@ -20,6 +20,9 @@ MnemonicFlow is a full-stack web application for flashcard-based learning and me
 cd infra
 docker compose -f compose.dev.yml up -d
 
+# Production deployment
+docker compose -f compose.prod.yml up -d
+
 # View logs
 docker compose -f compose.dev.yml logs -f
 docker compose -f compose.dev.yml logs backend --tail=50  # specific service
@@ -38,6 +41,15 @@ docker compose -f compose.dev.yml down -v
 
 **Note:** `docker compose` (v2) is the modern syntax. `docker-compose` (v1) also works but is deprecated.
 
+### Pre-commit via Docker
+
+```bash
+cd infra
+docker compose -f compose.pre-commit.yml run --rm pre-commit
+```
+
+Uses cached image from `ghcr.io/<owner>/mnemonic_flow/pre-commit:latest` with all hooks pre-installed.
+
 ### Local Development (Without Docker)
 
 **Backend (FastAPI):**
@@ -55,6 +67,9 @@ npm install
 npm run dev    # Runs on port 3000, proxies /api to localhost:8000
 npm run build  # Production build
 npm run preview  # Preview production build
+
+# PWA assets
+npm run generate-pwa-assets  # Generate PWA icons and manifest
 ```
 
 ### Testing
@@ -62,10 +77,17 @@ npm run preview  # Preview production build
 **Backend tests:**
 ```bash
 cd backend
-pytest
+pytest                              # All tests
+pytest backend/tests/test_security.py  # Specific file
+pytest -s                           # With print() output
+pytest -x                           # Stop on first failure
+pytest --cov=backend/app            # With coverage (requires pytest-cov)
 ```
 
-Configuration in `backend/backend/pytest.ini` - uses short traceback format and ignores SQLAlchemy deprecation warnings.
+Configuration in `backend/pyproject.toml`:
+- Sets `pythonpath = "backend"` for correct imports
+- Contains Black, isort, Flake8, mypy settings
+- Defines pytest configuration and test paths
 
 **Frontend tests:**
 ```bash
@@ -75,18 +97,131 @@ npm run test:ui    # Run tests with UI
 npm run test:coverage  # Generate coverage report
 ```
 
+## Backend Testing
+
+### Test Structure
+
+```
+backend/backend/tests/
+├── conftest.py            # Pytest fixtures (db, client, auth)
+├── test_security.py       # Unit tests (no DB)
+├── test_user_model.py     # Integration tests (with DB)
+└── ...
+```
+
+### Fixtures (conftest.py)
+
+| Fixture | Description | Scope | Usage |
+|---------|-------------|-------|-------|
+| `init_database` | Creates all tables before test | function, autouse | Automatic |
+| `db` | SQLAlchemy database session | function | For DB operations |
+| `cleanup_db` | Truncates tables after test | function, explicit | Add `cleanup_db` param |
+| `client` | FastAPI TestClient for HTTP | function | For API tests |
+| `test_user` | Creates test user in DB | function | For authenticated tests |
+| `auth_token` | JWT token for test_user | function | For API auth |
+| `auth_headers` | Dict with Authorization header | function | For API auth |
+
+### Test Patterns
+
+**Unit test (no database):**
+```python
+# backend/tests/test_security.py
+from app.core.security import hash_password, verify_password
+
+class TestHashPassword:
+    def test_hash_returns_different_values(self):
+        password = "mypassword123"
+        hash1 = hash_password(password)
+        hash2 = hash_password(password)
+        assert hash1 != hash2  # Salt makes them different
+```
+
+**Integration test (with database):**
+```python
+# backend/tests/test_user_model.py
+from app.models.user import User
+from app.core.security import hash_password
+
+class TestUserModel:
+    def test_create_user(self, db, cleanup_db):
+        user = User(
+            username="testuser",
+            email=f"test_{uuid.uuid4()}@example.com",
+            password_hash=hash_password("password123"),
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        assert user.id is not None
+        assert user.username == "testuser"
+```
+
+**API endpoint test:**
+```python
+def test_login_success(client, test_user):
+    resp = client.post("/api/auth/login", json={
+        "email": test_user.email,
+        "password": "password123"
+    })
+    assert resp.status_code == 200
+    assert "access_token" in resp.json()
+```
+
+### Key Configuration Details
+
+1. **Environment variables** - Set in `conftest.py` before imports:
+   - `DATABASE_URL` - defaults to local PostgreSQL
+   - `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` - JWT config
+
+2. **Model imports** - All models must be imported in `conftest.py` so `Base.metadata` knows about them for table creation
+
+3. **init_database fixture** - Runs automatically before each test (`autouse=True`), creates tables via `Base.metadata.create_all()`
+
+4. **cleanup_db fixture** - Must be explicitly requested as parameter, uses `TRUNCATE ... CASCADE`
+
+5. **app.main import** - Delayed until inside `client()` fixture to avoid `init_db()` call during import
+
 ### CI/CD
 
-**GitHub Actions** - Automated CI on Pull Requests to `main` branch.
+**GitHub Actions** - Automated CI on Pull Requests to `main` and `develop` branches.
 
-Configuration: `.github/workflows/ci.yml`
+**Main Pipeline (`.github/workflows/ci.yml`)** - Orchestrates all stages:
 
-**What CI checks:**
-- Frontend container build
-- Backend container build
-- All services build via `docker compose -f compose.dev.yml build`
+1. **validate-commits** - Validates PR metadata
+   - VERSION file format (xx.xx.xx)
+   - Commit messages follow Conventional Commits
 
-**Trigger:** Any PR targeting `main` branch
+2. **code-style** - Code quality checks
+   - Runs pre-commit hooks on all files
+   - Uses Docker registry cache for faster builds
+   - Python: Black, isort, Flake8
+   - TypeScript/JS: Prettier formatting
+   - YAML/TOML/JSON validation
+
+3. **build-all** - Build containers
+   - Frontend image with registry cache
+   - Backend image with registry cache
+   - Docker Compose build validation
+
+4. **test-all** - Run tests
+   - Backend pytest tests
+   - Frontend vitest tests
+
+**Push Images Pipeline (`.github/workflows/push-images.yml`)** - Separate workflow for image publishing:
+   - Triggered on push to `main`/`develop` or manual dispatch
+   - Pushes `backend`, `frontend`, `pre-commit` images to `ghcr.io/<owner>/mnemonic_flow/`
+   - Images used as cache for CI builds
+
+**Docker Registry Caching:**
+- Images are stored in GitHub Container Registry (ghcr.io)
+- CI workflows use BuildKit with registry caching to speed up builds
+- Pre-commit image has all hooks pre-installed and cached in layers
+- Local development uses registry images as fallback if build fails
+
+**Registry URL format:** `ghcr.io/<repository_owner>/mnemonic_flow/<image>:latest`
+
+**Trigger:** Any PR targeting `main` or `develop` branches
 
 **Note:** CI uses `docker compose` (v2 syntax), not `docker-compose` (v1). Local development can use either.
 
@@ -279,19 +414,225 @@ import { DeleteCardButton } from '@/features/card-delete/ui/DeleteCardButton';  
 ## Backend Architecture
 
 **Structure:**
+```
+backend/
+├── backend/
+│   ├── app/
+│   │   ├── api/          # FastAPI routers (routes/)
+│   │   ├── auth/         # Authentication logic
+│   │   ├── core/         # Config, security, database
+│   │   ├── db/           # Database initialization
+│   │   ├── domain/       # Domain services
+│   │   ├── models/       # SQLAlchemy models
+│   │   ├── schemas/      # Pydantic schemas
+│   │   └── services/     # Business logic
+│   └── tests/            # Test suite
+├── migrations/           # Alembic migrations
+├── pyproject.toml        # Python project config
+└── requirements.txt      # Python dependencies
+```
+
+**Key Technologies:**
 - FastAPI with automatic OpenAPI docs at `/docs` and `/redoc`
-- SQLAlchemy ORM with async support
+- SQLAlchemy 2.0 ORM with async support
 - JWT authentication with refresh token rotation
-- Alembic for database migrations
-- PostgreSQL database
+- Alembic for database migrations (currently using custom init)
+- PostgreSQL 16 database
+- MinIO/S3 for object storage (images, audio) with boto3
 
 **Key Files:**
-- `app/main.py` - FastAPI application entry point
-- `app/models/` - SQLAlchemy models
-- `app/schemas/` - Pydantic schemas
-- `app/api/` - API route handlers
-- `app/core/` - Core functionality (security, config, database)
-- `app/alembic/` - Database migrations
+- `backend/backend/app/main.py` - FastAPI application entry point
+- `backend/backend/app/models/` - SQLAlchemy models
+- `backend/backend/app/schemas/` - Pydantic schemas
+- `backend/backend/app/api/routes/` - API route handlers
+- `backend/backend/app/core/` - Core functionality (security, config, database)
+- `backend/migrations/` - Database migrations
+- `backend/pyproject.toml` - Project configuration with tool settings
+
+**API Routes:**
+| Route | Description | Auth Required |
+|-------|-------------|---------------|
+| `/version` | Get application version | No |
+| `/api/auth/*` | Registration, login, token refresh | No |
+| `/api/cards/*` | Card CRUD operations + media upload | Yes |
+| `/api/cards/{card_id}/levels/{level_index}/question-image` | Upload/delete question image | Yes |
+| `/api/cards/{card_id}/levels/{level_index}/answer-image` | Upload/delete answer image | Yes |
+| `/api/cards/{card_id}/levels/{level_index}/question-audio` | Upload/delete question audio | Yes |
+| `/api/cards/{card_id}/levels/{level_index}/answer-audio` | Upload/delete answer audio | Yes |
+| `/api/cards/{card_id}/option-image` | Upload MCQ option image | Yes |
+| `/api/decks/*` | Deck CRUD operations + study cards | Yes |
+| `/api/groups/*` | Study group operations | Yes |
+| `/api/stats/dashboard` | Dashboard statistics | Yes |
+
+**Version Endpoint (`GET /version`):**
+Returns the current application version:
+```json
+{"version": "0.0.99"}
+```
+
+Version is read from the `VERSION` file in the project root and is automatically injected during Docker build.
+
+**In code (backend):**
+```python
+from app.core.version import get_version
+version = get_version()  # "0.0.99"
+```
+
+**In code (frontend):**
+```typescript
+import { APP_VERSION } from '@/shared/lib/version';
+console.log(APP_VERSION);  // "0.0.99"
+```
+
+**Statistics Endpoint (`GET /api/stats/dashboard`):**
+Returns user statistics for the dashboard:
+- `cards_studied_today`: Number of cards reviewed today
+- `time_spent_today`: Time spent studying today (minutes)
+- `current_streak`: Consecutive days with reviews
+- `total_cards`: Total cards owned by user
+
+**Important:** When working with time calculations, note that `CardReviewHistory.interval_minutes` is the SM-2 algorithm's interval until next review, NOT study time. For actual study time, use `reviewed_at - reveal_at` (time from answer reveal to user rating).
+
+**Image Upload:**
+- Cards support per-level images for question and answer sides
+- MCQ cards support images for options
+- Images are stored in MinIO (S3-compatible object storage)
+- Upload via FormData: `POST /api/cards/{card_id}/levels/{level_index}/question-image`
+- Supported formats: JPEG, PNG, WebP (max 5MB)
+- Images are proxied through Nginx at `/images/`
+- Frontend feature: `features/card-image-upload/`
+
+**Audio Upload:**
+- Cards support per-level audio for question and answer sides
+- Audio files are stored in MinIO (S3-compatible object storage)
+- Upload via FormData: `POST /api/cards/{card_id}/levels/{level_index}/question-audio`
+- Supported formats: MP3, M4A, WAV, WebM, OGG/Opus (max 10MB)
+- Audio files are proxied through Nginx at `/audio/`
+- Frontend feature: `features/card-audio/`
+
+**Documentation:** See `backend/README.md` for detailed backend documentation including testing, migrations, and environment configuration.
+
+## Code Style & Quality
+
+### Python (Backend)
+
+**Pre-commit hooks** — автоматическая проверка перед коммитом:
+
+```bash
+# Install pre-commit
+pip install pre-commit
+cd /path/to/repo
+pre-commit install
+
+# Run on all files
+pre-commit run --all-files
+
+# Run specific hook manually
+pre-commit run black --all-files
+pre-commit run mypy --all-files --hook-stage manual
+```
+
+**Tools configured in `.pre-commit-config.yaml`:**
+| Tool | Purpose | Config |
+|------|---------|--------|
+| **Black** | Code formatter | `preview` mode, 100 char line |
+| **isort** | Import sorting | black-compatible profile |
+| **Flake8** | Linting | via `Flake8-pyproject` |
+| **mypy** | Type checking | manual stage only |
+
+**Manual commands:**
+```bash
+cd backend
+black .                 # Format code
+isort .                 # Sort imports
+flake8 .                # Check style
+mypy backend/app        # Type check
+```
+
+**Configuration files:**
+- `backend/pyproject.toml` — Black, isort, Flake8, mypy settings
+- `.pre-commit-config.yaml` — All pre-commit hooks
+
+### TypeScript (Frontend)
+
+**Linting & formatting:**
+```bash
+cd frontend
+
+# Lint
+npm run lint            # Check
+npm run lint:fix        # Fix auto-fixable issues
+
+# Format (Prettier)
+npm run format          # Format all files
+npm run format:check    # Check formatting
+```
+
+**Tools:**
+- **ESLint 9** — Flat config format (`eslint.config.js`)
+- **Prettier** — Code formatter (`.prettierrc`)
+- **typescript-eslint** — TypeScript-specific rules
+
+**Configuration files:**
+- `frontend/eslint.config.js` — ESLint flat config
+- `frontend/.prettierrc` — Prettier settings
+
+### CI/CD Integration
+
+Code style checks run automatically in CI for all PRs to `main` and `develop`. The pipeline:
+
+1. Validates commits → 2. Checks code style → 3. Builds containers → 4. Runs tests
+
+**Tip:** Run `pre-commit run --all-files` locally before pushing to catch issues early.
+
+### Manual Code Fixes
+
+If pre-commit hooks fail and you need to fix manually:
+
+**Python (backend):**
+```bash
+cd backend
+pip install autopep8 autoflake
+
+# Remove unused imports
+autoflake --in-place --remove-all-unused-imports -r backend/
+
+# Fix formatting
+autopep8 --in-place --aggressive --max-line-length=100 -r backend/
+
+# Run black for final formatting
+black . --preview
+```
+
+**TypeScript/JavaScript (frontend):**
+```bash
+cd frontend
+
+# ESLint auto-fix
+npm run lint:fix
+
+# Prettier formatting
+npm run format
+```
+
+### SQLAlchemy Forward References
+
+Models use `# noqa` comments for forward references — this is **intentional**, not a bug:
+
+```python
+from app.models.card_tag import CardTag  # noqa: F401 - needed for relationship
+from __future__ import annotations
+
+class Card(Base):
+    # String in relationship() = forward reference (not imported yet)
+    tags = relationship("CardTag", secondary=CardCardTag)  # noqa: F821
+```
+
+**Why:**
+- `from __future__ import annotations` makes all type hints strings automatically
+- SQLAlchemy `relationship()` uses string names for forward references
+- `# noqa: F401` — import needed for SQLAlchemy mapper initialization
+- `# noqa: F821` — forward reference to class not defined yet
 
 ## Environment Configuration
 
@@ -360,8 +701,11 @@ The backend uses a custom initialization approach in `entrypoint.sh`:
 # Connect to PostgreSQL container
 docker compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards
 
-# Example: Update user email verification
+# Verify email for all users (bypass email verification)
 docker compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards -c "UPDATE users SET is_email_verified = true;"
+
+# Verify email for specific user
+docker compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards -c "UPDATE users SET is_email_verified = true WHERE email = 'user@example.com';"
 ```
 
 **7. Nginx config path:**
@@ -372,7 +716,7 @@ docker compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards 
 
 **Frontend:**
 - Build: Vite 6.3.5 with SWC compiler (not Babel)
-- UI: Radix UI primitives + Tailwind CSS
+- UI: Radix UI primitives + CSS Modules for component styling
 - State: React hooks, react-hook-form
 - Math: KaTeX for mathematical content in flashcards
 - Charts: Recharts for statistics visualization
@@ -381,6 +725,7 @@ docker compose -f compose.dev.yml exec db psql -U flashcards_user -d flashcards 
 **Backend:**
 - FastAPI with uvicorn server
 - PostgreSQL 16 with SQLAlchemy 2.0
+- MinIO/S3 for object storage (images, audio) with boto3
 - Password hashing: bcrypt
 - JWT tokens: python-jose
 

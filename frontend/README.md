@@ -1,4 +1,4 @@
-# Frontend
+# MnemonicFlow Frontend
 
 React 18 + TypeScript приложение, построенное по методологии Feature-Sliced Design (FSD v2).
 
@@ -21,39 +21,122 @@ npm test -- --run    # однократный запуск
 npm run test:ui      # с UI интерфейсом
 npm run test:coverage # с покрытием кода
 
+# Code Style
+npm run lint         # проверить ESLint
+npm run lint:fix     # исправить ESLint
+npm run format       # форматировать Prettier
+npm run format:check # проверить форматирование
+
 # PWA ассеты
 npm run generate-pwa-assets
 ```
 
-## 📁 Структура (FSD)
+## 📁 Структура (FSD v2)
 
 ```
 src/
-├── app/          # Глобальная инфраструктура (провайдеры, роутинг)
-├── pages/        # Страницы (Auth, Home, Study, Stats, Profile)
-├── widgets/      # Крупные reusable UI блоки
-├── features/     # Фичи (создание карточек, изучение, редактирование)
-├── entities/     # Сущности (Card, Deck, User, Group)
-├── shared/       # UI kit, API, утилиты, конфиг
-└── test/         # Настройки тестов
+├── app/              # Глобальная инфраструктура
+│   ├── providers/    # Context providers (AuthProvider)
+│   ├── styles/       # Глобальные стили
+│   ├── pwa/          # PWA конфигурация
+│   ├── overlays/     # Глобальные оверлеи
+│   ├── App.tsx       # Корневой компонент
+│   └── AppRouter.tsx # Роутинг
+│
+├── pages/            # Страницы (роуты)
+│   ├── auth/         # Логин, регистрация, восстановление пароля
+│   └── onboarding/   # Онбординг
+│
+├── widgets/          # Крупные reusable UI блоки
+│   ├── main-shell/   # Основной лэйаут (таб-навигация)
+│   └── bottom-nav/   # Нижняя навигация
+│
+├── features/         # Фичи (use-cases)
+│   ├── card-audio/        # Загрузка аудио для карточек
+│   ├── card-image-upload/ # Загрузка изображений для карточек
+│   ├── cards-actions/     # Действия с карточками
+│   ├── cards-create/      # Создание карточек
+│   ├── cards-edit/        # Редактирование карточек
+│   ├── cards-flow/        # Flow для работы с карточками
+│   ├── deck-add/          # Добавление существующей колоды
+│   ├── deck-create/       # Создание колоды
+│   ├── deck-details/      # Детали колоды
+│   ├── deck-edit/         # Редактирование колоды
+│   ├── decks-actions/     # Действия с колодами
+│   ├── decks-flow/        # Flow для работы с колодами
+│   ├── dashboard/         # Дашборд
+│   ├── group-create/      # Создание группы
+│   ├── profile/           # Профиль пользователя
+│   ├── statistics/        # Статистика
+│   ├── study-flow/        # Flow изучения
+│   └── ...
+│
+├── entities/         # Сущности (domain models)
+│   ├── card/          # Сущность Card
+│   ├── deck/          # Сущность Deck
+│   ├── group/         # Сущность Group
+│   └── statistics/    # Сущность Statistics
+│
+├── shared/           # Переиспользуемый код
+│   ├── api/           # API клиент
+│   ├── lib/           # Утилиты (errors, hooks, utils)
+│   ├── pwa/           # PWA утилиты
+│   ├── theme/         # Тематизация
+│   ├── types/         # Глобальные типы
+│   └── ui/            # UI kit (Radix UI + кастомные компоненты)
+│
+└── test/             # Настройки тестов
 ```
 
 ## 🏗️ FSD правила
 
-**Импорты только сверху вниз:**
+### Иерархия слоёв
+
 ```
 app → pages → widgets → features → entities → shared
 ```
 
-**Используйте алиас `@/`:**
+**Правило:** Слой может импортировать только из слоёв **строго ниже**.
+
+### Импорты
+
+**Используйте алиас `@/` для всех кросс-слойных импортов:**
+
 ```typescript
 // ✅ Правильно
-import { Button } from '@/shared/ui/Button/Button';
-import { StudyCard } from '@/entities/card';
+import { Button } from '@/shared/ui/Button/Button'
+import { StudyCard } from '@/entities/card'
+import { CreateCardForm } from '@/features/cards-create'
 
-// ❌ Неправильно
-import { Button } from '../../../shared/ui/Button/Button';
+// ❌ Неправильно (относительные пути)
+import { Button } from '../../../shared/ui/Button/Button'
+
+// ❌ Неправильно (deep imports)
+import { CreateCardForm } from '@/features/cards-create/ui/CreateCardForm'
 ```
+
+### Публичный API
+
+Каждый slice (слой/сущность/фича) должен иметь `index.ts`, который экспортирует публичный API:
+
+```typescript
+// features/cards-create/index.ts
+export { CreateCardForm } from './ui/CreateCardForm'
+export type { CreateCardFormProps } from './ui/CreateCardForm'
+export { useCreateCard } from './model/useCreateCard'
+```
+
+### Стандартные сегменты
+
+Используйте эти имена сегментов последовательно:
+
+- **`ui/`** — React компоненты (View)
+- **`model/`** — State, hooks, бизнес-логика
+- **`api/`** — API вызовы (на уровне сущности или сценария)
+- **`lib/`** — Специфичные утилиты для slice
+- **`config/`** — Локальные флаги/конфигурация
+
+**НЕ создавайте:** `hooks/`, `types/`, `components/` как основные сегменты.
 
 ## 🧪 Тесты
 
@@ -69,17 +152,163 @@ src/
 │   └── cardApi.test.ts
 ```
 
+**Vitest + React Testing Library:**
+
+```bash
+npm test                    # Watch mode
+npm test -- --run           # Single run
+npm run test:ui             # UI интерфейс
+npm run test:coverage       # С покрытием
+```
+
+## 🎨 Code Style
+
+### Инструменты
+
+| Инструмент   | Назначение               | Конфиг                           |
+| ------------ | ------------------------ | -------------------------------- |
+| **ESLint 9** | Линтинг TypeScript/React | `eslint.config.js` (flat config) |
+| **Prettier** | Форматирование           | `.prettierrc`                    |
+
+### Команды
+
+```bash
+# Проверить
+npm run lint
+
+# Исправить автоматически
+npm run lint:fix
+
+# Форматировать
+npm run format
+
+# Проверить форматирование
+npm run format:check
+```
+
 ## 🛠️ Технологии
 
-- **Build:** Vite 6 с SWC
-- **UI:** Radix UI + Tailwind CSS
-- **State:** React hooks, react-hook-form
-- **Math:** KaTeX
-- **Charts:** Recharts
-- **Testing:** Vitest + React Testing Library
-- **PWA:** vite-plugin-pwa
+| Категория   | Технологии                                |
+| ----------- | ----------------------------------------- |
+| **Build**   | Vite 6.3.5 + SWC compiler                 |
+| **UI**      | Radix UI primitives + CSS Modules         |
+| **State**   | React hooks, react-hook-form              |
+| **Math**    | KaTeX (для формул в карточках)            |
+| **Charts**  | Recharts (графики статистики)             |
+| **PWA**     | vite-plugin-pwa (service worker, offline) |
+| **Testing** | Vitest + React Testing Library            |
+| **Linting** | ESLint 9 + Prettier                       |
+
+## 📱 PWA
+
+Приложение является Progressive Web App с оффлайн-поддержкой.
+
+**Генерация ассетов:**
+
+```bash
+npm run generate-pwa-assets
+```
+
+**Конфигурация:** `pwa-assets.config.ts`
+
+**Особенности:**
+
+- Service Worker для кеширования
+- Манифест для установки
+- Оффлайн-режим
+- Иконки для разных размеров
+
+## 🎨 Темизация
+
+Проект использует систему темизации на основе CSS переменных:
+
+```typescript
+import { useTheme } from '@/shared/theme'
+
+const { theme, toggleTheme } = useTheme()
+```
+
+Темы определены в `shared/theme/`.
+
+## 📦 API клиент
+
+API клиент находится в `shared/api/`:
+
+```typescript
+import { api } from '@/shared/api'
+
+// GET запрос
+const { data } = await api.get('/cards')
+
+// POST запрос
+const { data } = await api.post('/cards', { question: '...' })
+```
+
+**Особенности:**
+
+- Автоматическое добавление JWT токена
+- Обработка ошибок
+- Типизация запросов/ответов
+
+## 🔧 Конфигурация
+
+### Vite
+
+Файл: `vite.config.ts`
+
+- Алиас `@/` → `src/`
+- PWA плагин
+- Proxy для `/api` → `http://localhost:8000`
+
+### TypeScript
+
+Файл: `tsconfig.json`
+
+- Strict mode
+- Path aliases
+- React typings
+
+### Environment
+
+Переменные окружения (префикс `VITE_`):
+
+- `VITE_API_URL` — URL API (по умолчанию `/api`)
 
 ## 📖 Документация
 
-- [FSD Contract](./docs/fsd-contract.md) — архитектурный контракт (на русском)
-- [CLAUDE.md](../CLAUDE.md) — документация для разработчиков
+- [FSD Contract](./docs/fsd-contract.md) — Полный архитектурный контракт FSD v2 (на русском)
+- [CLAUDE.md](../CLAUDE.md) — Документация для разработчиков
+- [Backend README](../backend/README.md) — Документация бэкенда
+- [Infra README](../infra/README.md) — Инфраструктура и Docker
+
+## 🐛 Troubleshooting
+
+### Vite dev сервер не запускается
+
+```bash
+# Очистить node_modules и переустановить
+rm -rf node_modules package-lock.json
+npm install
+```
+
+### PWA не работает
+
+Проверьте, что:
+
+1. `VITE_API_URL` указан верно
+2. Service Worker зарегистрирован
+3. HTTPS включён (или localhost)
+
+### Тесты падают
+
+```bash
+# Запустить с отладкой
+npm test -- --inspect-brk --no-coverage
+```
+
+## 🔗 Ссылки
+
+- [Vite Documentation](https://vitejs.dev/)
+- [FSD Documentation](https://feature-sliced.design/)
+- [Radix UI](https://www.radix-ui.com/)
+- [React Hook Form](https://react-hook-form.com/)

@@ -1,30 +1,30 @@
-import React, { useState } from 'react';
-import { Button } from '../../shared/ui/Button/Button';
-import { Input } from '../../shared/ui/Input';
+import React, { useState } from 'react'
+import { Button } from '../../shared/ui/Button/Button'
+import { Input } from '../../shared/ui/Input'
 
-import styles from './ForgotPasswordPage.module.css';
+import styles from './ForgotPasswordPage.module.css'
 
 export function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
-  const [done, setDone] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState('')
+  const [done, setDone] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+    e.preventDefault()
+    setError(null)
 
     const res = await fetch('/api/auth/request-password-reset', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
-    });
+    })
 
     if (!res.ok) {
-      setError(await res.text());
-      return;
+      setError(await res.text())
+      return
     }
-    setDone(true);
-  };
+    setDone(true)
+  }
 
   if (done) {
     return (
@@ -36,7 +36,7 @@ export function ForgotPasswordPage() {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -62,5 +62,5 @@ export function ForgotPasswordPage() {
         </form>
       </div>
     </div>
-  );
+  )
 }

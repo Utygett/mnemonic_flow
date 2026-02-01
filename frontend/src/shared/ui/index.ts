@@ -1,6 +1,6 @@
-export * from './kit';
-export * as Legacy from './legacy';
+export * from './kit'
+export * as Legacy from './legacy'
 
 // Direct shared-ui exports
-export * from './MarkdownField';
-export * from './MarkdownView';
+export * from './MarkdownField'
+export * from './MarkdownView'

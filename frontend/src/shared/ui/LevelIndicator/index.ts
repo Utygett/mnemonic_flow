@@ -1,1 +1,1 @@
-export { LevelIndicator } from './LevelIndicator';
+export { LevelIndicator } from './LevelIndicator'

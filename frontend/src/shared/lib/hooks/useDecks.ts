@@ -1,47 +1,47 @@
 // src/shared/lib/hooks/useDecks.ts
-import { useState, useEffect, useCallback } from 'react';
-import type { PublicDeckSummary } from '@/entities/deck';
-import { getGroupDecksSummary } from '@/entities/group';
-import { ApiError } from '@/shared/api/request';
+import { useState, useEffect, useCallback } from 'react'
+import type { PublicDeckSummary } from '@/entities/deck'
+import { getGroupDecksSummary } from '@/entities/group'
+import { ApiError } from '@/shared/api/request'
 
 export type UseDecksResult = {
-  decks: PublicDeckSummary[];
-  loading: boolean;
-  error: string | null;
-  refresh: () => Promise<void>;
-};
+  decks: PublicDeckSummary[]
+  loading: boolean
+  error: string | null
+  refresh: () => Promise<void>
+}
 
 export function useDecks(groupId: string | null): UseDecksResult {
-  const [decks, setDecks] = useState<PublicDeckSummary[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [decks, setDecks] = useState<PublicDeckSummary[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
-    if (!groupId) return;
+    if (!groupId) return
 
-    setLoading(true);
-    setError(null);
+    setLoading(true)
+    setError(null)
 
     try {
-      const data = await getGroupDecksSummary(groupId);
-      setDecks(data);
+      const data = await getGroupDecksSummary(groupId)
+      setDecks(data)
     } catch (e: unknown) {
-      if (e instanceof ApiError) setError(e.detail ?? e.message);
-      else setError('Не удалось загрузить колоды');
+      if (e instanceof ApiError) setError(e.detail ?? e.message)
+      else setError('Не удалось загрузить колоды')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [groupId]);
+  }, [groupId])
 
   useEffect(() => {
     if (!groupId) {
-      setDecks([]);
-      setError(null);
-      setLoading(false);
-      return;
+      setDecks([])
+      setError(null)
+      setLoading(false)
+      return
     }
-    refresh();
-  }, [groupId, refresh]);
+    refresh()
+  }, [groupId, refresh])
 
-  return { decks, loading, error, refresh };
+  return { decks, loading, error, refresh }
 }

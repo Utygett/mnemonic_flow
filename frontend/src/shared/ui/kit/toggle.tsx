@@ -1,27 +1,23 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import * as TogglePrimitive from "@radix-ui/react-toggle";
+import * as React from 'react'
+import * as TogglePrimitive from '@radix-ui/react-toggle'
 
-import { cn } from "./utils";
+import { cn } from './utils'
 
-type ToggleVariant = "default" | "outline";
-type ToggleSize = "default" | "sm" | "lg";
+type ToggleVariant = 'default' | 'outline'
+type ToggleSize = 'default' | 'sm' | 'lg'
 
-function toggleVariants(opts?: {
-  variant?: ToggleVariant;
-  size?: ToggleSize;
-  extra?: string;
-}) {
-  const variant = opts?.variant || "default";
-  const size = opts?.size || "default";
+function toggleVariants(opts?: { variant?: ToggleVariant; size?: ToggleSize; extra?: string }) {
+  const variant = opts?.variant || 'default'
+  const size = opts?.size || 'default'
   const sizeMap: Record<ToggleSize, string> = {
-    default: "toggle--medium",
-    sm: "toggle--small",
-    lg: "toggle--large",
-  };
+    default: 'toggle--medium',
+    sm: 'toggle--small',
+    lg: 'toggle--large',
+  }
 
-  return cn("toggle", `toggle--${variant}`, sizeMap[size], opts?.extra);
+  return cn('toggle', `toggle--${variant}`, sizeMap[size], opts?.extra)
 }
 
 function Toggle({
@@ -30,8 +26,8 @@ function Toggle({
   size,
   ...props
 }: React.ComponentProps<typeof TogglePrimitive.Root> & {
-  variant?: ToggleVariant;
-  size?: ToggleSize;
+  variant?: ToggleVariant
+  size?: ToggleSize
 }) {
   return (
     <TogglePrimitive.Root
@@ -39,7 +35,7 @@ function Toggle({
       className={toggleVariants({ variant, size, extra: className })}
       {...props}
     />
-  );
+  )
 }
 
-export { Toggle, toggleVariants };
+export { Toggle, toggleVariants }

@@ -1,43 +1,43 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'
 
 // Компонент для отображения обновлений PWA
 export function PWAUpdatePrompt() {
-  const [showReload, setShowReload] = useState(false);
-  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+  const [showReload, setShowReload] = useState(false)
+  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null)
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then((registration) => {
+      navigator.serviceWorker.ready.then(registration => {
         registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
+          const newWorker = registration.installing
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                setShowReload(true);
-                setWaitingWorker(newWorker);
+                setShowReload(true)
+                setWaitingWorker(newWorker)
               }
-            });
+            })
           }
-        });
-      });
+        })
+      })
 
-      let refreshing = false;
+      let refreshing = false
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (!refreshing) {
-          refreshing = true;
-          window.location.reload();
+          refreshing = true
+          window.location.reload()
         }
-      });
+      })
     }
-  }, []);
+  }, [])
 
   const reloadPage = () => {
-    waitingWorker?.postMessage({ type: 'SKIP_WAITING' });
-    setShowReload(false);
-    window.location.reload();
-  };
+    waitingWorker?.postMessage({ type: 'SKIP_WAITING' })
+    setShowReload(false)
+    window.location.reload()
+  }
 
-  if (!showReload) return null;
+  if (!showReload) return null
 
   return (
     <div className="update-prompt">
@@ -61,5 +61,5 @@ export function PWAUpdatePrompt() {
         </div>
       </div>
     </div>
-  );
+  )
 }

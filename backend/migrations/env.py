@@ -3,9 +3,8 @@ import sys
 from logging.config import fileConfig
 from pathlib import Path
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
 from alembic import context
+from sqlalchemy import engine_from_config, pool
 
 # ------------------------------------------------------------
 # ВАЖНО: чтобы импортировался пакет "app" из папки backend/app
@@ -31,11 +30,12 @@ if not DATABASE_URL:
 
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
+import app.models  # noqa: E402, F401 - важно: чтобы все модели зарегистрировались
+
 # ------------------------------------------------------------
 # Подключаем metadata твоих моделей для autogenerate
 # ------------------------------------------------------------
 from app.db.base import Base  # noqa: E402
-import app.models  # noqa: E402  (важно: чтобы все модели зарегистрировались)
 
 target_metadata = Base.metadata
 

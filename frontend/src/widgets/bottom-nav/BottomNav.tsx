@@ -1,11 +1,11 @@
-import React from 'react';
-import { BarChart3, BookOpen, Home, User } from 'lucide-react';
+import React from 'react'
+import { BarChart3, BookOpen, Home, User } from 'lucide-react'
 
-import styles from './BottomNav.module.css';
+import styles from './BottomNav.module.css'
 
 interface BottomNavProps {
-  activeTab: 'home' | 'study' | 'stats' | 'profile';
-  onTabChange: (tab: 'home' | 'study' | 'stats' | 'profile') => void;
+  activeTab: 'home' | 'study' | 'stats' | 'profile'
+  onTabChange: (tab: 'home' | 'study' | 'stats' | 'profile') => void
 }
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
@@ -14,7 +14,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
     { id: 'study' as const, icon: BookOpen, label: 'Обучение' },
     { id: 'stats' as const, icon: BarChart3, label: 'Статистика' },
     { id: 'profile' as const, icon: User, label: 'Профиль' },
-  ];
+  ]
 
   return (
     <nav className={styles.nav} aria-label="Нижняя навигация">
@@ -33,5 +33,5 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         ))}
       </div>
     </nav>
-  );
+  )
 }

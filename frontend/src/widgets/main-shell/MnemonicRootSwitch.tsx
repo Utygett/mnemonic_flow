@@ -1,41 +1,50 @@
-import React from 'react';
+import React from 'react'
 
-import { CreateCard } from '../../features/cards-create';
-import { EditCard } from '../../features/cards-edit';
-import { CreateDeck } from '../../features/deck-create';
-import { EditDeck } from '../../features/deck-edit';
-import { Statistics } from '../../features/statistics';
-import { ProfileContainer } from '../../features/profile';
+import { CreateCard } from '../../features/cards-create'
+import { EditCard } from '../../features/cards-edit'
+import { CreateDeck } from '../../features/deck-create'
+import { EditDeck } from '../../features/deck-edit'
+import { Statistics } from '../../features/statistics'
+import { ProfileContainer } from '../../features/profile'
 
-import { HomeTabContainer } from '../../features/dashboard';
+import { HomeTabContainer } from '../../features/dashboard'
 
-import type { MnemonicRootSwitchProps } from './mnemonicRootSwitch.types';
+import type { MnemonicRootSwitchProps } from './mnemonicRootSwitch.types'
+
+import styles from './MnemonicRootSwitch.module.css'
 
 export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
   // loading
-  if (props.status.decksLoading || props.status.statsLoading) {
+  // IMPORTANT: don't unmount current UI during background refresh (e.g. when AddDeck triggers refreshDecks).
+  // Otherwise HomeTabContainer resets its local view state and user is "kicked out" of AddDeck screen.
+  const isInitialDecksLoading = props.status.decksLoading && (props.data.decks?.length ?? 0) === 0
+  const isInitialStatsLoading = props.status.statsLoading && !props.data.statistics
+
+  if (isInitialDecksLoading || isInitialStatsLoading) {
     return (
-      <div className="min-h-screen bg-dark flex items-center justify-center">
-        <div className="text-center">
+      <div className={styles.loadingContainer}>
+        <div className={styles.loadingContent}>
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
           <p className="text-[#9CA3AF]">Загрузка данных...</p>
         </div>
       </div>
-    );
+    )
   }
 
   // error
   if (props.status.decksError || props.status.statsError) {
     return (
-      <div className="min-h-screen bg-dark flex items-center justify-center p-4">
-        <div className="card text-center">
+      <div className={styles.errorContainer}>
+        <div className={`card ${styles.errorCard}`}>
           <div className="text-4xl mb-4">⚠️</div>
           <h2 className="text-[#E8EAF0] mb-2">Ошибка загрузки</h2>
-          <p className="text-[#9CA3AF] mb-4">{String(props.status.decksError ?? props.status.statsError)}</p>
+          <p className="text-[#9CA3AF] mb-4">
+            {String(props.status.decksError ?? props.status.statsError)}
+          </p>
           <button
             onClick={() => {
-              props.refresh.refreshDecks();
-              props.refresh.refreshStats();
+              props.refresh.refreshDecks()
+              props.refresh.refreshStats()
             }}
             className="btn-primary"
           >
@@ -43,7 +52,7 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
           </button>
         </div>
       </div>
-    );
+    )
   }
 
   // flows
@@ -55,7 +64,7 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
         onSaveMany={props.cards.actions.onCreateCardSaveMany}
         onCancel={props.cards.flow.closeCreateCard}
       />
-    );
+    )
   }
 
   if (props.decks.flow.isCreatingDeck) {
@@ -63,13 +72,13 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
       <CreateDeck
         onCancel={props.decks.flow.closeCreateDeck}
         onSave={(createdDeckId?: string) => {
-          props.decks.actions.onDeckCreated();
+          props.decks.actions.onDeckCreated()
           if (createdDeckId) {
-            props.decks.flow.openEditDeck(createdDeckId);
+            props.decks.flow.openEditDeck(createdDeckId)
           }
         }}
       />
-    );
+    )
   }
 
   if (props.decks.flow.isEditingDeck && props.decks.flow.editingDeckId) {
@@ -79,7 +88,7 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
         onCancel={props.decks.flow.closeEditDeck}
         onSaved={props.decks.actions.onDeckSaved}
       />
-    );
+    )
   }
 
   if (props.cards.flow.isEditingCard) {
@@ -89,17 +98,17 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
         onCancel={props.cards.flow.closeEditCard}
         onDone={props.cards.actions.onEditCardDone}
         onEditDeck={(deckId: string) => {
-          props.decks.flow.openEditDeck(deckId);
+          props.decks.flow.openEditDeck(deckId)
         }}
       />
-    );
+    )
   }
 
   // tabs
   return (
     <>
       {props.isPWA && (
-        <div className="fixed top-4 left-4 z-30">
+        <div className={styles.pwaBadge}>
           <div className="pwa-badge">PWA</div>
         </div>
       )}
@@ -127,17 +136,19 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
       )}
 
       {props.activeTab === 'study' && (
-        <div className="min-h-screen bg-dark pb-24">
+        <div className={styles.tabPage}>
           <header className="page__header">
             <div className="page__header-inner">
               <h1 className="page__title">Обучение</h1>
             </div>
           </header>
 
-          <main className="container-centered max-w-390 py-6">
-            <div className="text-center py-12">
+          <main className={`container-centered max-w-390 ${styles.tabMain}`}>
+            <div className={styles.emptyState}>
               <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📖</div>
-              <h2 style={{ marginBottom: '1rem', color: '#E8EAF0' }}>Создайте свою первую карточку</h2>
+              <h2 style={{ marginBottom: '1rem', color: '#E8EAF0' }}>
+                Создайте свою первую карточку
+              </h2>
               <p style={{ color: '#9CA3AF', marginBottom: '1.5rem' }}>
                 Начните изучение с создания карточек
               </p>
@@ -157,7 +168,7 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
               </div>
 
               {!props.isPWA && (
-                <div className="mt-8 card">
+                <div className={`card ${styles.pwaTip}`}>
                   <p style={{ color: '#9CA3AF', marginBottom: '0.5rem' }}>
                     💡 Установите приложение для работы офлайн
                   </p>
@@ -175,7 +186,7 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
         <Statistics statistics={props.data.statistics} decks={props.data.decks} />
       )}
 
-      {props.activeTab === 'profile' && <ProfileContainer isPWA={props.isPWA} />}
+      {props.activeTab === 'profile' && <ProfileContainer />}
     </>
-  );
+  )
 }

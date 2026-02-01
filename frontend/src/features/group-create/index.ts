@@ -1,4 +1,6 @@
-export { CreateGroup } from './ui/CreateGroup';
-export type { CreateGroupProps } from './model/types';
+export { CreateGroup } from './ui/CreateGroup'
+export { CreateGroupView } from './ui/CreateGroupView'
 
-export type { UserGroupResponse, GroupCreatePayload, Group } from './model/groupTypes';
+export type { CreateGroupProps } from './model/types'
+
+export type { UserGroupResponse, GroupCreatePayload, Group } from './model/groupTypes'

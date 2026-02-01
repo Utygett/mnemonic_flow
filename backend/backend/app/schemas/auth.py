@@ -1,5 +1,7 @@
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -13,6 +15,7 @@ class RegisterRequest(BaseModel):
 
 class RegisterResponse(BaseModel):
     message: str
+
 
 class TokenResponse(BaseModel):
     access_token: str

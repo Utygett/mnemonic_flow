@@ -8,5 +8,14 @@ POSTGRES_USER=flashcards_user
 POSTGRES_PASSWORD=PASSWORD
 DATABASE_URL=postgresql+psycopg2://flashcards_user:PASSWORD@db:5432/flashcards
 
+# MinIO/S3 Configuration
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=minioadmin
+MINIO_ENDPOINT=http://minio:9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
+MINIO_BUCKET_NAME=card-images
+MINIO_USE_SSL=false
+
 # Frontend
 VITE_API_URL=/api

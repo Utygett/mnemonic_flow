@@ -1,12 +1,18 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, Enum, Integer, DateTime
+from sqlalchemy import DateTime, Enum, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base
 from app.core.enums import ReviewRating
+from app.db.base import Base
+from app.models.card import Card  # noqa: F401 - needed for SQLAlchemy relationship
+from app.models.card_level import CardLevel  # noqa: F401 - needed for SQLAlchemy relationship
+
+# User импортировать нельзя — циклический импорт! Используем строку "User" в relationship
 
 
 class CardReviewHistory(Base):

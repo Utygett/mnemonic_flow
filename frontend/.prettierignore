@@ -1,0 +1,21 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+build
+
+# PWA assets
+pwa-assets/public
+
+# Generated files
+*.generated.ts
+
+# Config files (low priority)
+vite.config.ts
+tsconfig*.json
+tailwind.config.*
+pwa-assets.config.ts
+
+# Lock files
+package-lock.json

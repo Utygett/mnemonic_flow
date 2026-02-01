@@ -44,4 +44,3 @@ $remoteScript = ($remoteLines -join "`n") + "`n"
 
 $remoteScript | ssh $HostName "bash -se"
 if ($LASTEXITCODE -ne 0) { throw "remote deploy failed with code $LASTEXITCODE" }
-

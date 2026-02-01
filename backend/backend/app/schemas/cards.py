@@ -1,12 +1,17 @@
-from pydantic import BaseModel, Field, ConfigDict, conint, root_validator
-from typing import List, Dict, Optional, Union, Any
-from uuid import UUID
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field, conint, model_validator
 
 
 class CardLevelContent(BaseModel):
     level_index: int
     content: Dict
+    question_image_url: Optional[str] = None
+    answer_image_url: Optional[str] = None
+    question_audio_url: Optional[str] = None
+    answer_audio_url: Optional[str] = None
 
 
 class CardForReviewWithLevels(BaseModel):
@@ -41,6 +46,8 @@ class CardLevelPayload(BaseModel):
 class CreateCardLevelOption(BaseModel):
     id: str
     text: str
+    image_url: Optional[str] = None
+
 
 class CreateCardLevelRequest(BaseModel):
     question: str
@@ -53,6 +60,7 @@ class CreateCardLevelRequest(BaseModel):
     correctOptionId: Optional[str] = None
     explanation: Optional[str] = None
     timerSec: Optional[conint(ge=1, le=3600)] = None
+
 
 class CreateCardRequest(BaseModel):
     deck_id: str
@@ -69,6 +77,7 @@ class QaContentIn(BaseModel):
 class McqOptionIn(BaseModel):
     id: str
     text: str
+    image_url: Optional[str] = None
 
 
 class McqContentIn(BaseModel):
@@ -86,8 +95,9 @@ class LevelIn(BaseModel):
     level_index: int = Field(ge=0)
     content: ContentIn
 
-    @root_validator(pre=True)
-    def parse_content_union(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    @model_validator(mode="before")
+    @classmethod
+    def parse_content_union(cls, data: Any) -> Any:
         """
         Payload приходит как:
         {
@@ -98,14 +108,15 @@ class LevelIn(BaseModel):
         Так как в content нет discriminator-поля (kind/type),
         определяем тип по наличию ключей options/correctOptionId. [web:2]
         """
-        c = values.get("content") or {}
+        if isinstance(data, dict):
+            c = data.get("content") or {}
 
-        if isinstance(c, dict) and ("options" in c or "correctOptionId" in c):
-            values["content"] = McqContentIn(**c)
-        else:
-            values["content"] = QaContentIn(**c)
+            if isinstance(c, dict) and ("options" in c or "correctOptionId" in c):
+                data["content"] = McqContentIn(**c)
+            else:
+                data["content"] = QaContentIn(**c)
 
-        return values
+        return data
 
 
 class ReplaceLevelsRequest(BaseModel):
@@ -128,12 +139,15 @@ class DeckSessionCard(BaseModel):
     active_level_index: int
 
     levels: List[CardLevelContent]
+    question_image_url: Optional[str] = None
+    answer_image_url: Optional[str] = None
 
 
 class DeckCreate(BaseModel):
     title: str
     description: str | None = None
     color: str | None = None
+
 
 class CreateCardResponse(BaseModel):
     card_id: UUID
@@ -145,6 +159,7 @@ class DeckUpdate(BaseModel):
     description: Optional[str] = None
     color: Optional[str] = Field(default=None, min_length=1)  # опционально: regex под HEX
     is_public: Optional[bool] = None
+
 
 class DeckDetail(BaseModel):
     deck_id: UUID = Field(validation_alias="id", serialization_alias="deck_id")

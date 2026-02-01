@@ -1,5 +1,5 @@
 export type EditDeckProps = {
-  deckId: string;
-  onCancel: () => void;
-  onSaved: () => void;
-};
+  deckId: string
+  onCancel: () => void
+  onSaved: () => void
+}

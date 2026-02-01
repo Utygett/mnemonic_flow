@@ -1,9 +1,9 @@
-import type { LevelMCQ } from './types';
-import { newId } from './utils';
+import type { LevelMCQ } from './types'
+import { newId } from './utils'
 
 export function makeDefaultMcqLevel(): LevelMCQ {
-  const a = newId();
-  const b = newId();
+  const a = newId()
+  const b = newId()
 
   return {
     question: '',
@@ -14,5 +14,5 @@ export function makeDefaultMcqLevel(): LevelMCQ {
     correctOptionId: a,
     explanation: '',
     timerSec: undefined,
-  };
+  }
 }

@@ -1,9 +1,9 @@
-import * as React from "react";
-import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
-import { cva } from "class-variance-authority";
-import { ChevronDownIcon } from "lucide-react";
+import * as React from 'react'
+import * as NavigationMenuPrimitive from '@radix-ui/react-navigation-menu'
+import { cva } from 'class-variance-authority'
+import { ChevronDownIcon } from 'lucide-react'
 
-import { cn } from "./utils";
+import { cn } from './utils'
 
 function NavigationMenu({
   className,
@@ -11,19 +11,19 @@ function NavigationMenu({
   viewport = true,
   ...props
 }: React.ComponentProps<typeof NavigationMenuPrimitive.Root> & {
-  viewport?: boolean;
+  viewport?: boolean
 }) {
   return (
     <NavigationMenuPrimitive.Root
       data-slot="navigation-menu"
       data-viewport={viewport}
-      className={cn("navigation-menu", className)}
+      className={cn('navigation-menu', className)}
       {...props}
     >
       {children}
       {viewport && <NavigationMenuViewport />}
     </NavigationMenuPrimitive.Root>
-  );
+  )
 }
 
 function NavigationMenuList({
@@ -33,10 +33,10 @@ function NavigationMenuList({
   return (
     <NavigationMenuPrimitive.List
       data-slot="navigation-menu-list"
-      className={cn("navigation-menu__list", className)}
+      className={cn('navigation-menu__list', className)}
       {...props}
     />
-  );
+  )
 }
 
 function NavigationMenuItem({
@@ -46,13 +46,13 @@ function NavigationMenuItem({
   return (
     <NavigationMenuPrimitive.Item
       data-slot="navigation-menu-item"
-      className={cn("relative", className)}
+      className={cn('relative', className)}
       {...props}
     />
-  );
+  )
 }
 
-const navigationMenuTriggerStyle = cva("navigation__trigger");
+const navigationMenuTriggerStyle = cva('navigation__trigger')
 
 function NavigationMenuTrigger({
   className,
@@ -65,13 +65,13 @@ function NavigationMenuTrigger({
       className={cn(navigationMenuTriggerStyle(), className)}
       {...props}
     >
-      {children}{" "}
+      {children}{' '}
       <ChevronDownIcon
-        className={cn("icon icon--sm navigation__chevron navigation__chevron--offset")}
+        className={cn('icon icon--sm navigation__chevron navigation__chevron--offset')}
         aria-hidden="true"
       />
     </NavigationMenuPrimitive.Trigger>
-  );
+  )
 }
 
 function NavigationMenuContent({
@@ -81,10 +81,10 @@ function NavigationMenuContent({
   return (
     <NavigationMenuPrimitive.Content
       data-slot="navigation-menu-content"
-      className={cn("navigation-menu__content", className)}
+      className={cn('navigation-menu__content', className)}
       {...props}
     />
-  );
+  )
 }
 
 function NavigationMenuViewport({
@@ -92,14 +92,14 @@ function NavigationMenuViewport({
   ...props
 }: React.ComponentProps<typeof NavigationMenuPrimitive.Viewport>) {
   return (
-    <div className={cn("navigation-menu__viewport-container")}>
+    <div className={cn('navigation-menu__viewport-container')}>
       <NavigationMenuPrimitive.Viewport
         data-slot="navigation-menu-viewport"
-        className={cn("navigation-menu__viewport", className)}
+        className={cn('navigation-menu__viewport', className)}
         {...props}
       />
     </div>
-  );
+  )
 }
 
 function NavigationMenuLink({
@@ -109,10 +109,10 @@ function NavigationMenuLink({
   return (
     <NavigationMenuPrimitive.Link
       data-slot="navigation-menu-link"
-      className={cn("navigation__link", className)}
+      className={cn('navigation__link', className)}
       {...props}
     />
-  );
+  )
 }
 
 function NavigationMenuIndicator({
@@ -122,12 +122,12 @@ function NavigationMenuIndicator({
   return (
     <NavigationMenuPrimitive.Indicator
       data-slot="navigation-menu-indicator"
-      className={cn("navigation-menu__indicator", className)}
+      className={cn('navigation-menu__indicator', className)}
       {...props}
     >
       <div className="navigation-menu__indicator-dot" />
     </NavigationMenuPrimitive.Indicator>
-  );
+  )
 }
 
 export {
@@ -140,4 +140,4 @@ export {
   NavigationMenuIndicator,
   NavigationMenuViewport,
   navigationMenuTriggerStyle,
-};
+}

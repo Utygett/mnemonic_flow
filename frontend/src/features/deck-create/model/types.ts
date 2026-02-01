@@ -1,4 +1,4 @@
 export type CreateDeckProps = {
-  onSave: (createdDeckId?: string) => void;
-  onCancel: () => void;
-};
+  onSave: (createdDeckId?: string) => void
+  onCancel: () => void
+}

@@ -2,13 +2,50 @@ name: Validate Commits
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   workflow_call:
 
 jobs:
+  validate-version:
+    name: Validate Version Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate VERSION file format
+        run: |
+          # Проверяем, что VERSION файл существует
+          if [ ! -f "VERSION" ]; then
+            echo "❌ VERSION file not found!"
+            exit 1
+          fi
+
+          # Читаем версию
+          VERSION=$(cat VERSION | tr -d '[:space:]')
+
+          # Проверяем формат xx.xx.xx (semver)
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "❌ Invalid VERSION format: $VERSION"
+            echo "Expected format: xx.xx.xx (e.g., 1.0.0, 0.5.12)"
+            exit 1
+          fi
+
+          # Проверяем, что каждый компонент < 1000
+          IFS='.' read -ra PARTS <<< "$VERSION"
+          for part in "${PARTS[@]}"; do
+            if [ "$part" -ge 1000 ]; then
+              echo "❌ Version part too large: $part (must be < 1000)"
+              exit 1
+            fi
+          done
+
+          echo "✅ VERSION format is valid: $VERSION"
+
   validate-commits:
     name: Validate Conventional Commits
     runs-on: ubuntu-latest
+    needs: validate-version
     steps:
       - name: Validate commit messages
         uses: actions/github-script@v7

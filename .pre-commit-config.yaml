@@ -1,0 +1,82 @@
+# Pre-commit hooks for MnemonicFlow
+# Install: pip install pre-commit
+# Run: pre-commit install
+# Check all: pre-commit run --all-files
+
+repos:
+  # Python code formatting
+  - repo: https://github.com/psf/black
+    rev: 26.1.0
+    hooks:
+      - id: black
+        files: ^backend/.*\.py$
+        args: [--preview]
+
+  # Python import sorting
+  - repo: https://github.com/PyCQA/isort
+    rev: 6.0.0
+    hooks:
+      - id: isort
+        files: ^backend/.*\.py$
+
+  # Python linting
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        additional_dependencies:
+          - Flake8-pyproject
+          - mccabe
+          - pycodestyle
+          - pyflakes
+        files: ^backend/.*\.py$
+
+  # Type checking (manual - run explicitly)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.15.0
+    hooks:
+      - id: mypy
+        stages: [manual]
+        additional_dependencies:
+          - types-PyYAML
+          - types-requests
+          - pydantic>=2.0
+        files: ^backend/.*\.py$
+        args: [--config-file=backend/pyproject.toml]
+
+  # General pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        files: ^backend/.*\.ya?ml$
+      - id: check-toml
+        files: .*\.toml$
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # JSON schema validation
+  - repo: https://github.com/sirosen/check-jsonschema
+    rev: 0.31.2
+    hooks:
+      - id: check-github-workflows
+        files: ^\.github/workflows/.*\.ya?ml$
+      - id: check-jsonschema
+        name: 'Validate Docker Compose config'
+        files: ^infra/compose.*\.ya?ml$
+        args: ['--builtin-schema', 'compose-spec']
+
+  # Frontend formatting with prettier (requires node_modules)
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.4.2
+    hooks:
+      - id: prettier
+        files: ^frontend/.*\.(ts|tsx|js|jsx|css|json|md)$
+        args: [--config=frontend/.prettierrc, --write]

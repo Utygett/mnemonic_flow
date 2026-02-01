@@ -1,15 +1,13 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import * as AccordionPrimitive from "@radix-ui/react-accordion";
-import { ChevronDownIcon } from "lucide-react";
+import * as React from 'react'
+import * as AccordionPrimitive from '@radix-ui/react-accordion'
+import { ChevronDownIcon } from 'lucide-react'
 
-import { cn } from "./utils";
+import { cn } from './utils'
 
-function Accordion({
-  ...props
-}: React.ComponentProps<typeof AccordionPrimitive.Root>) {
-  return <AccordionPrimitive.Root data-slot="accordion" {...props} />;
+function Accordion({ ...props }: React.ComponentProps<typeof AccordionPrimitive.Root>) {
+  return <AccordionPrimitive.Root data-slot="accordion" {...props} />
 }
 
 function AccordionItem({
@@ -19,10 +17,10 @@ function AccordionItem({
   return (
     <AccordionPrimitive.Item
       data-slot="accordion-item"
-      className={cn("accordion__item", className)}
+      className={cn('accordion__item', className)}
       {...props}
     />
-  );
+  )
 }
 
 function AccordionTrigger({
@@ -34,14 +32,14 @@ function AccordionTrigger({
     <AccordionPrimitive.Header className="flex">
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
-        className={cn("accordion__trigger", className)}
+        className={cn('accordion__trigger', className)}
         {...props}
       >
         {children}
-        <ChevronDownIcon className={cn("icon icon--sm accordion__chevron")} />
+        <ChevronDownIcon className={cn('icon icon--sm accordion__chevron')} />
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
-  );
+  )
 }
 
 function AccordionContent({
@@ -55,9 +53,9 @@ function AccordionContent({
       className="accordion__content"
       {...props}
     >
-      <div className={cn("accordion__inner", className)}>{children}</div>
+      <div className={cn('accordion__inner', className)}>{children}</div>
     </AccordionPrimitive.Content>
-  );
+  )
 }
 
-export { Accordion, AccordionItem, AccordionTrigger, AccordionContent };
+export { Accordion, AccordionItem, AccordionTrigger, AccordionContent }

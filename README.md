@@ -18,25 +18,42 @@ MnemonicFlow/
 │   └── package.json
 │
 ├── backend/               # FastAPI + Python бэкенд
-│   ├── app/
-│   │   ├── api/           # API эндпоинты
-│   │   ├── core/          # Конфигурация, безопасность, БД
-│   │   ├── models/        # SQLAlchemy модели
-│   │   ├── schemas/       # Pydantic схемы
-│   │   └── services/      # Бизнес-логика
+│   ├── backend/
+│   │   ├── app/           # Основное приложение
+│   │   │   ├── api/       # API эндпоинты (routes)
+│   │   │   ├── auth/      # Аутентификация
+│   │   │   ├── core/      # Конфигурация, безопасность, БД
+│   │   │   ├── db/        # Инициализация БД
+│   │   │   ├── domain/    # Domain сервисы
+│   │   │   ├── models/    # SQLAlchemy модели
+│   │   │   ├── schemas/   # Pydantic схемы
+│   │   │   └── services/  # Бизнес-логика
+│   │   └── tests/         # Тесты
+│   ├── migrations/        # Alembic миграции
 │   ├── Dockerfile
+│   ├── Dockerfile.ci      # Dockerfile для CI
 │   ├── entrypoint.sh      # Скрипт инициализации
+│   ├── pyproject.toml     # Python конфигурация
 │   └── requirements.txt
 │
 ├── infra/                 # Инфраструктура
 │   ├── deploy/
 │   │   └── nginx/         # Nginx конфигурация
 │   ├── compose.dev.yml    # Docker Compose для разработки
+│   ├── compose.prod.yml   # Docker Compose для продакшна
+│   ├── compose.ci.yml     # Docker Compose для CI
+│   ├── compose.pre-commit.yml  # Docker Compose для pre-commit
+│   ├── Dockerfile.pre-commit  # Dockerfile для pre-commit образа
 │   └── .envExample.dev    # Шаблон переменных окружения
 │
 └── .github/
     └── workflows/
-        └── ci.yml         # GitHub Actions CI
+        ├── ci.yml                # Основной CI пайплайн (объединяет все этапы)
+        ├── validate-commits.yml  # Валидация коммитов
+        ├── code-style.yml        # Проверка код стиля
+        ├── build-all.yml         # Сборка образов
+        ├── test-all.yml          # Запуск тестов
+        └── push-images.yml       # Публикация образов в registry
 ```
 
 ## 🏗️ Архитектура фронтенда (FSD)
@@ -69,7 +86,7 @@ MnemonicFlow/
 ## 🚀 Быстрый старт
 
 ### Требования
-- Docker и Docker Compose
+- Docker и Docker Compose v2
 - Node.js 20+ (для локальной разработки)
 - Python 3.11+ (для локальной разработки)
 
@@ -85,6 +102,13 @@ docker compose -f compose.dev.yml up -d
 
 # 3. Приложение доступно по адресу
 http://localhost:80
+```
+
+**Использование pre-commit через Docker:**
+```bash
+# Запуск pre-commit проверок
+cd infra
+docker compose -f compose.pre-commit.yml run --rm pre-commit
 ```
 
 ### Локальная разработка
@@ -107,16 +131,21 @@ npm run dev    # http://localhost:3000
 
 | Слой | Технологии |
 |------|-----------|
-| **Frontend** | React 18, TypeScript, Vite, FSD v2, Radix UI, Tailwind |
-| **Backend** | FastAPI, Python 3.11, PostgreSQL 16, SQLAlchemy 2.0 |
+| **Frontend** | React 18, TypeScript, Vite, FSD v2, Radix UI, CSS Modules |
+| **Backend** | FastAPI, Python 3.13, PostgreSQL 16, SQLAlchemy 2.0, MinIO |
 | **Infrastructure** | Docker, Docker Compose, Nginx |
 | **CI/CD** | GitHub Actions |
 
 ## 📖 Документация
 
-- **[CLAUDE.md](./CLAUDE.md)** — подробная документация для разработчиков
-- **API Docs** — `http://localhost/docs` (при запущенном бэкенде)
-- **FSD Contract** — `frontend/docs/fsd-contract.md` (на русском)
+| Документация | Описание |
+|--------------|----------|
+| **[ROADMAP.md](./ROADMAP.md)** | Карта проекта |
+| **[CLAUDE.md](./CLAUDE.md)** | Центральная документация для разработчиков: архитектура проекта, команды разработки, паттерны, FSD правила, настройка окружения, Docker, CI/CD |
+| **[Backend README](./backend/README.md)** | Документация бэкенда: структура FastAPI приложения, модели, API эндпоинты, миграции Alembic, тестирование |
+| **[Frontend README](./frontend/README.md)** | Документация фронтенда: структура FSD, команды разработки, тестирование с Vitest, технологический стек |
+| **[FSD Contract](./frontend/docs/fsd-contract.md)** | Полный архитектурный контракт Feature-Sliced Design v2 (на русском языке) — детальное описание слоёв, сегментов и правил импортов |
+| **API Docs** | Интерактивная документация API: `http://localhost/docs` (Swagger) или `http://localhost/redoc` (ReDoc) — доступна при запущенном бэкенде |
 
 ## 🧪 Тесты
 
@@ -131,5 +160,76 @@ npm run test:coverage # Генерация отчёта о покрытии
 **Backend:**
 ```bash
 cd backend
-pytest
+pytest                              # Все тесты
+pytest backend/tests/test_security.py  # Конкретный файл
+pytest -s                           # С выводом print()
+pytest -x                           # Остановиться на первой ошибке
+pytest --cov=backend/app            # С покрытием (нужен pytest-cov)
 ```
+
+> Подробнее: [`backend/README.md`](./backend/README.md#-тесты)
+
+## 🏷️ Версионирование
+
+Проект использует **Semantic Versioning** (формат `MAJOR.MINOR.PATCH`):
+
+- `MAJOR` — Breaking changes (обратная совместимость нарушена)
+- `MINOR` — Новые функции (обратная совместимость сохранена)
+- `PATCH` — Bugfixes (обратная совместимость сохранена)
+
+### Получение версии
+
+**Backend:**
+```bash
+# Через API
+curl http://localhost:8000/version
+# {"version": "0.0.99"}
+
+# В коде
+from app.core.version import get_version
+print(get_version())  # "0.0.99"
+```
+
+**Frontend:**
+```typescript
+import { APP_VERSION } from '@/shared/lib/version';
+
+console.log(APP_VERSION);  // "0.0.99"
+```
+
+### Обновление версии
+
+Версия хранится в файле `VERSION` в корне проекта. Для обновления версии:
+
+1. Откройте файл `VERSION`
+2. Измените номер версии (например, `0.0.99` → `0.1.0`)
+3. Пересоберите приложение:
+   ```bash
+   docker compose -f compose.dev.yml up -d --build frontend
+   docker compose -f compose.dev.yml up -d --build backend
+   ```
+
+### Релизы
+
+Для создания релиза на GitHub:
+
+1. Обновите версию в файле `VERSION`
+2. Закоммитьте изменения: `git commit -am "chore: bump version to X.Y.Z"`
+3. Создайте git tag: `git tag vX.Y.Z`
+4. Запушьте тег: `git push origin vX.Y.Z`
+5. Создайте Release на GitHub на основе тега
+
+## 🔧 CI/CD
+
+Автоматический CI запускается для всех PR в ветки `main` и `develop` через единый пайплайн `ci.yml`:
+
+1. **validate-commits** — Валидация формата VERSION и Conventional Commits
+2. **code-style** — Проверка код стиля (pre-commit hooks)
+3. **build-all** — Сборка Docker образов с кешированием
+4. **test-all** — Запуск тестов (pytest + vitest)
+
+**Публикация образов** (`push-images.yml`) — Отдельный workflow, запускается:
+- При пуше в ветки `main` или `develop`
+- Вручную через `workflow_dispatch`
+
+**Docker Registry:** `ghcr.io/<username>/mnemonic_flow/` (замените `<username>` на вашего владельца репозитория)

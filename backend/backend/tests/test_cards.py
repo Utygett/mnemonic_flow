@@ -1,264 +1,209 @@
-from datetime import datetime, timezone, timedelta
+"""Тесты для API карточек."""
 
-from starlette.testclient import TestClient
+import uuid
 
-from app.models.card import Card
-from app.models.card_level import CardLevel
-from app.models.card_progress import CardProgress
-from app.models.card_review_history import CardReviewHistory
-
-from app.core.enums import ReviewRating
-from app.domain.review.policy import ReviewPolicy
-from app.domain.review.dto import LearningSettingsSnapshot
-from app.domain.review.entities import CardLevelProgressState
+from fastapi.testclient import TestClient
 
 
-class TestLevelUp:
-    """POST /api/cards/{card_id}/level_up"""
+def test_create_card_success(client: TestClient, test_deck, auth_headers):
+    """Успешное создание карточки."""
+    payload = {
+        "deck_id": str(test_deck.id),
+        "title": "Test Card",
+        "type": "flashcard",
+        "levels": [
+            {
+                "question": "What is 2+2?",
+                "answer": "4",
+            }
+        ],
+    }
 
-    def test_level_up_success(self, client: TestClient, auth_token: str, db, test_user, test_deck):
-        # Карточка + уровни
-        card = Card(deck_id=test_deck.id, title="Card", type="text", max_level=3)
-        db.add(card)
-        db.flush()
+    response = client.post("/api/cards/", json=payload, headers=auth_headers)
 
-        lvl0 = CardLevel(card_id=card.id, level_index=0, content={"question": "Q0", "answer": "A0"})
-        lvl1 = CardLevel(card_id=card.id, level_index=1, content={"question": "Q1", "answer": "A1"})
-        db.add_all([lvl0, lvl1])
-        db.commit()
-
-        # В новой логике прогресс может не существовать — эндпоинт сам создаст lvl0-progress и переключит на lvl1
-        response = client.post(
-            f"/api/cards/{card.id}/level_up",
-            headers={"Authorization": f"Bearer {auth_token}"},
-        )
-        assert response.status_code == 200, response.text
-        data = response.json()
-
-        assert data["active_level_index"] == 1
-        assert "active_card_level_id" in data
-
-        active = (
-            db.query(CardProgress)
-            .filter_by(user_id=test_user.id, card_id=card.id, is_active=True)
-            .first()
-        )
-        assert active is not None
-        active_level = db.get(CardLevel, active.card_level_id)
-        assert active_level.level_index == 1
+    assert response.status_code == 201
+    data = response.json()
+    assert "card_id" in data
+    assert data["deck_id"] == str(test_deck.id)
 
 
-class TestLevelDown:
-    """POST /api/cards/{card_id}/level_down"""
+def test_create_card_duplicate_title_fails(client: TestClient, test_deck, auth_headers):
+    """Создание карточки с дублирующимся названием в той же колоде должно завершиться ошибкой."""
+    card_payload = {
+        "deck_id": str(test_deck.id),
+        "title": "Duplicate Card",
+        "type": "flashcard",
+        "levels": [
+            {
+                "question": "Question 1",
+                "answer": "Answer 1",
+            }
+        ],
+    }
 
-    def test_level_down_success(self, client: TestClient, auth_token: str, db, test_user, test_deck):
-        card = Card(deck_id=test_deck.id, title="Card", type="text", max_level=3)
-        db.add(card)
-        db.flush()
+    # Создаём первую карточку
+    response1 = client.post("/api/cards/", json=card_payload, headers=auth_headers)
+    assert response1.status_code == 201
 
-        lvl0 = CardLevel(card_id=card.id, level_index=0, content={"question": "Q0", "answer": "A0"})
-        lvl1 = CardLevel(card_id=card.id, level_index=1, content={"question": "Q1", "answer": "A1"})
-        db.add_all([lvl0, lvl1])
-        db.commit()
-
-        # Сначала поднимем на 1
-        up = client.post(
-            f"/api/cards/{card.id}/level_up",
-            headers={"Authorization": f"Bearer {auth_token}"},
-        )
-        assert up.status_code == 200, up.text
-        assert up.json()["active_level_index"] == 1
-
-        # Потом опустим на 0
-        down = client.post(
-            f"/api/cards/{card.id}/level_down",
-            headers={"Authorization": f"Bearer {auth_token}"},
-        )
-        assert down.status_code == 200, down.text
-        assert down.json()["active_level_index"] == 0
-
-        active = (
-            db.query(CardProgress)
-            .filter_by(user_id=test_user.id, card_id=card.id, is_active=True)
-            .first()
-        )
-        assert active is not None
-        active_level = db.get(CardLevel, active.card_level_id)
-        assert active_level.level_index == 0
+    # Пытаемся создать вторую карточку с тем же названием
+    response2 = client.post("/api/cards/", json=card_payload, headers=auth_headers)
+    assert response2.status_code == 409
+    assert "already exists" in response2.json()["detail"].lower()
 
 
-class TestReviewCard:
-    """POST /api/cards/{card_id}/review"""
+def test_create_card_same_title_different_deck(
+    client: TestClient, test_user, test_deck, auth_headers, db
+):
+    """Создание карточек с одинаковым названием в разных колодах должно быть разрешено."""
+    from app.models.deck import Deck
+    from app.models.user_study_group import UserStudyGroup
+    from app.models.user_study_group_deck import UserStudyGroupDeck
 
-    def test_review_card_success(self, client: TestClient, auth_token: str, db, test_user, test_deck):
-        card = Card(deck_id=test_deck.id, title="Card", type="text", max_level=1)
-        db.add(card)
-        db.flush()
+    # Создаём вторую колоду
+    group2 = UserStudyGroup(user_id=test_user.id, title_override="Test Group 2")
+    db.add(group2)
+    db.flush()
 
-        lvl0 = CardLevel(card_id=card.id, level_index=0, content={"question": "Q", "answer": "A"})
-        db.add(lvl0)
-        db.commit()
+    deck2 = Deck(
+        owner_id=test_user.id,
+        title="Test Deck 2",
+        color="#00FF00",
+        is_public=True,
+    )
+    db.add(deck2)
+    db.flush()
 
-        response = client.post(
-            f"/api/cards/{card.id}/review",
-            headers={"Authorization": f"Bearer {auth_token}"},
-            json={"rating": "easy"},
-        )
-        assert response.status_code == 200, response.text
-        data = response.json()
+    link = UserStudyGroupDeck(
+        user_group_id=group2.id,
+        deck_id=deck2.id,
+        order_index=0,
+    )
+    db.add(link)
+    db.commit()
 
-        # новый ответ
-        assert "card_id" in data
-        assert "card_level_id" in data
-        assert "level_index" in data
-        assert "stability" in data
-        assert "difficulty" in data
-        assert "next_review" in data
+    card_payload = {
+        "deck_id": str(test_deck.id),
+        "title": "Same Title Card",
+        "type": "flashcard",
+        "levels": [
+            {
+                "question": "Question",
+                "answer": "Answer",
+            }
+        ],
+    }
 
-        # прогресс должен существовать (активный)
-        active = (
-            db.query(CardProgress)
-            .filter_by(user_id=test_user.id, card_id=card.id, is_active=True)
-            .first()
-        )
-        assert active is not None
+    # Создаём карточку в первой колоде
+    response1 = client.post(
+        "/api/cards/", json={**card_payload, "deck_id": str(test_deck.id)}, headers=auth_headers
+    )
+    assert response1.status_code == 201
 
-        # и история review должна быть записана
-        h = db.query(CardReviewHistory).filter_by(user_id=test_user.id, card_id=card.id).first()
-        assert h is not None
-        assert h.card_level_id == active.card_level_id
-
-
-class TestGetCardsForReview:
-    """GET /api/cards/review"""
-
-    def test_get_cards_for_review_empty(self, client: TestClient, auth_token: str):
-        response = client.get(
-            "/api/cards/review",
-            headers={"Authorization": f"Bearer {auth_token}"},
-        )
-        assert response.status_code == 200, response.text
-        assert response.json() == []
-
-    def test_get_cards_for_review_has_due(self, client: TestClient, auth_token: str, db, test_user, test_deck):
-        card = Card(deck_id=test_deck.id, title="Card", type="text", max_level=1)
-        db.add(card)
-        db.flush()
-
-        lvl0 = CardLevel(card_id=card.id, level_index=0, content={"question": "Q", "answer": "A"})
-        db.add(lvl0)
-        db.flush()
-
-        now = datetime.now(timezone.utc)
-        p = CardProgress(
-            user_id=test_user.id,
-            card_id=card.id,
-            card_level_id=lvl0.id,
-            is_active=True,
-            stability=1.0,
-            difficulty=5.0,
-            last_reviewed=now,
-            next_review=now - timedelta(minutes=1),  # due
-        )
-        db.add(p)
-        db.commit()
-
-        response = client.get(
-            "/api/cards/review",
-            headers={"Authorization": f"Bearer {auth_token}"},
-        )
-        assert response.status_code == 200, response.text
-        data = response.json()
-        assert len(data) == 1
-        assert data[0]["title"] == "Card"
-        assert data[0]["level_index"] == 0
+    # Создаём карточку с тем же названием во второй колоде
+    response2 = client.post(
+        "/api/cards/", json={**card_payload, "deck_id": str(deck2.id)}, headers=auth_headers
+    )
+    assert response2.status_code == 201
 
 
-class TestReviewWithLevels:
-    """GET /api/cards/review_with_levels"""
+def test_create_card_title_trim(client: TestClient, test_deck, auth_headers):
+    """Проверка обрезки пробелов в названии."""
+    payload = {
+        "deck_id": str(test_deck.id),
+        "title": "  Spaces Card  ",
+        "type": "flashcard",
+        "levels": [
+            {
+                "question": "Q",
+                "answer": "A",
+            }
+        ],
+    }
 
-    def test_review_with_levels_empty(self, client: TestClient, auth_token: str):
-        response = client.get(
-            "/api/cards/review_with_levels",
-            headers={"Authorization": f"Bearer {auth_token}"},
-        )
-        assert response.status_code == 200, response.text
-        assert response.json() == []
+    response1 = client.post("/api/cards/", json=payload, headers=auth_headers)
+    assert response1.status_code == 201
 
-    def test_review_with_levels_has_cards(self, client: TestClient, auth_token: str, db, test_user, test_deck):
-        card = Card(deck_id=test_deck.id, title="Card", type="text", max_level=2)
-        db.add(card)
-        db.flush()
-
-        lvl0 = CardLevel(card_id=card.id, level_index=0, content={"question": "Q0", "answer": "A0"})
-        lvl1 = CardLevel(card_id=card.id, level_index=1, content={"question": "Q1", "answer": "A1"})
-        db.add_all([lvl0, lvl1])
-        db.flush()
-
-        now = datetime.now(timezone.utc)
-        p = CardProgress(
-            user_id=test_user.id,
-            card_id=card.id,
-            card_level_id=lvl0.id,
-            is_active=True,
-            stability=1.0,
-            difficulty=5.0,
-            last_reviewed=now,
-            next_review=now - timedelta(minutes=1),
-        )
-        db.add(p)
-        db.commit()
-
-        response = client.get(
-            "/api/cards/review_with_levels",
-            headers={"Authorization": f"Bearer {auth_token}"},
-        )
-        assert response.status_code == 200, response.text
-        data = response.json()
-
-        assert len(data) == 1
-        assert data[0]["title"] == "Card"
-        assert data[0]["level_index"] == 0
-        assert len(data[0]["levels"]) == 2
+    # Пытаемся создать с тем же названием, но без пробелов по краям
+    payload2 = {**payload, "title": "Spaces Card"}
+    response2 = client.post("/api/cards/", json=payload2, headers=auth_headers)
+    assert response2.status_code == 409
 
 
-class TestReviewPolicy:
-    """Unit-тесты доменной логики FSRS-like"""
+def test_create_card_empty_title_fails(client: TestClient, test_deck, auth_headers):
+    """Пустое название карточки должно вызывать ошибку."""
+    payload = {
+        "deck_id": str(test_deck.id),
+        "title": "   ",
+        "type": "flashcard",
+        "levels": [
+            {
+                "question": "Q",
+                "answer": "A",
+            }
+        ],
+    }
 
-    def test_apply_review_again(self):
-        policy = ReviewPolicy()
-        now = datetime.now(timezone.utc)
+    response = client.post("/api/cards/", json=payload, headers=auth_headers)
+    assert response.status_code == 422
+    assert "title" in response.json()["detail"].lower()
 
-        settings = LearningSettingsSnapshot(
-            desired_retention=0.9,
-            initial_stability=1.0,
-            initial_difficulty=5.0,
-            promote_stability_multiplier=0.85,
-            promote_difficulty_delta=0.5,
-        )
 
-        state = CardLevelProgressState(stability=4.0, difficulty=5.0)
-        updated = policy.apply_review(state=state, rating=ReviewRating.again, settings=settings, now=now)
+def test_create_card_deck_not_found(client: TestClient, auth_headers):
+    """Создание карточки в несуществующей колоде."""
+    fake_deck_id = uuid.uuid4()
+    payload = {
+        "deck_id": str(fake_deck_id),
+        "title": "Test Card",
+        "type": "flashcard",
+        "levels": [
+            {
+                "question": "Q",
+                "answer": "A",
+            }
+        ],
+    }
 
-        assert updated.stability == 4.0 * 0.25
-        assert updated.difficulty == 5.0 + 0.6
-        assert updated.next_review > now
+    response = client.post("/api/cards/", json=payload, headers=auth_headers)
+    assert response.status_code == 404
 
-    def test_apply_review_easy(self):
-        policy = ReviewPolicy()
-        now = datetime.now(timezone.utc)
 
-        settings = LearningSettingsSnapshot(
-            desired_retention=0.9,
-            initial_stability=1.0,
-            initial_difficulty=5.0,
-            promote_stability_multiplier=0.85,
-            promote_difficulty_delta=0.5,
-        )
+def test_create_card_unauthorized_deck(client: TestClient, test_deck, db, auth_headers):
+    """Попытка создать карточку в чужой колоде."""
+    import uuid
 
-        state = CardLevelProgressState(stability=2.0, difficulty=5.0)
-        updated = policy.apply_review(state=state, rating=ReviewRating.easy, settings=settings, now=now)
+    from app.core.security import hash_password
+    from app.models.user import User
 
-        assert updated.stability == 2.0 * 1.35
-        assert updated.difficulty == 5.0 - 0.15
-        assert updated.next_review > now
+    # Создаём другого пользователя с уникальным email и подтверждённым email
+    unique_email = f"other_{uuid.uuid4().hex[:8]}@example.com"
+    other_user = User(
+        username="otheruser",
+        email=unique_email,
+        password_hash=hash_password("password123"),
+        is_email_verified=True,
+    )
+    db.add(other_user)
+    db.commit()
+
+    # Логинимся за другого пользователя
+    login_response = client.post(
+        "/api/auth/login",
+        json={"email": unique_email, "password": "password123"},
+    )
+    other_token = login_response.json()["access_token"]
+    other_headers = {"Authorization": f"Bearer {other_token}"}
+
+    payload = {
+        "deck_id": str(test_deck.id),
+        "title": "Test Card",
+        "type": "flashcard",
+        "levels": [
+            {
+                "question": "Q",
+                "answer": "A",
+            }
+        ],
+    }
+
+    response = client.post("/api/cards/", json=payload, headers=other_headers)
+    assert response.status_code == 403

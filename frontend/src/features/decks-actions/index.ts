@@ -1,2 +1,2 @@
-export { DecksActionsContainer } from './model/DecksActionsContainer';
-export type { DecksActionsApi } from './model/DecksActionsContainer';
+export { DecksActionsContainer } from './model/DecksActionsContainer'
+export type { DecksActionsApi } from './model/DecksActionsContainer'

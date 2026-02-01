@@ -1,36 +1,64 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Settings, User, Shield, LogOut } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react'
+import { Settings, KeyRound, LogOut, Pencil, Sun, Moon } from 'lucide-react'
 
-import type { ProfileViewProps } from '../model/types';
+import type { ProfileViewProps, Theme } from '../model/types'
+
+import styles from './ProfileView.module.css'
+
+const THEME_OPTIONS: { value: Theme; label: string; icon: React.ReactNode }[] = [
+  { value: 'light', label: 'Светлая', icon: <Sun size={16} /> },
+  { value: 'blue', label: 'Синяя', icon: <Moon size={16} /> },
+  { value: 'dark', label: 'Тёмная', icon: <Moon size={16} /> },
+]
 
 export function ProfileView(props: ProfileViewProps) {
-  const { apiHealth, isPWA } = props;
+  const {
+    initials,
+    name,
+    email,
+    version,
+    theme,
+    onThemeChange,
+    onLogout,
+    onChangePassword,
+    onEditUsername,
+  } = props
 
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
+  const [open, setOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
-      if (!open) return;
-      const target = e.target as Node;
-      if (!menuRef.current) return;
-      if (!menuRef.current.contains(target)) setOpen(false);
-    };
+      if (!open) return
+      const target = e.target as Node
+      if (!menuRef.current) return
+      if (!menuRef.current.contains(target)) setOpen(false)
+    }
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
+      if (e.key === 'Escape') setOpen(false)
+    }
 
-    document.addEventListener('mousedown', onDocClick);
-    document.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', onDocClick)
+    document.addEventListener('keydown', onKey)
     return () => {
-      document.removeEventListener('mousedown', onDocClick);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
+      document.removeEventListener('mousedown', onDocClick)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  const handleLogout = () => {
+    setOpen(false)
+    onLogout()
+  }
+
+  const handleChangePassword = () => {
+    setOpen(false)
+    onChangePassword()
+  }
 
   return (
-    <div className="min-h-screen bg-dark pb-24">
+    <div className={styles.page}>
       <header className="page__header">
         <div className="page__header-inner profileHeader">
           <h1 className="page__title">Профиль</h1>
@@ -42,43 +70,33 @@ export function ProfileView(props: ProfileViewProps) {
               aria-label="Настройки"
               aria-haspopup="menu"
               aria-expanded={open}
-              onClick={() => setOpen((v) => !v)}
+              onClick={() => setOpen(v => !v)}
             >
               <Settings size={18} />
             </button>
 
             {open && (
-              <div className="dropdown" role="menu">
+              <div className={styles.dropdown} role="menu">
                 <button
                   type="button"
-                  className="dropdown__item"
+                  className={styles.dropdownItem}
                   role="menuitem"
-                  onClick={() => alert('Подменю 1 (заглушка)')}
+                  onClick={handleChangePassword}
                 >
-                  <User size={16} />
-                  Аккаунт (заглушка)
+                  <KeyRound size={16} />
+                  Сменить пароль
                 </button>
 
-                <button
-                  type="button"
-                  className="dropdown__item"
-                  role="menuitem"
-                  onClick={() => alert('Подменю 2 (заглушка)')}
-                >
-                  <Shield size={16} />
-                  Безопасность (заглушка)
-                </button>
-
-                <div className="dropdown__sep" />
+                <div className={styles.dropdownSep} />
 
                 <button
                   type="button"
-                  className="dropdown__item dropdown__item--danger"
+                  className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`}
                   role="menuitem"
-                  onClick={() => alert('Подменю 3 (заглушка)')}
+                  onClick={handleLogout}
                 >
                   <LogOut size={16} />
-                  Выйти (заглушка)
+                  Выйти
                 </button>
               </div>
             )}
@@ -86,47 +104,61 @@ export function ProfileView(props: ProfileViewProps) {
         </div>
       </header>
 
-      <div className="p-4 container-centered max-w-390">
+      <div className={`${styles.main} container-centered`}>
         <div className="card">
+          {/* Profile Card */}
           <div className="profileCard">
-            <div className="avatar avatar--xl avatar--accent">{props.initials}</div>
+            <div className="avatar avatar--xl avatar--accent">{initials}</div>
             <div className="profileCard__meta">
-              <div className="profileCard__name">{props.name}</div>
-              <div className="profileCard__email">{props.email}</div>
+              <div className={styles.nameRow}>
+                <span className="profileCard__name">{name}</span>
+                <button
+                  type="button"
+                  className={styles.editBtn}
+                  aria-label="Редактировать имя"
+                  onClick={onEditUsername}
+                >
+                  <Pencil size={14} />
+                </button>
+              </div>
+              <div className="profileCard__email">{email}</div>
             </div>
           </div>
 
+          {/* Settings Section */}
           <div className="profileSection">
-            <div className="profileSection__title">Состояние приложения</div>
+            <div className="profileSection__title">Настройки</div>
 
             <div className="profileRow">
-              <span className="profileRow__label">API статус</span>
-              <span className={`profileRow__value ${apiHealth === 'healthy' ? 'text-ok' : 'text-bad'}`}>
-                {apiHealth === 'healthy' ? '✓ Работает' : '✗ Ошибка'}
-              </span>
+              <span className="profileRow__label">Тема</span>
+              <div className={styles.themeSelector}>
+                {THEME_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={`${styles.themeBtn} ${theme === opt.value ? styles.themeBtnActive : ''}`}
+                    onClick={() => onThemeChange(opt.value)}
+                    aria-pressed={theme === opt.value}
+                  >
+                    {opt.icon}
+                    <span>{opt.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
+          </div>
+
+          {/* App Info Section */}
+          <div className="profileSection">
+            <div className="profileSection__title">О приложении</div>
 
             <div className="profileRow">
               <span className="profileRow__label">Версия</span>
-              <span className="profileRow__value">{props.version}</span>
-            </div>
-
-            <div className="profileRow">
-              <span className="profileRow__label">Режим</span>
-              <span className="profileRow__value text-accent">
-                {isPWA ? 'Установлено как PWA' : 'Веб-версия'}
-              </span>
-            </div>
-
-            <div className="profileRow">
-              <span className="profileRow__label">Офлайн доступ</span>
-              <span className={`profileRow__value ${isPWA ? 'text-ok' : 'text-warn'}`}>
-                {isPWA ? 'Доступно' : 'Требуется установка'}
-              </span>
+              <span className="profileRow__value">{version}</span>
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

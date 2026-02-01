@@ -1,25 +1,25 @@
-import React from 'react';
+import React from 'react'
 
-import type { StudyMode } from '@/entities/card';
-import type { PersistedSession } from '@/shared/lib/utils/session-store';
-import { Button } from '@/shared/ui/Button/Button';
+import type { StudyMode } from '@/entities/card'
+import type { PersistedSession } from '@/shared/lib/utils/session-store'
+import { Button } from '@/shared/ui/Button/Button'
 
-import styles from './DeckDetailsView.module.css';
+import styles from './DeckDetailsView.module.css'
 
 type Props = {
-  deckId: string;
-  limit: number;
-  setLimit: (v: number) => void;
+  deckId: string
+  limit: number
+  setLimit: (v: number) => void
 
-  saved: PersistedSession | null;
-  hasSaved: boolean;
+  saved: PersistedSession | null
+  hasSaved: boolean
 
-  limitClamped: number;
+  limitClamped: number
 
-  onBack: () => void;
-  onResume: () => void;
-  onStart: (mode: StudyMode) => void;
-};
+  onBack: () => void
+  onResume: () => void
+  onStart: (mode: StudyMode) => void
+}
 
 export function DeckDetailsView(props: Props) {
   return (
@@ -40,7 +40,7 @@ export function DeckDetailsView(props: Props) {
             <div className={styles.card}>
               <p className={styles.cardTitle}>Есть незавершённая сессия</p>
               <p className={styles.cardMeta}>
-                Карточка {((props.saved.currentIndex ?? 0) + 1)} из {props.saved.deckCards.length}
+                Карточка {(props.saved.currentIndex ?? 0) + 1} из {props.saved.deckCards.length}
               </p>
 
               <div className={styles.inlineActions}>
@@ -55,15 +55,30 @@ export function DeckDetailsView(props: Props) {
             Случайно
           </Button>
 
-          <Button onClick={() => props.onStart('ordered')} variant="secondary" size="large" fullWidth>
+          <Button
+            onClick={() => props.onStart('ordered')}
+            variant="secondary"
+            size="large"
+            fullWidth
+          >
             По порядку
           </Button>
 
-          <Button onClick={() => props.onStart('new_random')} variant="secondary" size="large" fullWidth>
+          <Button
+            onClick={() => props.onStart('new_random')}
+            variant="secondary"
+            size="large"
+            fullWidth
+          >
             Новые случайно
           </Button>
 
-          <Button onClick={() => props.onStart('new_ordered')} variant="secondary" size="large" fullWidth>
+          <Button
+            onClick={() => props.onStart('new_ordered')}
+            variant="secondary"
+            size="large"
+            fullWidth
+          >
             Новые по порядку
           </Button>
 
@@ -76,7 +91,7 @@ export function DeckDetailsView(props: Props) {
               min={1}
               max={200}
               value={String(props.limit)}
-              onChange={(e) => props.setLimit(Number(e.target.value))}
+              onChange={e => props.setLimit(Number(e.target.value))}
               placeholder="Напр. 20"
             />
 
@@ -85,5 +100,5 @@ export function DeckDetailsView(props: Props) {
         </div>
       </div>
     </div>
-  );
+  )
 }

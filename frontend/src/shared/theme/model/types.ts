@@ -10,15 +10,15 @@ export const THEME_TOKEN_KEYS = [
   'shadow',
   'radius-sm',
   'radius-md',
-] as const;
+] as const
 
-export type ThemeTokenKey = (typeof THEME_TOKEN_KEYS)[number];
+export type ThemeTokenKey = (typeof THEME_TOKEN_KEYS)[number]
 
-export type ThemeName = 'dark' | 'light' | 'custom';
+export type ThemeName = 'dark' | 'light' | 'custom'
 
-export type ThemeTokens = Partial<Record<ThemeTokenKey, string>>;
+export type ThemeTokens = Partial<Record<ThemeTokenKey, string>>
 
 export type ThemeState = {
-  name: ThemeName;
-  tokens?: ThemeTokens; // only meaningful for 'custom'
-};
+  name: ThemeName
+  tokens?: ThemeTokens // only meaningful for 'custom'
+}

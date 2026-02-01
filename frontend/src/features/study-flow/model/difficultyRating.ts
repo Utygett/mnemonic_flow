@@ -1,1 +1,1 @@
-export type DifficultyRating = 'again' | 'hard' | 'good' | 'easy';
+export type DifficultyRating = 'again' | 'hard' | 'good' | 'easy'

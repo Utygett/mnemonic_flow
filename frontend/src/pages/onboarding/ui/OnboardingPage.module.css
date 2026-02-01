@@ -90,7 +90,9 @@
   height: 8px;
   border-radius: 50%;
   background: var(--surface-2);
-  transition: background-color 0.2s ease, transform 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .dotActive {

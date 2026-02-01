@@ -1,75 +1,75 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'
 
-import { Input } from '@/shared/ui/Input';
-import { Button } from '@/shared/ui/Button/Button';
+import { Input } from '@/shared/ui/Input'
+import { Button } from '@/shared/ui/Button/Button'
 
-import { useAuth } from '@/app/providers/auth/AuthContext';
-import { login as loginApi } from '@/shared/api/auth-client';
+import { useAuth } from '@/app/providers/auth/AuthContext'
+import { login as loginApi } from '@/shared/api/auth-client'
 
-import styles from './Login.module.css';
+import styles from './Login.module.css'
 
-type Mode = 'login' | 'forgot';
+type Mode = 'login' | 'forgot'
 
 export function Login({ onSwitch }: { onSwitch: () => void }) {
-  const { login } = useAuth();
+  const { login } = useAuth()
 
-  const [mode, setMode] = useState<Mode>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [mode, setMode] = useState<Mode>('login')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
 
-  const [info, setInfo] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [info, setInfo] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   const handleLogin = async () => {
-    setLoading(true);
-    setError(null);
-    setInfo(null);
+    setLoading(true)
+    setError(null)
+    setInfo(null)
 
     try {
-      const data = await loginApi(email, password);
-      await login(data.access_token, data.refresh_token);
+      const data = await loginApi(email, password)
+      await login(data.access_token, data.refresh_token)
     } catch (e: unknown) {
-      console.error('Login error:', e);
-      const msg = e instanceof Error ? e.message : 'Ошибка входа';
-      setError(msg || 'Ошибка входа');
+      console.error('Login error:', e)
+      const msg = e instanceof Error ? e.message : 'Ошибка входа'
+      setError(msg || 'Ошибка входа')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleForgot = async () => {
-    setLoading(true);
-    setError(null);
-    setInfo(null);
+    setLoading(true)
+    setError(null)
+    setInfo(null)
 
     try {
       const res = await fetch('/api/auth/request-password-reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
-      });
+      })
 
-      const rawText = await res.text();
-      let payload: any = null;
+      const rawText = await res.text()
+      let payload: any = null
       try {
-        payload = rawText ? JSON.parse(rawText) : null;
+        payload = rawText ? JSON.parse(rawText) : null
       } catch {
-        payload = null;
+        payload = null
       }
 
       if (!res.ok) {
         const msg =
-          payload?.detail?.message ?? payload?.detail ?? rawText ?? 'Не удалось отправить ссылку';
-        setError(String(msg));
-        return;
+          payload?.detail?.message ?? payload?.detail ?? rawText ?? 'Не удалось отправить ссылку'
+        setError(String(msg))
+        return
       }
 
-      setInfo('Если этот email существует, на него отправлена ссылка для сброса пароля.');
+      setInfo('Если этот email существует, на него отправлена ссылка для сброса пароля.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className={styles.page}>
@@ -84,9 +84,9 @@ export function Login({ onSwitch }: { onSwitch: () => void }) {
         {mode === 'login' && (
           <form
             className={styles.form}
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleLogin();
+            onSubmit={e => {
+              e.preventDefault()
+              handleLogin()
             }}
           >
             <Input label="Пароль" type="password" value={password} onChange={setPassword} />
@@ -97,9 +97,9 @@ export function Login({ onSwitch }: { onSwitch: () => void }) {
 
             <button
               onClick={() => {
-                setMode('forgot');
-                setError(null);
-                setInfo(null);
+                setMode('forgot')
+                setError(null)
+                setInfo(null)
               }}
               className={styles.linkBtn}
               type="button"
@@ -117,9 +117,9 @@ export function Login({ onSwitch }: { onSwitch: () => void }) {
         {mode === 'forgot' && (
           <form
             className={styles.form}
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleForgot();
+            onSubmit={e => {
+              e.preventDefault()
+              handleForgot()
             }}
           >
             <Button variant="primary" size="large" fullWidth disabled={loading} type="submit">
@@ -128,9 +128,9 @@ export function Login({ onSwitch }: { onSwitch: () => void }) {
 
             <button
               onClick={() => {
-                setMode('login');
-                setError(null);
-                setInfo(null);
+                setMode('login')
+                setError(null)
+                setInfo(null)
               }}
               className={styles.linkBtn}
               type="button"
@@ -142,5 +142,5 @@ export function Login({ onSwitch }: { onSwitch: () => void }) {
         )}
       </div>
     </div>
-  );
+  )
 }

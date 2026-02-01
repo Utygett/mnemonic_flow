@@ -1,10 +1,12 @@
-import React from 'react';
+import React from 'react'
 
-import type { CreateGroupViewModel } from '../model/useCreateGroupModel';
+import type { CreateGroupViewModel } from '../model/useCreateGroupModel'
+
+import styles from './CreateGroupView.module.css'
 
 type Props = CreateGroupViewModel & {
-  onCancel: () => void;
-};
+  onCancel: () => void
+}
 
 export function CreateGroupView(props: Props) {
   const {
@@ -17,50 +19,50 @@ export function CreateGroupView(props: Props) {
     canSubmit,
     submit,
     onCancel,
-  } = props;
+  } = props
 
   return (
-    <div className="min-h-screen bg-dark p-4">
-      <div className="container-centered max-w-390">
-        <div className="card">
-          <h2 className="page__title">Новая группа</h2>
+    <div className={styles.page}>
+      <div className={`${styles.container} container-centered`}>
+        <div className={styles.card}>
+          <h2 className={styles.title}>Новая группа</h2>
 
-          <label className="field">
-            <div className="field__label">Название</div>
+          <label className={styles.field}>
+            <div className={styles.fieldLabel}>Название</div>
             <input
-              className="input"
+              className={styles.input}
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={e => setTitle(e.target.value)}
               placeholder="Например: Мои колоды"
               maxLength={60}
               disabled={saving}
             />
           </label>
 
-          <label className="field">
-            <div className="field__label">Описание</div>
+          <label className={styles.field}>
+            <div className={styles.fieldLabel}>Описание</div>
             <textarea
-              className="input input--textarea"
+              className={`${styles.input} ${styles.textarea}`}
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               placeholder="Необязательно"
               rows={3}
               disabled={saving}
             />
           </label>
 
-          {error && <div className="text-error">{error}</div>}
+          {error && <div className={styles.error}>{error}</div>}
 
-          <div className="actions">
-            <button className="btn-ghost" onClick={onCancel} disabled={saving}>
+          <div className={styles.actions}>
+            <button className={styles.btnGhost} onClick={onCancel} disabled={saving}>
               Отмена
             </button>
-            <button className="btn-primary" onClick={submit} disabled={saving || !canSubmit}>
+            <button className={styles.btnPrimary} onClick={submit} disabled={saving || !canSubmit}>
               {saving ? 'Сохранение…' : 'Создать'}
             </button>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
