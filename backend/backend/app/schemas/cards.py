@@ -8,10 +8,10 @@ from pydantic import BaseModel, ConfigDict, Field, conint, model_validator
 class CardLevelContent(BaseModel):
     level_index: int
     content: Dict
-    question_image_url: Optional[str] = None
-    answer_image_url: Optional[str] = None
-    question_audio_url: Optional[str] = None
-    answer_audio_url: Optional[str] = None
+    question_image_urls: Optional[List[str]] = None
+    answer_image_urls: Optional[List[str]] = None
+    question_audio_urls: Optional[List[str]] = None
+    answer_audio_urls: Optional[List[str]] = None
 
 
 class CardForReviewWithLevels(BaseModel):
@@ -94,6 +94,10 @@ ContentIn = Union[QaContentIn, McqContentIn]
 class LevelIn(BaseModel):
     level_index: int = Field(ge=0)
     content: ContentIn
+    question_image_urls: Optional[List[str]] = None
+    answer_image_urls: Optional[List[str]] = None
+    question_audio_urls: Optional[List[str]] = None
+    answer_audio_urls: Optional[List[str]] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -139,8 +143,8 @@ class DeckSessionCard(BaseModel):
     active_level_index: int
 
     levels: List[CardLevelContent]
-    question_image_url: Optional[str] = None
-    answer_image_url: Optional[str] = None
+    question_image_urls: Optional[List[str]] = None
+    answer_image_urls: Optional[List[str]] = None
 
 
 class DeckCreate(BaseModel):

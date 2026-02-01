@@ -1,5 +1,5 @@
 export interface UploadAudioResult {
-  audioUrl: string
+  audioUrls: string[] // All audio URLs after upload (the full array)
   audioName: string
 }
 
@@ -13,6 +13,6 @@ export interface CardAudioUploadProps {
   cardId: string
   levelIndex: number
   side: 'question' | 'answer'
-  currentAudioUrl?: string
-  onAudioChange?: (audioUrl: string | undefined) => void
+  currentAudioUrls?: string[]
+  onAudiosChange?: (audioUrls: string[] | undefined) => void
 }

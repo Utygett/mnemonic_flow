@@ -38,6 +38,10 @@ describe('defaultQaLevel', () => {
       kind: 'qa',
       question: '',
       answer: '',
+      question_image_urls: undefined,
+      answer_image_urls: undefined,
+      question_audio_urls: undefined,
+      answer_audio_urls: undefined,
     })
   })
 })
@@ -209,22 +213,71 @@ describe('normalizeMcqLevel', () => {
     expect(result.question).toBe('')
     expect(result.options).toHaveLength(2)
   })
+
+  it('должен сохранять media URL из исходных данных', () => {
+    const raw = {
+      question: 'Q?',
+      options: [{ id: '1', text: 'opt1' }],
+      correctOptionId: '1',
+      question_image_urls: ['/images/q.jpg'],
+      answer_audio_urls: ['/audio/a.mp3'],
+    }
+    const result = normalizeMcqLevel(raw)
+    expect(result.question_image_urls).toEqual(['/images/q.jpg'])
+    expect(result.answer_audio_urls).toEqual(['/audio/a.mp3'])
+  })
 })
 
 describe('normalizeQaLevel', () => {
   it('должен нормализовать QA уровень с полными данными', () => {
     const raw = { question: 'Q?', answer: 'A' }
     const result = normalizeQaLevel(raw)
-    expect(result).toEqual({ kind: 'qa', question: 'Q?', answer: 'A' })
+    expect(result).toEqual({
+      kind: 'qa',
+      question: 'Q?',
+      answer: 'A',
+      question_image_urls: undefined,
+      answer_image_urls: undefined,
+      question_audio_urls: undefined,
+      answer_audio_urls: undefined,
+    })
+  })
+
+  it('должен сохранять media URL из исходных данных', () => {
+    const raw = {
+      question: 'Q?',
+      answer: 'A',
+      question_image_urls: ['/images/q.jpg'],
+      answer_audio_urls: ['/audio/a.mp3'],
+    }
+    const result = normalizeQaLevel(raw)
+    expect(result.question_image_urls).toEqual(['/images/q.jpg'])
+    expect(result.answer_audio_urls).toEqual(['/audio/a.mp3'])
   })
 
   it('должен использовать пустые строки если поля отсутствуют', () => {
     const result = normalizeQaLevel({})
-    expect(result).toEqual({ kind: 'qa', question: '', answer: '' })
+    expect(result).toEqual({
+      kind: 'qa',
+      question: '',
+      answer: '',
+      question_image_urls: undefined,
+      answer_image_urls: undefined,
+      question_audio_urls: undefined,
+      answer_audio_urls: undefined,
+    })
   })
 
   it('должен обрабатывать null/undefined входные данные', () => {
     const result = normalizeQaLevel(null)
-    expect(result).toEqual({ kind: 'qa', question: '', answer: '' })
+    expect(result).toEqual({
+      kind: 'qa',
+      question: '',
+      answer: '',
+      question_image_urls: undefined,
+      answer_image_urls: undefined,
+      question_audio_urls: undefined,
+      answer_audio_urls: undefined,
+    })
   })
 })

@@ -414,6 +414,20 @@
   margin-top: 12px;
 }
 
+.imagesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.audioList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
 .inlineUploadButton {
   display: inline-flex;
   align-items: center;

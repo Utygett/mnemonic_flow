@@ -14,7 +14,17 @@ export interface Props {
   onEditDeck?: (deckId: string) => void
 }
 
-export type QaLevelDraft = { kind: 'qa'; question: string; answer: string }
+export type QaLevelDraft = {
+  kind: 'qa'
+  question: string
+  answer: string
+  // Media URLs (arrays for multiple files)
+  question_image_urls?: string[]
+  answer_image_urls?: string[]
+  question_audio_urls?: string[]
+  answer_audio_urls?: string[]
+}
+
 export type McqOptionDraft = { id: string; text: string }
 export type McqLevelDraft = {
   kind: 'mcq'
@@ -23,6 +33,11 @@ export type McqLevelDraft = {
   correctOptionId: string
   explanation: string
   timerSec: number // 0 = без таймера
+  // Media URLs (arrays for multiple files)
+  question_image_urls?: string[]
+  answer_image_urls?: string[]
+  question_audio_urls?: string[]
+  answer_audio_urls?: string[]
 }
 
 export type LevelDraft = QaLevelDraft | McqLevelDraft

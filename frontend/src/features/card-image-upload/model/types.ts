@@ -1,11 +1,12 @@
 export interface CardImageUploadProps {
   cardId: string
+  levelIndex: number
   side: 'question' | 'answer'
-  currentImageUrl?: string
-  onImageChange?: (imageUrl: string | undefined) => void
+  currentImageUrls?: string[]
+  onImagesChange?: (imageUrls: string[] | undefined) => void
 }
 
 export interface UploadImageResult {
-  imageUrl: string
+  imageUrls: string[] // All image URLs after upload (the full array)
   imageName: string
 }

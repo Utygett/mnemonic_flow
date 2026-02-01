@@ -9,7 +9,15 @@ export const getLevelIndex = (l: any) => {
 }
 
 export function defaultQaLevel(): QaLevelDraft {
-  return { kind: 'qa', question: '', answer: '' }
+  return {
+    kind: 'qa',
+    question: '',
+    answer: '',
+    question_image_urls: undefined,
+    answer_image_urls: undefined,
+    question_audio_urls: undefined,
+    answer_audio_urls: undefined,
+  }
 }
 
 export function defaultMcqLevel(): McqLevelDraft {
@@ -25,6 +33,10 @@ export function defaultMcqLevel(): McqLevelDraft {
     correctOptionId: '',
     explanation: '',
     timerSec: 0,
+    question_image_urls: undefined,
+    answer_image_urls: undefined,
+    question_audio_urls: undefined,
+    answer_audio_urls: undefined,
   }
 }
 
@@ -41,8 +53,11 @@ export function isLevelEmpty(level: LevelDraft): boolean {
   return !q || opts.length < 2 || !correctOk
 }
 
-export function normalizeMcqLevel(rawContent: any): McqLevelDraft {
-  const c = rawContent ?? {}
+export function normalizeMcqLevel(rawLevel: any): McqLevelDraft {
+  // Media URLs are at the top level, content is nested
+  const c = rawLevel?.content ?? rawLevel ?? {}
+  const level = rawLevel ?? {}
+
   const rawOptions = Array.isArray(c.options) ? c.options : []
 
   const options: McqOptionDraft[] =
@@ -65,14 +80,27 @@ export function normalizeMcqLevel(rawContent: any): McqLevelDraft {
     correctOptionId,
     explanation: String(c.explanation ?? ''),
     timerSec: Number(c.timerSec ?? c.timer_sec ?? 0) || 0,
+    // Media URLs are at the top level of the level object (arrays)
+    question_image_urls: level.question_image_urls ?? level.questionImageUrls ?? undefined,
+    answer_image_urls: level.answer_image_urls ?? level.answerImageUrls ?? undefined,
+    question_audio_urls: level.question_audio_urls ?? level.questionAudioUrls ?? undefined,
+    answer_audio_urls: level.answer_audio_urls ?? level.answerAudioUrls ?? undefined,
   }
 }
 
-export function normalizeQaLevel(rawContent: any): QaLevelDraft {
-  const c = rawContent ?? {}
+export function normalizeQaLevel(rawLevel: any): QaLevelDraft {
+  // Media URLs are at the top level, content is nested
+  const c = rawLevel?.content ?? rawLevel ?? {}
+  const level = rawLevel ?? {}
+
   return {
     kind: 'qa',
     question: String(c.question ?? ''),
     answer: String(c.answer ?? ''),
+    // Media URLs are at the top level of the level object (arrays)
+    question_image_urls: level.question_image_urls ?? level.questionImageUrls ?? undefined,
+    answer_image_urls: level.answer_image_urls ?? level.answerImageUrls ?? undefined,
+    question_audio_urls: level.question_audio_urls ?? level.questionAudioUrls ?? undefined,
+    answer_audio_urls: level.answer_audio_urls ?? level.answerAudioUrls ?? undefined,
   }
 }

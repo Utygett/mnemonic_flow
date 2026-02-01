@@ -5,6 +5,7 @@ import { X, Plus, Trash2, ChevronUp, ChevronDown, Pencil } from 'lucide-react'
 import { Button } from '../../../shared/ui/Button/Button'
 import { MarkdownField } from '../../../shared/ui/MarkdownField'
 import { CardImageUpload } from '@/features/card-image-upload'
+import { CardAudioUpload } from '@/features/card-audio'
 
 import type { EditCardViewModel } from '../model/useEditCardModel'
 
@@ -249,134 +250,248 @@ export function EditCardView(props: Props) {
                 {/* QA */}
                 {active.kind === 'qa' ? (
                   <>
-                    <MarkdownField
-                      label="Вопрос"
-                      value={active.question}
-                      onChange={v => patchLevel(activeLevel, { question: v } as any)}
-                      preview={qPreview}
-                      onTogglePreview={() => setQPreview(p => !p)}
-                      disabled={saving}
-                    />
+                    {/* Question Section */}
+                    <div className={styles.sideSection}>
+                      <h4 className={styles.sideSectionTitle}>Вопрос</h4>
+                      <div className={styles.sideSectionContent}>
+                        <MarkdownField
+                          label="Текст вопроса"
+                          value={active.question}
+                          onChange={v => patchLevel(activeLevel, { question: v } as any)}
+                          preview={qPreview}
+                          onTogglePreview={() => setQPreview(p => !p)}
+                          disabled={saving}
+                        />
+                        <div className={styles.mt3}>
+                          <CardImageUpload
+                            cardId={selectedCardId}
+                            levelIndex={activeLevel}
+                            side="question"
+                            currentImageUrls={(active as any)?.question_image_urls}
+                            onImagesChange={urls =>
+                              patchLevel(activeLevel, { question_image_urls: urls } as any)
+                            }
+                          />
+                          <div className={styles.mt3}>
+                            <CardAudioUpload
+                              cardId={selectedCardId}
+                              levelIndex={activeLevel}
+                              side="question"
+                              currentAudioUrls={(active as any)?.question_audio_urls}
+                              onAudiosChange={urls =>
+                                patchLevel(activeLevel, { question_audio_urls: urls } as any)
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-                    <MarkdownField
-                      label="Ответ"
-                      value={active.answer}
-                      onChange={v => patchLevel(activeLevel, { answer: v } as any)}
-                      preview={aPreview}
-                      onTogglePreview={() => setAPreview(p => !p)}
-                      disabled={saving}
-                      className={styles.mt4}
-                    />
+                    {/* Answer Section */}
+                    <div className={styles.sideSection}>
+                      <h4 className={styles.sideSectionTitle}>Ответ</h4>
+                      <div className={styles.sideSectionContent}>
+                        <MarkdownField
+                          label="Текст ответа"
+                          value={active.answer}
+                          onChange={v => patchLevel(activeLevel, { answer: v } as any)}
+                          preview={aPreview}
+                          onTogglePreview={() => setAPreview(p => !p)}
+                          disabled={saving}
+                        />
+                        <div className={styles.mt3}>
+                          <CardImageUpload
+                            cardId={selectedCardId}
+                            levelIndex={activeLevel}
+                            side="answer"
+                            currentImageUrls={(active as any)?.answer_image_urls}
+                            onImagesChange={urls =>
+                              patchLevel(activeLevel, { answer_image_urls: urls } as any)
+                            }
+                          />
+                          <div className={styles.mt3}>
+                            <CardAudioUpload
+                              cardId={selectedCardId}
+                              levelIndex={activeLevel}
+                              side="answer"
+                              currentAudioUrls={(active as any)?.answer_audio_urls}
+                              onAudiosChange={urls =>
+                                patchLevel(activeLevel, { answer_audio_urls: urls } as any)
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </>
                 ) : (
                   /* MCQ */
                   <>
-                    <MarkdownField
-                      label="Вопрос"
-                      value={active.question}
-                      onChange={v => patchLevel(activeLevel, { question: v } as any)}
-                      preview={qPreview}
-                      onTogglePreview={() => setQPreview(p => !p)}
-                      disabled={saving}
-                    />
-
-                    <div className={styles.mt3}>
-                      <label className={styles.formLabel}>Варианты</label>
-
-                      {active.options.map((o, i) => (
-                        <div key={o.id} className={styles.mcqOptionRow}>
-                          <input
-                            className={styles.input}
-                            value={o.text}
-                            onChange={e => patchOptionText(i, e.target.value)}
-                            disabled={saving}
-                            placeholder={`Вариант ${i + 1}`}
+                    {/* Question Section */}
+                    <div className={styles.sideSection}>
+                      <h4 className={styles.sideSectionTitle}>Вопрос</h4>
+                      <div className={styles.sideSectionContent}>
+                        <MarkdownField
+                          label="Текст вопроса"
+                          value={active.question}
+                          onChange={v => patchLevel(activeLevel, { question: v } as any)}
+                          preview={qPreview}
+                          onTogglePreview={() => setQPreview(p => !p)}
+                          disabled={saving}
+                        />
+                        <div className={styles.mt3}>
+                          <CardImageUpload
+                            cardId={selectedCardId}
+                            levelIndex={activeLevel}
+                            side="question"
+                            currentImageUrls={(active as any)?.question_image_urls}
+                            onImagesChange={urls =>
+                              patchLevel(activeLevel, { question_image_urls: urls } as any)
+                            }
                           />
-
-                          <button
-                            onClick={() => moveOption(i, i - 1)}
-                            disabled={i === 0 || saving}
-                            title="Вверх"
-                            className={`${styles.square40Button} ${styles.square40ButtonNeutral}`}
-                          >
-                            <ChevronUp size={16} />
-                          </button>
-
-                          <button
-                            onClick={() => moveOption(i, i + 1)}
-                            disabled={i === active.options.length - 1 || saving}
-                            title="Вниз"
-                            className={`${styles.square40Button} ${styles.square40ButtonNeutral}`}
-                          >
-                            <ChevronDown size={16} />
-                          </button>
-
-                          <button
-                            onClick={() => removeOption(i)}
-                            disabled={active.options.length <= 2 || saving}
-                            title="Удалить вариант"
-                            className={`${styles.square40Button} ${styles.square40ButtonDanger}`}
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          <div className={styles.mt3}>
+                            <CardAudioUpload
+                              cardId={selectedCardId}
+                              levelIndex={activeLevel}
+                              side="question"
+                              currentAudioUrls={(active as any)?.question_audio_urls}
+                              onAudiosChange={urls =>
+                                patchLevel(activeLevel, { question_audio_urls: urls } as any)
+                              }
+                            />
+                          </div>
                         </div>
-                      ))}
-
-                      <button
-                        onClick={addOption}
-                        disabled={saving || active.options.length >= 8}
-                        className={styles.inlineAction}
-                      >
-                        <Plus size={16} />
-                        Добавить вариант
-                      </button>
-                    </div>
-
-                    <div className={styles.mt3}>
-                      <label className={styles.formLabel}>Правильный вариант</label>
-                      <select
-                        className={styles.input}
-                        value={active.correctOptionId}
-                        onChange={e =>
-                          patchLevel(activeLevel, { correctOptionId: e.target.value } as any)
-                        }
-                        disabled={saving}
-                      >
-                        <option value="">— выбери —</option>
-                        {active.options.map(o => (
-                          <option key={o.id} value={o.id}>
-                            {o.text || o.id}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className={styles.mt3}>
-                      <label className={styles.formLabel}>Таймер (сек)</label>
-                      <input
-                        className={styles.input}
-                        type="number"
-                        min={0}
-                        value={active.timerSec}
-                        onChange={e =>
-                          patchLevel(activeLevel, { timerSec: Number(e.target.value) || 0 } as any)
-                        }
-                        disabled={saving}
-                      />
-                      <div className={styles.hintText}>
-                        0 = без таймера (карточка не будет автопереворачиваться по времени).
                       </div>
                     </div>
 
-                    <MarkdownField
-                      label="Пояснение (показывать на обороте)"
-                      value={active.explanation}
-                      onChange={v => patchLevel(activeLevel, { explanation: v } as any)}
-                      preview={aPreview}
-                      onTogglePreview={() => setAPreview(p => !p)}
-                      disabled={saving}
-                      className={styles.mt4}
-                    />
+                    {/* Answer Section */}
+                    <div className={styles.sideSection}>
+                      <h4 className={styles.sideSectionTitle}>Ответ</h4>
+                      <div className={styles.sideSectionContent}>
+                        <div className={styles.mt3}>
+                          <label className={styles.formLabel}>Варианты</label>
+
+                          {active.options.map((o, i) => (
+                            <div key={o.id} className={styles.mcqOptionRow}>
+                              <input
+                                className={styles.input}
+                                value={o.text}
+                                onChange={e => patchOptionText(i, e.target.value)}
+                                disabled={saving}
+                                placeholder={`Вариант ${i + 1}`}
+                              />
+
+                              <button
+                                onClick={() => moveOption(i, i - 1)}
+                                disabled={i === 0 || saving}
+                                title="Вверх"
+                                className={`${styles.square40Button} ${styles.square40ButtonNeutral}`}
+                              >
+                                <ChevronUp size={16} />
+                              </button>
+
+                              <button
+                                onClick={() => moveOption(i, i + 1)}
+                                disabled={i === active.options.length - 1 || saving}
+                                title="Вниз"
+                                className={`${styles.square40Button} ${styles.square40ButtonNeutral}`}
+                              >
+                                <ChevronDown size={16} />
+                              </button>
+
+                              <button
+                                onClick={() => removeOption(i)}
+                                disabled={active.options.length <= 2 || saving}
+                                title="Удалить вариант"
+                                className={`${styles.square40Button} ${styles.square40ButtonDanger}`}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          ))}
+
+                          <button
+                            onClick={addOption}
+                            disabled={saving || active.options.length >= 8}
+                            className={styles.inlineAction}
+                          >
+                            <Plus size={16} />
+                            Добавить вариант
+                          </button>
+                        </div>
+
+                        <div className={styles.mt3}>
+                          <label className={styles.formLabel}>Правильный вариант</label>
+                          <select
+                            className={styles.input}
+                            value={active.correctOptionId}
+                            onChange={e =>
+                              patchLevel(activeLevel, { correctOptionId: e.target.value } as any)
+                            }
+                            disabled={saving}
+                          >
+                            <option value="">— выбери —</option>
+                            {active.options.map(o => (
+                              <option key={o.id} value={o.id}>
+                                {o.text || o.id}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className={styles.mt3}>
+                          <label className={styles.formLabel}>Таймер (сек)</label>
+                          <input
+                            className={styles.input}
+                            type="number"
+                            min={0}
+                            value={active.timerSec}
+                            onChange={e =>
+                              patchLevel(activeLevel, {
+                                timerSec: Number(e.target.value) || 0,
+                              } as any)
+                            }
+                            disabled={saving}
+                          />
+                          <div className={styles.hintText}>
+                            0 = без таймера (карточка не будет автопереворачиваться по времени).
+                          </div>
+                        </div>
+
+                        <MarkdownField
+                          label="Пояснение (показывать на обороте)"
+                          value={active.explanation}
+                          onChange={v => patchLevel(activeLevel, { explanation: v } as any)}
+                          preview={aPreview}
+                          onTogglePreview={() => setAPreview(p => !p)}
+                          disabled={saving}
+                          className={styles.mt4}
+                        />
+
+                        <div className={styles.mt3}>
+                          <CardImageUpload
+                            cardId={selectedCardId}
+                            levelIndex={activeLevel}
+                            side="answer"
+                            currentImageUrls={(active as any)?.answer_image_urls}
+                            onImagesChange={urls =>
+                              patchLevel(activeLevel, { answer_image_urls: urls } as any)
+                            }
+                          />
+                          <div className={styles.mt3}>
+                            <CardAudioUpload
+                              cardId={selectedCardId}
+                              levelIndex={activeLevel}
+                              side="answer"
+                              currentAudioUrls={(active as any)?.answer_audio_urls}
+                              onAudiosChange={urls =>
+                                patchLevel(activeLevel, { answer_audio_urls: urls } as any)
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </>
                 )}
               </div>
@@ -388,35 +503,6 @@ export function EditCardView(props: Props) {
                   </div>
                 </div>
               )}
-            </div>
-
-            {/* Image Upload Section */}
-            <div className={styles.imageUploadSection}>
-              <h3 className={styles.sectionTitle}>Изображения</h3>
-              <div className={styles.imageUploadRow}>
-                <div className={styles.imageUploadColumn}>
-                  <CardImageUpload
-                    cardId={selectedCardId}
-                    side="question"
-                    currentImageUrl={(selectedCard as any)?.questionImageUrl}
-                    onImageChange={() => {
-                      // Image will be uploaded via the component's hook
-                      // The card data will be refreshed on next save
-                    }}
-                  />
-                </div>
-                <div className={styles.imageUploadColumn}>
-                  <CardImageUpload
-                    cardId={selectedCardId}
-                    side="answer"
-                    currentImageUrl={(selectedCard as any)?.answerImageUrl}
-                    onImageChange={() => {
-                      // Image will be uploaded via the component's hook
-                      // The card data will be refreshed on next save
-                    }}
-                  />
-                </div>
-              </div>
             </div>
 
             <div className={styles.bottomActions}>

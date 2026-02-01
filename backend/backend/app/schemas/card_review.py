@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -21,8 +21,10 @@ class CardForReview(BaseModel):
     difficulty: float
 
     next_review: Optional[datetime]
-    question_image_url: Optional[str] = None
-    answer_image_url: Optional[str] = None
+    question_image_urls: Optional[List[str]] = None
+    answer_image_urls: Optional[List[str]] = None
+    question_audio_urls: Optional[List[str]] = None
+    answer_audio_urls: Optional[List[str]] = None
 
 
 class ReviewRequest(BaseModel):

@@ -1,5 +1,5 @@
 import { useRef, ChangeEvent, useState, useEffect } from 'react'
-import { Upload, X, Volume2 as VolumeIcon, Loader2, Mic } from 'lucide-react'
+import { Upload, X, Volume2 as VolumeIcon, Loader2, Mic, Plus } from 'lucide-react'
 
 import type { CardAudioUploadProps } from '../model/types'
 import { useCardAudioUpload } from '../model/useCardAudioUpload'
@@ -10,21 +10,27 @@ export function CardAudioUpload({
   cardId,
   levelIndex,
   side,
-  currentAudioUrl,
-  onAudioChange,
+  currentAudioUrls,
+  onAudiosChange,
 }: CardAudioUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { uploadAudio, deleteAudio, isUploading, error } = useCardAudioUpload({
+  const {
+    uploadAudio,
+    deleteAudio,
+    isUploading,
+    error: uploadError,
+  } = useCardAudioUpload({
     cardId,
     levelIndex,
     side,
   })
-  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [isRecording, setIsRecording] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
 
-  const displayUrl = audioUrl || currentAudioUrl || null
+  const displayUrls = [...previewUrls, ...(currentAudioUrls || [])]
 
   const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -33,23 +39,29 @@ export function CardAudioUpload({
     try {
       // Create preview URL
       const url = URL.createObjectURL(file)
-      setAudioUrl(url)
+      setPreviewUrls(prev => [...prev, url])
 
       const result = await uploadAudio(file)
-      onAudioChange?.(result.audioUrl)
+      // Notify parent of new URLs so it can update its state
+      onAudiosChange?.(result.audioUrls)
+      // After successful upload, clear preview to let actual URL come from props
       URL.revokeObjectURL(url)
-      setAudioUrl(null)
+      setTimeout(() => {
+        setPreviewUrls([])
+      }, 100)
     } catch (err) {
       console.error('Upload error:', err)
-      setAudioUrl(null)
+      setPreviewUrls([])
     }
   }
 
-  const handleDelete = async () => {
+  const handleDelete = async (index: number) => {
     try {
-      await deleteAudio()
-      setAudioUrl(null)
-      onAudioChange?.(undefined)
+      await deleteAudio(index)
+      // Update local state by removing the deleted audio from the current URLs
+      const newUrls = [...(currentAudioUrls || [])]
+      newUrls.splice(index, 1)
+      onAudiosChange?.(newUrls.length > 0 ? newUrls : undefined)
     } catch (err) {
       console.error('Delete error:', err)
     }
@@ -58,7 +70,18 @@ export function CardAudioUpload({
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mediaRecorder = new MediaRecorder(stream)
+
+      // Determine supported MIME type for recording
+      // Chrome/Firefox: audio/webm, Safari: audio/mp4
+      let mimeType = 'audio/webm'
+      let fileExtension = 'webm'
+
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'audio/mp4'
+        fileExtension = 'm4a'
+      }
+
+      const mediaRecorder = new MediaRecorder(stream, { mimeType })
       mediaRecorderRef.current = mediaRecorder
       audioChunksRef.current = []
 
@@ -69,20 +92,29 @@ export function CardAudioUpload({
       }
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-        const audioFile = new File([audioBlob], 'recording.webm', { type: 'audio/webm' })
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType })
+        const audioFile = new File([audioBlob], `recording.${fileExtension}`, { type: mimeType })
 
         try {
-          const url = URL.createObjectURL(audioBlob)
-          setAudioUrl(url)
+          // Create preview URL for immediate playback
+          const previewUrl = URL.createObjectURL(audioBlob)
+          setPreviewUrls(prev => [...prev, previewUrl])
 
           const result = await uploadAudio(audioFile)
-          onAudioChange?.(result.audioUrl)
-          URL.revokeObjectURL(url)
-          setAudioUrl(null)
+          // Notify parent of new URLs so it can update its state
+          onAudiosChange?.(result.audioUrls)
+
+          // Clean up preview URL and switch to server URL
+          URL.revokeObjectURL(previewUrl)
+
+          // After successful upload, clear preview to let actual URL come from props
+          setTimeout(() => {
+            setPreviewUrls([])
+          }, 100)
         } catch (err) {
           console.error('Upload recording error:', err)
-          setAudioUrl(null)
+          setError('Failed to upload recording')
+          setPreviewUrls([])
         }
 
         stream.getTracks().forEach(track => track.stop())
@@ -109,48 +141,52 @@ export function CardAudioUpload({
     <div className={styles.container}>
       <div className={styles.label}>{sideLabel} Audio</div>
 
-      {displayUrl ? (
-        <div className={styles.audioWrapper}>
-          <audio src={displayUrl} controls className={styles.audioPlayer} />
-          {!isUploading && (
-            <button
-              type="button"
-              onClick={handleDelete}
-              className={styles.deleteButton}
-              title="Remove audio"
-            >
-              <X size={16} />
-            </button>
-          )}
-          {isUploading && (
-            <div className={styles.overlay}>
-              <Loader2 size={32} className={styles.spinner} />
+      {displayUrls.length > 0 && (
+        <div className={styles.audioList}>
+          {displayUrls.map((url, index) => (
+            <div key={index} className={styles.audioWrapper}>
+              <audio src={url} controls className={styles.audioPlayer} data-testid="audio-player" />
+              {!isUploading && (
+                <button
+                  type="button"
+                  onClick={() => handleDelete(index)}
+                  className={styles.deleteButton}
+                  title="Remove audio"
+                >
+                  <X size={16} />
+                </button>
+              )}
+              {isUploading && index === displayUrls.length - 1 && (
+                <div className={styles.overlay}>
+                  <Loader2 size={32} className={styles.spinner} />
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      ) : (
-        <div className={styles.uploadRow}>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading || isRecording}
-            className={styles.uploadButton}
-          >
-            {isUploading ? <Loader2 size={20} className={styles.spinner} /> : <Upload size={20} />}
-            <span>{isUploading ? 'Uploading...' : 'Upload File'}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={isRecording ? stopRecording : startRecording}
-            disabled={isUploading}
-            className={`${styles.recordButton} ${isRecording ? styles.recording : ''}`}
-          >
-            <Mic size={20} />
-            <span>{isRecording ? 'Stop' : 'Record'}</span>
-          </button>
+          ))}
         </div>
       )}
+
+      <div className={styles.uploadRow}>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading || isRecording}
+          className={styles.uploadButton}
+        >
+          {isUploading ? <Loader2 size={20} className={styles.spinner} /> : <Upload size={20} />}
+          <span>{isUploading ? 'Uploading...' : 'Upload File'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={isRecording ? stopRecording : startRecording}
+          disabled={isUploading}
+          className={`${styles.recordButton} ${isRecording ? styles.recording : ''}`}
+        >
+          <Mic size={20} />
+          <span>{isRecording ? 'Stop' : 'Record'}</span>
+        </button>
+      </div>
 
       <input
         ref={fileInputRef}
@@ -160,8 +196,8 @@ export function CardAudioUpload({
         style={{ display: 'none' }}
       />
 
-      {error && <div className={styles.error}>{error}</div>}
-      <div className={styles.hint}>Max 10MB. MP3, M4A, WAV, WebM, OGG</div>
+      {(error || uploadError) && <div className={styles.error}>{error || uploadError}</div>}
+      <div className={styles.hint}>Max 10MB per file. MP3, M4A, WAV, WebM, OGG. Max 10 files.</div>
     </div>
   )
 }

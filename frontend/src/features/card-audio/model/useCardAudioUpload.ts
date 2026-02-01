@@ -52,16 +52,16 @@ export function useCardAudioUpload({ cardId, levelIndex, side }: UseCardAudioUpl
           }
         )
 
-        // The API returns CardLevelContent, extract just the audio URL
+        // The API returns CardLevelContent, extract the audio URLs
         const cardLevel = result as unknown as {
-          question_audio_url?: string
-          answer_audio_url?: string
+          question_audio_urls?: string[]
+          answer_audio_urls?: string[]
         }
-        const audioUrl =
-          side === 'question' ? cardLevel.question_audio_url : cardLevel.answer_audio_url
+        const audioUrls =
+          side === 'question' ? cardLevel.question_audio_urls : cardLevel.answer_audio_urls
 
         return {
-          audioUrl: audioUrl || '',
+          audioUrls: audioUrls || [], // Return the full array of URLs
           audioName: file.name,
         }
       } catch (err) {
@@ -75,23 +75,26 @@ export function useCardAudioUpload({ cardId, levelIndex, side }: UseCardAudioUpl
     [cardId, levelIndex, side, validateFile]
   )
 
-  const deleteAudio = useCallback(async () => {
-    setIsUploading(true)
-    setError(null)
+  const deleteAudio = useCallback(
+    async (index: number) => {
+      setIsUploading(true)
+      setError(null)
 
-    try {
-      const endpoint = side === 'question' ? '/question-audio' : '/answer-audio'
-      await apiRequest(`/cards/${cardId}/levels/${levelIndex}${endpoint}`, {
-        method: 'DELETE',
-      })
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Delete failed'
-      setError(message)
-      throw err
-    } finally {
-      setIsUploading(false)
-    }
-  }, [cardId, levelIndex, side])
+      try {
+        const endpoint = side === 'question' ? '/question-audio' : '/answer-audio'
+        await apiRequest(`/cards/${cardId}/levels/${levelIndex}${endpoint}/${index}`, {
+          method: 'DELETE',
+        })
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Delete failed'
+        setError(message)
+        throw err
+      } finally {
+        setIsUploading(false)
+      }
+    },
+    [cardId, levelIndex, side]
+  )
 
   return {
     uploadAudio,

@@ -81,8 +81,10 @@ class TestLevelImageUpload:
 
         assert response.status_code == 200
         data = response.json()
-        assert "question_image_url" in data
-        assert data["question_image_url"].startswith("/images/")
+        assert "question_image_urls" in data
+        assert isinstance(data["question_image_urls"], list)
+        assert len(data["question_image_urls"]) == 1
+        assert data["question_image_urls"][0].startswith("/images/")
 
     def test_upload_level_answer_image_success(self, client: TestClient, test_card, auth_headers):
         """Test successful answer image upload for a specific level."""
@@ -96,8 +98,38 @@ class TestLevelImageUpload:
 
         assert response.status_code == 200
         data = response.json()
-        assert "answer_image_url" in data
-        assert data["answer_image_url"].startswith("/images/")
+        assert "answer_image_urls" in data
+        assert isinstance(data["answer_image_urls"], list)
+        assert len(data["answer_image_urls"]) == 1
+        assert data["answer_image_urls"][0].startswith("/images/")
+
+    def test_upload_multiple_images_to_same_level(
+        self, client: TestClient, test_card, auth_headers
+    ):
+        """Test that multiple images can be uploaded to the same level."""
+        image_data = b"fake_image_data" * 1000
+
+        # Upload first image
+        response1 = client.post(
+            f"/api/cards/{test_card.id}/levels/0/question-image",
+            headers=auth_headers,
+            files={"file": ("test1.jpg", BytesIO(image_data), "image/jpeg")},
+        )
+        assert response1.status_code == 200
+        urls1 = response1.json()["question_image_urls"]
+        assert len(urls1) == 1
+
+        # Upload second image
+        response2 = client.post(
+            f"/api/cards/{test_card.id}/levels/0/question-image",
+            headers=auth_headers,
+            files={"file": ("test2.jpg", BytesIO(image_data), "image/jpeg")},
+        )
+        assert response2.status_code == 200
+        urls2 = response2.json()["question_image_urls"]
+        assert len(urls2) == 2
+        # First image should still be there
+        assert urls2[0] == urls1[0]
 
     def test_upload_different_levels_different_images(
         self, client: TestClient, test_card, auth_headers
@@ -112,7 +144,7 @@ class TestLevelImageUpload:
             files={"file": ("test1.jpg", BytesIO(image_data), "image/jpeg")},
         )
         assert response1.status_code == 200
-        url1 = response1.json()["question_image_url"]
+        url1 = response1.json()["question_image_urls"][0]
 
         # Upload to level 1
         response2 = client.post(
@@ -121,10 +153,32 @@ class TestLevelImageUpload:
             files={"file": ("test2.jpg", BytesIO(image_data), "image/jpeg")},
         )
         assert response2.status_code == 200
-        url2 = response2.json()["question_image_url"]
+        url2 = response2.json()["question_image_urls"][0]
 
         # URLs should be different
         assert url1 != url2
+
+    def test_upload_level_image_max_limit(self, client: TestClient, test_card, auth_headers):
+        """Test that max 10 images per side is enforced."""
+        image_data = b"fake_image_data" * 1000
+
+        # Upload 10 images (should succeed)
+        for i in range(10):
+            response = client.post(
+                f"/api/cards/{test_card.id}/levels/0/question-image",
+                headers=auth_headers,
+                files={"file": (f"test{i}.jpg", BytesIO(image_data), "image/jpeg")},
+            )
+            assert response.status_code == 200
+
+        # Try to upload 11th image (should fail)
+        response = client.post(
+            f"/api/cards/{test_card.id}/levels/0/question-image",
+            headers=auth_headers,
+            files={"file": ("test11.jpg", BytesIO(image_data), "image/jpeg")},
+        )
+        assert response.status_code == 422
+        assert "Maximum" in response.json()["detail"]
 
     def test_upload_level_image_unauthorized(self, client: TestClient, test_card):
         """Test upload without auth fails."""
@@ -153,30 +207,10 @@ class TestLevelImageUpload:
             files={"file": ("large.jpg", BytesIO(large_data), "image/jpeg")},
         )
         assert response.status_code == 422
-        assert "File too large" in response.json()["detail"]
-
-    def test_upload_level_image_replaces_old(self, client: TestClient, test_card, auth_headers):
-        """Test that uploading a new image replaces the old one."""
-        # Upload first image
-        response1 = client.post(
-            f"/api/cards/{test_card.id}/levels/0/question-image",
-            headers=auth_headers,
-            files={"file": ("test1.jpg", BytesIO(b"data1"), "image/jpeg")},
+        assert (
+            "File too large" in response.json()["detail"]
+            or "File size must be less than 5MB" in response.json()["detail"]
         )
-        assert response1.status_code == 200
-        first_url = response1.json()["question_image_url"]
-
-        # Upload second image
-        response2 = client.post(
-            f"/api/cards/{test_card.id}/levels/0/question-image",
-            headers=auth_headers,
-            files={"file": ("test2.jpg", BytesIO(b"data2"), "image/jpeg")},
-        )
-        assert response2.status_code == 200
-        second_url = response2.json()["question_image_url"]
-
-        # URLs should be different
-        assert first_url != second_url
 
     def test_upload_level_image_not_found(self, client: TestClient, test_card, auth_headers):
         """Test upload to non-existent level."""
@@ -191,75 +225,96 @@ class TestLevelImageUpload:
 class TestLevelImageDelete:
     """Tests for level image deletion endpoints."""
 
-    def test_delete_level_question_image_success(
+    def test_delete_level_question_image_by_index(
         self, client: TestClient, test_card, auth_headers, db
     ):
-        """Test successful question image deletion for a level."""
-        # First upload an image
+        """Test successful question image deletion by index."""
+        # Upload two images first
         client.post(
             f"/api/cards/{test_card.id}/levels/0/question-image",
             headers=auth_headers,
-            files={"file": ("test.jpg", BytesIO(b"data"), "image/jpeg")},
+            files={"file": ("test1.jpg", BytesIO(b"data1"), "image/jpeg")},
+        )
+        client.post(
+            f"/api/cards/{test_card.id}/levels/0/question-image",
+            headers=auth_headers,
+            files={"file": ("test2.jpg", BytesIO(b"data2"), "image/jpeg")},
         )
 
-        # Then delete it
+        # Delete the first image (index 0)
         response = client.delete(
-            f"/api/cards/{test_card.id}/levels/0/question-image",
+            f"/api/cards/{test_card.id}/levels/0/question-image/0",
             headers=auth_headers,
         )
         assert response.status_code == 204
 
-        # Verify it's deleted from DB
+        # Verify from DB - should have 1 image left
         level = (
             db.query(CardLevel)
             .filter(CardLevel.card_id == test_card.id, CardLevel.level_index == 0)
             .first()
         )
-        assert level.question_image_url is None
+        assert len(level.question_image_urls) == 1
 
-    def test_delete_level_answer_image_success(
+    def test_delete_level_answer_image_by_index(
         self, client: TestClient, test_card, auth_headers, db
     ):
-        """Test successful answer image deletion for a level."""
-        # First upload an image
+        """Test successful answer image deletion by index."""
+        # Upload an image first
         client.post(
             f"/api/cards/{test_card.id}/levels/1/answer-image",
             headers=auth_headers,
             files={"file": ("test.jpg", BytesIO(b"data"), "image/jpeg")},
         )
 
-        # Then delete it
+        # Delete it
         response = client.delete(
-            f"/api/cards/{test_card.id}/levels/1/answer-image",
+            f"/api/cards/{test_card.id}/levels/1/answer-image/0",
             headers=auth_headers,
         )
         assert response.status_code == 204
 
-        # Verify it's deleted from DB
+        # Verify it's deleted from DB (array should be None or empty)
         level = (
             db.query(CardLevel)
             .filter(CardLevel.card_id == test_card.id, CardLevel.level_index == 1)
             .first()
         )
-        assert level.answer_image_url is None
+        assert level.answer_image_urls is None or len(level.answer_image_urls) == 0
 
     def test_delete_level_image_unauthorized(self, client: TestClient, test_card):
         """Test delete without auth fails."""
-        response = client.delete(f"/api/cards/{test_card.id}/levels/0/question-image")
+        response = client.delete(f"/api/cards/{test_card.id}/levels/0/question-image/0")
         assert response.status_code == 401
 
-    def test_delete_level_image_when_none(self, client: TestClient, test_card, auth_headers):
-        """Test delete when no image exists should succeed (idempotent)."""
-        response = client.delete(
+    def test_delete_level_image_invalid_index(self, client: TestClient, test_card, auth_headers):
+        """Test delete with invalid index."""
+        # Upload an image first
+        client.post(
             f"/api/cards/{test_card.id}/levels/0/question-image",
             headers=auth_headers,
+            files={"file": ("test.jpg", BytesIO(b"data"), "image/jpeg")},
         )
-        assert response.status_code == 204
 
-    def test_delete_level_image_not_found(self, client: TestClient, test_card, auth_headers):
+        # Try to delete index 5 (doesn't exist)
+        response = client.delete(
+            f"/api/cards/{test_card.id}/levels/0/question-image/5",
+            headers=auth_headers,
+        )
+        assert response.status_code == 404
+
+    def test_delete_level_image_when_empty(self, client: TestClient, test_card, auth_headers):
+        """Test delete when no images exist."""
+        response = client.delete(
+            f"/api/cards/{test_card.id}/levels/0/question-image/0",
+            headers=auth_headers,
+        )
+        assert response.status_code == 404
+
+    def test_delete_level_image_not_found_level(self, client: TestClient, test_card, auth_headers):
         """Test delete from non-existent level."""
         response = client.delete(
-            f"/api/cards/{test_card.id}/levels/99/question-image",
+            f"/api/cards/{test_card.id}/levels/99/question-image/0",
             headers=auth_headers,
         )
         assert response.status_code == 404
@@ -321,7 +376,10 @@ class TestMCQOptionImageUpload:
             files={"file": ("large.jpg", BytesIO(large_data), "image/jpeg")},
         )
         assert response.status_code == 422
-        assert "File too large" in response.json()["detail"]
+        assert (
+            "File too large" in response.json()["detail"]
+            or "File size must be less than 5MB" in response.json()["detail"]
+        )
 
     def test_upload_option_image_replaces_old(
         self, client: TestClient, test_mcq_card, auth_headers
@@ -399,8 +457,8 @@ class TestLevelImagesInResponses:
             .filter(CardLevel.card_id == test_card.id, CardLevel.level_index == 0)
             .first()
         )
-        level.question_image_url = "/images/test/question.jpg"
-        level.answer_image_url = "/images/test/answer.jpg"
+        level.question_image_urls = ["/images/test/question1.jpg", "/images/test/question2.jpg"]
+        level.answer_image_urls = ["/images/test/answer.jpg"]
         db.commit()
 
         response = client.get("/api/cards/review_with_levels", headers=auth_headers)
@@ -410,10 +468,13 @@ class TestLevelImagesInResponses:
         if cards:
             card_data = cards[0]
             level_data = card_data["levels"][0]
-            assert "question_image_url" in level_data
-            assert "answer_image_url" in level_data
-            assert level_data["question_image_url"] == "/images/test/question.jpg"
-            assert level_data["answer_image_url"] == "/images/test/answer.jpg"
+            assert "question_image_urls" in level_data
+            assert "answer_image_urls" in level_data
+            assert level_data["question_image_urls"] == [
+                "/images/test/question1.jpg",
+                "/images/test/question2.jpg",
+            ]
+            assert level_data["answer_image_urls"] == ["/images/test/answer.jpg"]
 
     def test_study_cards_includes_level_image_urls(
         self, client: TestClient, test_card, test_deck, auth_headers, db
@@ -424,8 +485,8 @@ class TestLevelImagesInResponses:
             .filter(CardLevel.card_id == test_card.id, CardLevel.level_index == 0)
             .first()
         )
-        level.question_image_url = "/images/test/question.jpg"
-        level.answer_image_url = "/images/test/answer.jpg"
+        level.question_image_urls = ["/images/test/question.jpg"]
+        level.answer_image_urls = ["/images/test/answer.jpg"]
         db.commit()
 
         response = client.get(
@@ -439,7 +500,7 @@ class TestLevelImagesInResponses:
         if data["cards"]:
             card_data = data["cards"][0]
             level_data = card_data["levels"][0]
-            assert "questionImageUrl" in level_data
-            assert "answerImageUrl" in level_data
-            assert level_data["questionImageUrl"] == "/images/test/question.jpg"
-            assert level_data["answerImageUrl"] == "/images/test/answer.jpg"
+            assert "questionImageUrls" in level_data
+            assert "answerImageUrls" in level_data
+            assert level_data["questionImageUrls"] == ["/images/test/question.jpg"]
+            assert level_data["answerImageUrls"] == ["/images/test/answer.jpg"]

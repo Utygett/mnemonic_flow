@@ -9,6 +9,7 @@ vi.mock('@/shared/api', () => ({
 
 describe('useCardImageUpload', () => {
   const cardId = 'test-card-id'
+  const levelIndex = 0
   const side = 'question' as const
 
   beforeEach(() => {
@@ -20,7 +21,7 @@ describe('useCardImageUpload', () => {
       const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockResolvedValue({})
 
-      const { result } = renderHook(() => useCardImageUpload(cardId, side))
+      const { result } = renderHook(() => useCardImageUpload(cardId, levelIndex, side))
 
       const invalidFile = new File([''], 'test.pdf', { type: 'application/pdf' })
 
@@ -33,7 +34,7 @@ describe('useCardImageUpload', () => {
       const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockResolvedValue({})
 
-      const { result } = renderHook(() => useCardImageUpload(cardId, side))
+      const { result } = renderHook(() => useCardImageUpload(cardId, levelIndex, side))
 
       const largeData = new Array(6 * 1024 * 1024 + 1).fill('x').join('')
       const largeFile = new File([largeData], 'large.jpg', { type: 'image/jpeg' })
@@ -46,11 +47,11 @@ describe('useCardImageUpload', () => {
     it('should accept valid file', async () => {
       const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockResolvedValue({
-        question_image_url: '/images/cards/test/test.jpg',
-        answer_image_url: undefined,
+        question_image_urls: ['/images/cards/test/test.jpg'],
+        answer_image_urls: undefined,
       })
 
-      const { result } = renderHook(() => useCardImageUpload(cardId, side))
+      const { result } = renderHook(() => useCardImageUpload(cardId, levelIndex, side))
 
       const validFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
 
@@ -66,17 +67,17 @@ describe('useCardImageUpload', () => {
     it('should call correct endpoint for question side', async () => {
       const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockResolvedValue({
-        question_image_url: '/images/test.jpg',
-        answer_image_url: undefined,
+        question_image_urls: ['/images/test.jpg'],
+        answer_image_urls: undefined,
       })
 
-      const { result } = renderHook(() => useCardImageUpload(cardId, 'question'))
+      const { result } = renderHook(() => useCardImageUpload(cardId, levelIndex, 'question'))
 
       const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
       await result.current.uploadImage(file)
 
       expect(apiRequest).toHaveBeenCalledWith(
-        '/cards/test-card-id/question-image',
+        `/cards/${cardId}/levels/${levelIndex}/question-image`,
         expect.objectContaining({
           method: 'POST',
         })
@@ -86,17 +87,17 @@ describe('useCardImageUpload', () => {
     it('should call correct endpoint for answer side', async () => {
       const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockResolvedValue({
-        question_image_url: undefined,
-        answer_image_url: '/images/test.jpg',
+        question_image_urls: undefined,
+        answer_image_urls: ['/images/test.jpg'],
       })
 
-      const { result } = renderHook(() => useCardImageUpload(cardId, 'answer'))
+      const { result } = renderHook(() => useCardImageUpload(cardId, levelIndex, 'answer'))
 
       const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
       await result.current.uploadImage(file)
 
       expect(apiRequest).toHaveBeenCalledWith(
-        '/cards/test-card-id/answer-image',
+        `/cards/${cardId}/levels/${levelIndex}/answer-image`,
         expect.objectContaining({
           method: 'POST',
         })
@@ -111,7 +112,7 @@ describe('useCardImageUpload', () => {
       })
       vi.mocked(apiRequest).mockReturnValue(uploadPromise as any)
 
-      const { result } = renderHook(() => useCardImageUpload(cardId, side))
+      const { result } = renderHook(() => useCardImageUpload(cardId, levelIndex, side))
 
       const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
       const uploadPromiseResult = result.current.uploadImage(file)
@@ -120,7 +121,7 @@ describe('useCardImageUpload', () => {
         expect(result.current.isUploading).toBe(true)
       })
 
-      resolveUpload!({ question_image_url: '/images/test.jpg' })
+      resolveUpload!({ question_image_urls: ['/images/test.jpg'] })
       await uploadPromiseResult
 
       await waitFor(() => {
@@ -128,19 +129,19 @@ describe('useCardImageUpload', () => {
       })
     })
 
-    it('should return image URL on success', async () => {
+    it('should return image URLs array on success', async () => {
       const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockResolvedValue({
-        question_image_url: '/images/cards/abc123/test.jpg',
-        answer_image_url: undefined,
+        question_image_urls: ['/images/cards/abc123/test.jpg'],
+        answer_image_urls: undefined,
       })
 
-      const { result } = renderHook(() => useCardImageUpload(cardId, 'question'))
+      const { result } = renderHook(() => useCardImageUpload(cardId, levelIndex, 'question'))
 
       const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
       const uploadResult = await result.current.uploadImage(file)
 
-      expect(uploadResult.imageUrl).toBe('/images/cards/abc123/test.jpg')
+      expect(uploadResult.imageUrls).toEqual(['/images/cards/abc123/test.jpg'])
       expect(uploadResult.imageName).toBe('test.jpg')
     })
 
@@ -148,7 +149,7 @@ describe('useCardImageUpload', () => {
       const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockRejectedValue(new Error('Upload failed'))
 
-      const { result } = renderHook(() => useCardImageUpload(cardId, side))
+      const { result } = renderHook(() => useCardImageUpload(cardId, levelIndex, side))
 
       const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
 
@@ -161,39 +162,45 @@ describe('useCardImageUpload', () => {
   })
 
   describe('deleteImage', () => {
-    it('should call correct delete endpoint for question', async () => {
+    it('should call correct delete endpoint for question with index', async () => {
       const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockResolvedValue(undefined)
 
-      const { result } = renderHook(() => useCardImageUpload(cardId, 'question'))
+      const { result } = renderHook(() => useCardImageUpload(cardId, levelIndex, 'question'))
 
-      await result.current.deleteImage()
+      await result.current.deleteImage(0)
 
-      expect(apiRequest).toHaveBeenCalledWith('/cards/test-card-id/question-image', {
-        method: 'DELETE',
-      })
+      expect(apiRequest).toHaveBeenCalledWith(
+        `/cards/${cardId}/levels/${levelIndex}/question-image/0`,
+        {
+          method: 'DELETE',
+        }
+      )
     })
 
-    it('should call correct delete endpoint for answer', async () => {
+    it('should call correct delete endpoint for answer with index', async () => {
       const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockResolvedValue(undefined)
 
-      const { result } = renderHook(() => useCardImageUpload(cardId, 'answer'))
+      const { result } = renderHook(() => useCardImageUpload(cardId, levelIndex, 'answer'))
 
-      await result.current.deleteImage()
+      await result.current.deleteImage(1)
 
-      expect(apiRequest).toHaveBeenCalledWith('/cards/test-card-id/answer-image', {
-        method: 'DELETE',
-      })
+      expect(apiRequest).toHaveBeenCalledWith(
+        `/cards/${cardId}/levels/${levelIndex}/answer-image/1`,
+        {
+          method: 'DELETE',
+        }
+      )
     })
 
     it('should set error on delete failure', async () => {
       const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockRejectedValue(new Error('Delete failed'))
 
-      const { result } = renderHook(() => useCardImageUpload(cardId, side))
+      const { result } = renderHook(() => useCardImageUpload(cardId, levelIndex, side))
 
-      await expect(result.current.deleteImage()).rejects.toThrow('Delete failed')
+      await expect(result.current.deleteImage(0)).rejects.toThrow('Delete failed')
 
       await waitFor(() => {
         expect(result.current.error).toBe('Delete failed')

@@ -55,13 +55,29 @@ class StorageService:
         )
 
     def _ensure_bucket_exists(self) -> None:
-        """Create bucket if it doesn't exist."""
+        """Create bucket if it doesn't exist and set public read policy."""
+        import json
+
         from botocore.exceptions import ClientError  # noqa: TCH002 - Third-party import
 
         try:
             self._s3_client.head_bucket(Bucket=self.BUCKET_NAME)
         except ClientError:
             self._s3_client.create_bucket(Bucket=self.BUCKET_NAME)
+            # Set bucket policy for public read access
+            policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "PublicReadGetObject",
+                        "Effect": "Allow",
+                        "Principal": {"AWS": "*"},
+                        "Action": "s3:GetObject",
+                        "Resource": f"arn:aws:s3:::{self.BUCKET_NAME}/*",
+                    }
+                ],
+            }
+            self._s3_client.put_bucket_policy(Bucket=self.BUCKET_NAME, Policy=json.dumps(policy))
 
     def validate_file(
         self,

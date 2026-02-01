@@ -4,7 +4,7 @@ import uuid
 from typing import Optional
 
 from sqlalchemy import ForeignKey, Integer, String, UniqueConstraint
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -32,17 +32,13 @@ class CardLevel(Base):
     level_index: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[dict] = mapped_column(JSONB, nullable=False)
 
-    # Level-specific images
-    question_image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    question_image_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    answer_image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    answer_image_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    # Level-specific images (arrays for multiple images)
+    question_image_urls: Mapped[Optional[list[str]]] = mapped_column(ARRAY(String), nullable=True)
+    answer_image_urls: Mapped[Optional[list[str]]] = mapped_column(ARRAY(String), nullable=True)
 
-    # Level-specific audio
-    question_audio_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    question_audio_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    answer_audio_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    answer_audio_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    # Level-specific audio (arrays for multiple audio files)
+    question_audio_urls: Mapped[Optional[list[str]]] = mapped_column(ARRAY(String), nullable=True)
+    answer_audio_urls: Mapped[Optional[list[str]]] = mapped_column(ARRAY(String), nullable=True)
 
     card: Mapped[Card] = relationship("Card", back_populates="levels")  # noqa: F821
 

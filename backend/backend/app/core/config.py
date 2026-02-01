@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     MINIO_ENDPOINT: str = "minio:9000"
     MINIO_ACCESS_KEY: str = "minioadmin"
     MINIO_SECRET_KEY: str = "minioadmin"
-    MINIO_BUCKET_NAME: str = "card-images"
+    MINIO_BUCKET_NAME: str = "card-media"
     MINIO_USE_SSL: bool = False
 
 

@@ -39,13 +39,12 @@ export function FlipCard({
   const frontText = (level as any)?.content?.question || (card as any).title || '…'
   const backText = (level as any)?.content?.answer || '…'
 
-  // Use level images if available, otherwise fall back to card images
-  const questionImageUrl = (level as any)?.questionImageUrl || (card as any)?.questionImageUrl
-  const answerImageUrl = (level as any)?.answerImageUrl || (card as any)?.answerImageUrl
-
-  // Use level audio if available
-  const questionAudioUrl = (level as any)?.questionAudioUrl
-  const answerAudioUrl = (level as any)?.answerAudioUrl
+  // Media URLs are returned at the top level of the level object (camelCase from API)
+  // Now they are arrays for multiple files
+  const questionImageUrls = (level as any)?.questionImageUrls || []
+  const answerImageUrls = (level as any)?.answerImageUrls || []
+  const questionAudioUrls = (level as any)?.questionAudioUrls || []
+  const answerAudioUrls = (level as any)?.answerAudioUrls || []
 
   const hasPrev = card.levels.some((l: any) => getLevelIndex(l) === card.activeLevel - 1)
   const hasNext = card.levels.some((l: any) => getLevelIndex(l) === card.activeLevel + 1)
@@ -69,18 +68,26 @@ export function FlipCard({
         >
           {/* Front */}
           <div className={`${styles.flipcardSide} ${styles.flipcardFront}`}>
-            {questionImageUrl && (
-              <div className={styles.cardImage}>
-                <ImageWithFallback
-                  src={questionImageUrl}
-                  alt="Question image"
-                  className={styles.cardImageElement}
-                />
+            {questionImageUrls.length > 0 && (
+              <div className={styles.cardImages}>
+                {questionImageUrls.map((url: string, index: number) => (
+                  <div key={index} className={styles.cardImage}>
+                    <ImageWithFallback
+                      src={url}
+                      alt={`Question image ${index + 1}`}
+                      className={styles.cardImageElement}
+                    />
+                  </div>
+                ))}
               </div>
             )}
-            {questionAudioUrl && (
-              <div className={styles.cardAudio}>
-                <audio src={questionAudioUrl} controls className={styles.cardAudioElement} />
+            {questionAudioUrls.length > 0 && (
+              <div className={styles.cardAudios}>
+                {questionAudioUrls.map((url: string, index: number) => (
+                  <div key={index} className={styles.cardAudio}>
+                    <audio src={url} controls className={styles.cardAudioElement} />
+                  </div>
+                ))}
               </div>
             )}
             <div className={styles.flipcardText}>
@@ -91,18 +98,26 @@ export function FlipCard({
 
           {/* Back */}
           <div className={`${styles.flipcardSide} ${styles.flipcardBack}`}>
-            {answerImageUrl && (
-              <div className={styles.cardImage}>
-                <ImageWithFallback
-                  src={answerImageUrl}
-                  alt="Answer image"
-                  className={styles.cardImageElement}
-                />
+            {answerImageUrls.length > 0 && (
+              <div className={styles.cardImages}>
+                {answerImageUrls.map((url: string, index: number) => (
+                  <div key={index} className={styles.cardImage}>
+                    <ImageWithFallback
+                      src={url}
+                      alt={`Answer image ${index + 1}`}
+                      className={styles.cardImageElement}
+                    />
+                  </div>
+                ))}
               </div>
             )}
-            {answerAudioUrl && (
-              <div className={styles.cardAudio}>
-                <audio src={answerAudioUrl} controls className={styles.cardAudioElement} />
+            {answerAudioUrls.length > 0 && (
+              <div className={styles.cardAudios}>
+                {answerAudioUrls.map((url: string, index: number) => (
+                  <div key={index} className={styles.cardAudio}>
+                    <audio src={url} controls className={styles.cardAudioElement} />
+                  </div>
+                ))}
               </div>
             )}
 

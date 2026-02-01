@@ -116,10 +116,10 @@ def list_deck_cards(
             CardLevelContent(
                 level_index=card_level.level_index,
                 content=card_level.content,
-                question_image_url=card_level.question_image_url,
-                answer_image_url=card_level.answer_image_url,
-                question_audio_url=card_level.question_audio_url,
-                answer_audio_url=card_level.answer_audio_url,
+                question_image_urls=card_level.question_image_urls,
+                answer_image_urls=card_level.answer_image_urls,
+                question_audio_urls=card_level.question_audio_urls,
+                answer_audio_urls=card_level.answer_audio_urls,
             )
             for card_level in levels
         ]
@@ -235,10 +235,10 @@ def get_deck_session(
                     CardLevelContent(
                         level_index=card_level.level_index,
                         content=card_level.content,
-                        question_image_url=card_level.question_image_url,
-                        answer_image_url=card_level.answer_image_url,
-                        question_audio_url=card_level.question_audio_url,
-                        answer_audio_url=card_level.answer_audio_url,
+                        question_image_urls=card_level.question_image_urls,
+                        answer_image_urls=card_level.answer_image_urls,
+                        question_audio_urls=card_level.question_audio_urls,
+                        answer_audio_urls=card_level.answer_audio_urls,
                     )
                     for card_level in lvls
                 ],
@@ -319,10 +319,10 @@ def get_deck_with_cards(
                     CardLevelContent(
                         level_index=card_level.level_index,
                         content=card_level.content,
-                        question_image_url=card_level.question_image_url,
-                        answer_image_url=card_level.answer_image_url,
-                        question_audio_url=card_level.question_audio_url,
-                        answer_audio_url=card_level.answer_audio_url,
+                        question_image_urls=card_level.question_image_urls,
+                        answer_image_urls=card_level.answer_image_urls,
+                        question_audio_urls=card_level.question_audio_urls,
+                        answer_audio_urls=card_level.answer_audio_urls,
                     )
                     for card_level in levels
                 ],
@@ -370,10 +370,10 @@ def get_deck_with_cards_ordered(
                     CardLevelContent(
                         level_index=card_level.level_index,
                         content=card_level.content,
-                        question_image_url=card_level.question_image_url,
-                        answer_image_url=card_level.answer_image_url,
-                        question_audio_url=card_level.question_audio_url,
-                        answer_audio_url=card_level.answer_audio_url,
+                        question_image_urls=card_level.question_image_urls,
+                        answer_image_urls=card_level.answer_image_urls,
+                        question_audio_urls=card_level.question_audio_urls,
+                        answer_audio_urls=card_level.answer_audio_urls,
                     )
                     for card_level in levels
                 ],
@@ -557,10 +557,10 @@ def get_study_cards(
                     {
                         "levelIndex": card_level.level_index,
                         "content": card_level.content,
-                        "questionImageUrl": card_level.question_image_url,
-                        "answerImageUrl": card_level.answer_image_url,
-                        "questionAudioUrl": card_level.question_audio_url,
-                        "answerAudioUrl": card_level.answer_audio_url,
+                        "questionImageUrls": card_level.question_image_urls,
+                        "answerImageUrls": card_level.answer_image_urls,
+                        "questionAudioUrls": card_level.question_audio_urls,
+                        "answerAudioUrls": card_level.answer_audio_urls,
                     }
                     for card_level in lvls
                 ],
