@@ -354,9 +354,8 @@ curl http://localhost:8000/version
 
 **CardLevel** — Уровни сложности карточки
 - card_id, level_index, question, answer
-- question_image_url, answer_image_url (изображения для уровня)
-- question_audio_url, answer_audio_url (аудио для уровня)
-- question_audio_name, answer_audio_name (имена аудио файлов)
+- question_image_urls, answer_image_urls (до 10 изображений на сторону)
+- question_audio_urls, answer_audio_urls (до 10 аудиофайлов на сторону)
 - level_index: динамический индекс уровня (от 0 до 10+)
 
 **StudyGroup** — Учебные группы
@@ -393,10 +392,10 @@ app/services/
 ```
 
 **StorageService** — управление файлами в MinIO/S3:
-- **Изображения**: Валидация: image/jpeg, image/png, image/webp (макс 5MB)
-- **Аудио**: Валидация: audio/mpeg, audio/mp4, audio/wav, audio/webm, audio/ogg (макс 10MB)
+- **Изображения**: Валидация: image/jpeg, image/png, image/webp (макс 5MB на файл, до 10 файлов на сторону)
+- **Аудио**: Валидация: audio/mpeg, audio/mp4, audio/wav, audio/webm, audio/ogg (макс 10MB на файл, до 10 файлов на сторону)
 - Загрузка файлов с генерацией уникальных ключей
-- Удаление файлов
+- Удаление файлов по индексу
 - Проксирование через Nginx по путям `/images/` и `/audio/`
 
 ### Безопасность

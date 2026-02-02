@@ -494,21 +494,24 @@ Returns user statistics for the dashboard:
 **Important:** When working with time calculations, note that `CardReviewHistory.interval_minutes` is the SM-2 algorithm's interval until next review, NOT study time. For actual study time, use `reviewed_at - reveal_at` (time from answer reveal to user rating).
 
 **Image Upload:**
-- Cards support per-level images for question and answer sides
+- Cards support multiple images per level for question and answer sides
 - MCQ cards support images for options
 - Images are stored in MinIO (S3-compatible object storage)
-- Upload via FormData: `POST /api/cards/{card_id}/levels/{level_index}/question-image`
-- Supported formats: JPEG, PNG, WebP (max 5MB)
+- Upload: `POST /api/cards/{card_id}/levels/{level_index}/question-image`
+- Delete by index: `DELETE /api/cards/{card_id}/levels/{level_index}/question-image/{index}`
+- Supported formats: JPEG, PNG, WebP (max 5MB per file, max 10 files per side)
 - Images are proxied through Nginx at `/images/`
 - Frontend feature: `features/card-image-upload/`
 
 **Audio Upload:**
-- Cards support per-level audio for question and answer sides
+- Cards support multiple audio files per level for question and answer sides
 - Audio files are stored in MinIO (S3-compatible object storage)
-- Upload via FormData: `POST /api/cards/{card_id}/levels/{level_index}/question-audio`
-- Supported formats: MP3, M4A, WAV, WebM, OGG/Opus (max 10MB)
+- Upload: `POST /api/cards/{card_id}/levels/{level_index}/question-audio`
+- Delete by index: `DELETE /api/cards/{card_id}/levels/{level_index}/question-audio/{index}`
+- Supported formats: MP3, M4A, WAV, WebM, OGG/Opus (max 10MB per file, max 10 files per side)
 - Audio files are proxied through Nginx at `/audio/`
 - Frontend feature: `features/card-audio/`
+- Frontend supports recording audio directly in the browser (MediaRecorder API)
 
 **Documentation:** See `backend/README.md` for detailed backend documentation including testing, migrations, and environment configuration.
 
