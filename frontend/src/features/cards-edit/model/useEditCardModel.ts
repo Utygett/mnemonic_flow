@@ -142,15 +142,11 @@ export function useEditCardModel(props: Props): EditCardViewModel {
 
     if (isMcqType(selectedCard.type)) {
       const mapped: LevelDraft[] =
-        sorted.length > 0
-          ? sorted.map(l => normalizeMcqLevel((l as any).content))
-          : [defaultMcqLevel()]
+        sorted.length > 0 ? sorted.map(l => normalizeMcqLevel(l)) : [defaultMcqLevel()]
       setLevels(mapped)
     } else {
       const mapped: LevelDraft[] =
-        sorted.length > 0
-          ? sorted.map(l => normalizeQaLevel((l as any).content))
-          : [defaultQaLevel()]
+        sorted.length > 0 ? sorted.map(l => normalizeQaLevel(l)) : [defaultQaLevel()]
       setLevels(mapped)
     }
 
@@ -283,7 +279,14 @@ export function useEditCardModel(props: Props): EditCardViewModel {
               timerSec: lvl.timerSec,
             }
 
-      return { level_index, content } as any
+      return {
+        level_index,
+        content,
+        question_image_urls: lvl.question_image_urls,
+        answer_image_urls: lvl.answer_image_urls,
+        question_audio_urls: lvl.question_audio_urls,
+        answer_audio_urls: lvl.answer_audio_urls,
+      }
     })
   }
 
@@ -303,6 +306,9 @@ export function useEditCardModel(props: Props): EditCardViewModel {
       await replaceCardLevels(selectedCardId, apiLevels)
 
       setCards(prev => prev.map(c => (c.card_id === selectedCardId ? { ...c, title: t } : c)))
+
+      // Call onDone after successful save
+      onDone()
     } catch (e: any) {
       setErrorText(e?.message ?? 'Ошибка сохранения')
     } finally {

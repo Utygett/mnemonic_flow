@@ -53,12 +53,16 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
 
     // image actions
     setLevelQuestionImage,
+    removeLevelQuestionImage,
     setLevelAnswerImage,
+    removeLevelAnswerImage,
     setOptionImage,
 
     // audio actions
     setLevelQuestionAudio,
+    removeLevelQuestionAudio,
     setLevelAnswerAudio,
+    removeLevelAnswerAudio,
 
     // cleaned (готово для onSave)
     cleanedLevelsQA,
@@ -128,22 +132,22 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
               const level = levelsQA[levelIndex]
               if (!level) continue
 
-              // Upload question image
-              if (level.questionImageFile) {
-                setUploadProgress(`Загрузка изображения вопроса для уровня ${levelIndex + 1}...`)
+              // Upload question images
+              for (const img of level.questionImageFiles) {
+                setUploadProgress(`Загрузка изображений вопроса для уровня ${levelIndex + 1}...`)
                 const formData = new FormData()
-                formData.append('file', level.questionImageFile)
+                formData.append('file', img.file)
                 await apiRequest(`/cards/${cardId}/levels/${levelIndex}/question-image`, {
                   method: 'POST',
                   body: formData,
                 })
               }
 
-              // Upload answer image
-              if (level.answerImageFile) {
-                setUploadProgress(`Загрузка изображения ответа для уровня ${levelIndex + 1}...`)
+              // Upload answer images
+              for (const img of level.answerImageFiles) {
+                setUploadProgress(`Загрузка изображений ответа для уровня ${levelIndex + 1}...`)
                 const formData = new FormData()
-                formData.append('file', level.answerImageFile)
+                formData.append('file', img.file)
                 await apiRequest(`/cards/${cardId}/levels/${levelIndex}/answer-image`, {
                   method: 'POST',
                   body: formData,
@@ -151,10 +155,10 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
               }
 
               // Upload question audio
-              if (level.questionAudioFile) {
+              for (const audio of level.questionAudioFiles) {
                 setUploadProgress(`Загрузка аудио вопроса для уровня ${levelIndex + 1}...`)
                 const formData = new FormData()
-                formData.append('file', level.questionAudioFile)
+                formData.append('file', audio.file)
                 await apiRequest(`/cards/${cardId}/levels/${levelIndex}/question-audio`, {
                   method: 'POST',
                   body: formData,
@@ -162,10 +166,10 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
               }
 
               // Upload answer audio
-              if (level.answerAudioFile) {
+              for (const audio of level.answerAudioFiles) {
                 setUploadProgress(`Загрузка аудио ответа для уровня ${levelIndex + 1}...`)
                 const formData = new FormData()
-                formData.append('file', level.answerAudioFile)
+                formData.append('file', audio.file)
                 await apiRequest(`/cards/${cardId}/levels/${levelIndex}/answer-audio`, {
                   method: 'POST',
                   body: formData,
@@ -243,14 +247,6 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
     setLevelAnswerImage(activeLevel, file)
   }
 
-  const removeQuestionImage = () => {
-    setLevelQuestionImage(activeLevel, null)
-  }
-
-  const removeAnswerImage = () => {
-    setLevelAnswerImage(activeLevel, null)
-  }
-
   const handleQuestionAudioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -289,14 +285,6 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
     }
 
     setLevelAnswerAudio(activeLevel, file)
-  }
-
-  const removeQuestionAudio = () => {
-    setLevelQuestionAudio(activeLevel, null)
-  }
-
-  const removeAnswerAudio = () => {
-    setLevelAnswerAudio(activeLevel, null)
   }
 
   const startQuestionRecording = async () => {
@@ -581,23 +569,26 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
 
                 {/* Question Image Upload */}
                 <div className={styles.inlineImageUpload}>
-                  {activeQA?.questionImagePreview ? (
-                    <div className={styles.imagePreviewSmall}>
-                      <img
-                        src={activeQA.questionImagePreview}
-                        alt="Question preview"
-                        className={styles.previewImgSmall}
-                      />
-                      <button
-                        type="button"
-                        onClick={removeQuestionImage}
-                        className={styles.removeImageButton}
-                        disabled={saveBusy}
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ) : (
+                  <div className={styles.imagesList}>
+                    {activeQA?.questionImageFiles?.map((img, idx) => (
+                      <div key={idx} className={styles.imagePreviewSmall}>
+                        <img
+                          src={img.preview}
+                          alt={`Question image ${idx + 1}`}
+                          className={styles.previewImgSmall}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeLevelQuestionImage(activeLevel, idx)}
+                          className={styles.removeImageButton}
+                          disabled={saveBusy}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {activeQA?.questionImageFiles?.length < 10 && (
                     <label className={styles.inlineUploadButton}>
                       <input
                         type="file"
@@ -614,23 +605,22 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
 
                 {/* Question Audio Upload */}
                 <div className={styles.inlineImageUpload}>
-                  {activeQA?.questionAudioPreview ? (
-                    <div className={styles.audioPreviewSmall}>
-                      <audio
-                        src={activeQA.questionAudioPreview}
-                        controls
-                        className={styles.audioPlayerSmall}
-                      />
-                      <button
-                        type="button"
-                        onClick={removeQuestionAudio}
-                        className={styles.removeImageButton}
-                        disabled={saveBusy}
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ) : (
+                  <div className={styles.audioList}>
+                    {activeQA?.questionAudioFiles?.map((audio, idx) => (
+                      <div key={idx} className={styles.audioPreviewSmall}>
+                        <audio src={audio.preview} controls className={styles.audioPlayerSmall} />
+                        <button
+                          type="button"
+                          onClick={() => removeLevelQuestionAudio(activeLevel, idx)}
+                          className={styles.removeImageButton}
+                          disabled={saveBusy}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {activeQA?.questionAudioFiles?.length < 10 && (
                     <div className={styles.audioButtonsRow}>
                       <label className={styles.inlineUploadButton}>
                         <input
@@ -672,23 +662,26 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
 
                 {/* Answer Image Upload */}
                 <div className={styles.inlineImageUpload}>
-                  {activeQA?.answerImagePreview ? (
-                    <div className={styles.imagePreviewSmall}>
-                      <img
-                        src={activeQA.answerImagePreview}
-                        alt="Answer preview"
-                        className={styles.previewImgSmall}
-                      />
-                      <button
-                        type="button"
-                        onClick={removeAnswerImage}
-                        className={styles.removeImageButton}
-                        disabled={saveBusy}
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ) : (
+                  <div className={styles.imagesList}>
+                    {activeQA?.answerImageFiles?.map((img, idx) => (
+                      <div key={idx} className={styles.imagePreviewSmall}>
+                        <img
+                          src={img.preview}
+                          alt={`Answer image ${idx + 1}`}
+                          className={styles.previewImgSmall}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeLevelAnswerImage(activeLevel, idx)}
+                          className={styles.removeImageButton}
+                          disabled={saveBusy}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {activeQA?.answerImageFiles?.length < 10 && (
                     <label className={styles.inlineUploadButton}>
                       <input
                         type="file"
@@ -705,23 +698,22 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
 
                 {/* Answer Audio Upload */}
                 <div className={styles.inlineImageUpload}>
-                  {activeQA?.answerAudioPreview ? (
-                    <div className={styles.audioPreviewSmall}>
-                      <audio
-                        src={activeQA.answerAudioPreview}
-                        controls
-                        className={styles.audioPlayerSmall}
-                      />
-                      <button
-                        type="button"
-                        onClick={removeAnswerAudio}
-                        className={styles.removeImageButton}
-                        disabled={saveBusy}
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ) : (
+                  <div className={styles.audioList}>
+                    {activeQA?.answerAudioFiles?.map((audio, idx) => (
+                      <div key={idx} className={styles.audioPreviewSmall}>
+                        <audio src={audio.preview} controls className={styles.audioPlayerSmall} />
+                        <button
+                          type="button"
+                          onClick={() => removeLevelAnswerAudio(activeLevel, idx)}
+                          className={styles.removeImageButton}
+                          disabled={saveBusy}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {activeQA?.answerAudioFiles?.length < 10 && (
                     <div className={styles.audioButtonsRow}>
                       <label className={styles.inlineUploadButton}>
                         <input

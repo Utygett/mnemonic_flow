@@ -1,5 +1,5 @@
 import { useRef, ChangeEvent, useState } from 'react'
-import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react'
+import { Upload, X, Image as ImageIcon, Loader2, Plus } from 'lucide-react'
 import { ImageWithFallback } from '@/shared/ui/ImageWithFallback'
 
 import type { CardImageUploadProps } from '../model/types'
@@ -9,15 +9,20 @@ import styles from './CardImageUpload.module.css'
 
 export function CardImageUpload({
   cardId,
+  levelIndex,
   side,
-  currentImageUrl,
-  onImageChange,
+  currentImageUrls,
+  onImagesChange,
 }: CardImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { uploadImage, deleteImage, isUploading, error } = useCardImageUpload(cardId, side)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const { uploadImage, deleteImage, isUploading, error } = useCardImageUpload(
+    cardId,
+    levelIndex,
+    side
+  )
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
 
-  const displayUrl = previewUrl || currentImageUrl
+  const displayUrls = [...previewUrls, ...(currentImageUrls || [])]
 
   const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -27,23 +32,30 @@ export function CardImageUpload({
       // Create preview
       const reader = new FileReader()
       reader.onloadend = () => {
-        setPreviewUrl(reader.result as string)
+        setPreviewUrls(prev => [...prev, reader.result as string])
       }
       reader.readAsDataURL(file)
 
       const result = await uploadImage(file)
-      onImageChange?.(result.imageUrl)
+      // Notify parent of new URLs so it can update its state
+      onImagesChange?.(result.imageUrls)
+      // Clear the preview since we now have the actual URLs from props
+      setTimeout(() => {
+        setPreviewUrls([])
+      }, 100)
     } catch (err) {
       console.error('Upload error:', err)
-      setPreviewUrl(null)
+      setPreviewUrls([])
     }
   }
 
-  const handleDelete = async () => {
+  const handleDelete = async (index: number) => {
     try {
-      await deleteImage()
-      setPreviewUrl(null)
-      onImageChange?.(undefined)
+      await deleteImage(index)
+      // Update local state by removing the deleted image from the current URLs
+      const newUrls = [...(currentImageUrls || [])]
+      newUrls.splice(index, 1)
+      onImagesChange?.(newUrls.length > 0 ? newUrls : undefined)
     } catch (err) {
       console.error('Delete error:', err)
     }
@@ -53,38 +65,46 @@ export function CardImageUpload({
 
   return (
     <div className={styles.container}>
-      <div className={styles.label}>{sideLabel} Image</div>
+      <div className={styles.label}>{sideLabel} Images</div>
 
-      {displayUrl ? (
-        <div className={styles.imageWrapper}>
-          <ImageWithFallback src={displayUrl} alt={`${sideLabel} image`} className={styles.image} />
-          {!isUploading && (
-            <button
-              type="button"
-              onClick={handleDelete}
-              className={styles.deleteButton}
-              title="Remove image"
-            >
-              <X size={16} />
-            </button>
-          )}
-          {isUploading && (
-            <div className={styles.overlay}>
-              <Loader2 size={32} className={styles.spinner} />
+      {displayUrls.length > 0 && (
+        <div className={styles.imagesList}>
+          {displayUrls.map((url, index) => (
+            <div key={index} className={styles.imageWrapper}>
+              <ImageWithFallback
+                src={url}
+                alt={`${sideLabel} image ${index + 1}`}
+                className={styles.image}
+              />
+              {!isUploading && (
+                <button
+                  type="button"
+                  onClick={() => handleDelete(index)}
+                  className={styles.deleteButton}
+                  title={`Remove image ${index + 1}`}
+                >
+                  <X size={16} />
+                </button>
+              )}
+              {isUploading && index === displayUrls.length - 1 && (
+                <div className={styles.overlay}>
+                  <Loader2 size={32} className={styles.spinner} />
+                </div>
+              )}
             </div>
-          )}
+          ))}
         </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-          className={styles.uploadButton}
-        >
-          {isUploading ? <Loader2 size={24} className={styles.spinner} /> : <ImageIcon size={24} />}
-          <span>{isUploading ? 'Uploading...' : `Add ${sideLabel} Image`}</span>
-        </button>
       )}
+
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={isUploading}
+        className={styles.addButton}
+      >
+        <Plus size={20} />
+        <span>Add Image</span>
+      </button>
 
       <input
         ref={fileInputRef}
@@ -95,7 +115,7 @@ export function CardImageUpload({
       />
 
       {error && <div className={styles.error}>{error}</div>}
-      <div className={styles.hint}>Max 5MB. JPG, PNG, WebP</div>
+      <div className={styles.hint}>Max 5MB per image. JPG, PNG, WebP. Max 10 images.</div>
     </div>
   )
 }

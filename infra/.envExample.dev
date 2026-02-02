@@ -14,7 +14,7 @@ MINIO_ROOT_PASSWORD=minioadmin
 MINIO_ENDPOINT=http://minio:9000
 MINIO_ACCESS_KEY=minioadmin
 MINIO_SECRET_KEY=minioadmin
-MINIO_BUCKET_NAME=card-images
+MINIO_BUCKET_NAME=card-media
 MINIO_USE_SSL=false
 
 # Frontend

@@ -3,7 +3,11 @@ import { apiRequest } from '@/shared/api'
 
 import type { UploadImageResult } from './types'
 
-export function useCardImageUpload(cardId: string, side: 'question' | 'answer') {
+export function useCardImageUpload(
+  cardId: string,
+  levelIndex: number,
+  side: 'question' | 'answer'
+) {
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -37,22 +41,25 @@ export function useCardImageUpload(cardId: string, side: 'question' | 'answer') 
 
       try {
         const endpoint = side === 'question' ? '/question-image' : '/answer-image'
-        const result = await apiRequest<UploadImageResult>(`/cards/${cardId}${endpoint}`, {
-          method: 'POST',
-          headers: {}, // Let browser set Content-Type with boundary
-          body: formData,
-        })
+        const result = await apiRequest<UploadImageResult>(
+          `/cards/${cardId}/levels/${levelIndex}${endpoint}`,
+          {
+            method: 'POST',
+            headers: {}, // Let browser set Content-Type with boundary
+            body: formData,
+          }
+        )
 
-        // The API returns CardSummary, extract just the image URL
-        const cardSummary = result as unknown as {
-          question_image_url?: string
-          answer_image_url?: string
+        // The API returns CardLevelContent, extract the image URLs
+        const cardLevel = result as unknown as {
+          question_image_urls?: string[]
+          answer_image_urls?: string[]
         }
-        const imageUrl =
-          side === 'question' ? cardSummary.question_image_url : cardSummary.answer_image_url
+        const imageUrls =
+          side === 'question' ? cardLevel.question_image_urls : cardLevel.answer_image_urls
 
         return {
-          imageUrl: imageUrl || '',
+          imageUrls: imageUrls || [], // Return the full array of URLs
           imageName: file.name,
         }
       } catch (err) {
@@ -63,26 +70,29 @@ export function useCardImageUpload(cardId: string, side: 'question' | 'answer') 
         setIsUploading(false)
       }
     },
-    [cardId, side, validateFile]
+    [cardId, levelIndex, side, validateFile]
   )
 
-  const deleteImage = useCallback(async () => {
-    setIsUploading(true)
-    setError(null)
+  const deleteImage = useCallback(
+    async (index: number) => {
+      setIsUploading(true)
+      setError(null)
 
-    try {
-      const endpoint = side === 'question' ? '/question-image' : '/answer-image'
-      await apiRequest(`/cards/${cardId}${endpoint}`, {
-        method: 'DELETE',
-      })
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Delete failed'
-      setError(message)
-      throw err
-    } finally {
-      setIsUploading(false)
-    }
-  }, [cardId, side])
+      try {
+        const endpoint = side === 'question' ? '/question-image' : '/answer-image'
+        await apiRequest(`/cards/${cardId}/levels/${levelIndex}${endpoint}/${index}`, {
+          method: 'DELETE',
+        })
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Delete failed'
+        setError(message)
+        throw err
+      } finally {
+        setIsUploading(false)
+      }
+    },
+    [cardId, levelIndex, side]
+  )
 
   return {
     uploadImage,

@@ -2,17 +2,23 @@ import { useEffect, useMemo, useState } from 'react'
 
 export type CardType = 'flashcard' | 'multiple_choice'
 
+export type ImageFile = {
+  file: File
+  preview: string
+}
+
+export type AudioFile = {
+  file: File
+  preview: string
+}
+
 export type LevelQA = {
   question: string
   answer: string
-  questionImageFile?: File
-  questionImagePreview?: string
-  answerImageFile?: File
-  answerImagePreview?: string
-  questionAudioFile?: File
-  questionAudioPreview?: string
-  answerAudioFile?: File
-  answerAudioPreview?: string
+  questionImageFiles: ImageFile[]
+  answerImageFiles: ImageFile[]
+  questionAudioFiles: AudioFile[]
+  answerAudioFiles: AudioFile[]
   timerSec?: number
 }
 
@@ -96,12 +102,16 @@ export type CreateCardLevelsModel = {
 
   // image actions
   setLevelQuestionImage: (index: number, file: File | null) => void
+  removeLevelQuestionImage: (index: number, imageIndex: number) => void
   setLevelAnswerImage: (index: number, file: File | null) => void
+  removeLevelAnswerImage: (index: number, imageIndex: number) => void
   setOptionImage: (levelIndex: number, optionId: string, file: File | null) => void
 
   // audio actions
   setLevelQuestionAudio: (index: number, file: File | null) => void
+  removeLevelQuestionAudio: (index: number, audioIndex: number) => void
   setLevelAnswerAudio: (index: number, file: File | null) => void
+  removeLevelAnswerAudio: (index: number, audioIndex: number) => void
 
   // cleaned (готово для onSave)
   cleanedLevelsQA: Array<{ question: string; answer: string }>
@@ -118,7 +128,16 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
   const [activeLevel, setActiveLevel] = useState(0)
 
   // FLASHCARD levels
-  const [levelsQA, setLevelsQA] = useState<LevelQA[]>([{ question: '', answer: '' }])
+  const [levelsQA, setLevelsQA] = useState<LevelQA[]>([
+    {
+      question: '',
+      answer: '',
+      questionImageFiles: [],
+      answerImageFiles: [],
+      questionAudioFiles: [],
+      answerAudioFiles: [],
+    },
+  ])
   const [qPreview, setQPreview] = useState(false)
   const [aPreview, setAPreview] = useState(false)
 
@@ -136,7 +155,17 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
     if (levelsCount >= 10) return
 
     if (cardType === 'flashcard') {
-      setLevelsQA(prev => [...prev, { question: '', answer: '' }])
+      setLevelsQA(prev => [
+        ...prev,
+        {
+          question: '',
+          answer: '',
+          questionImageFiles: [],
+          answerImageFiles: [],
+          questionAudioFiles: [],
+          answerAudioFiles: [],
+        },
+      ])
       setActiveLevel(levelsQA.length)
     } else {
       setLevelsMCQ(prev => [...prev, makeDefaultMcqLevel()])
@@ -224,58 +253,73 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
   }
 
   const setLevelQuestionImage = (index: number, file: File | null) => {
-    setLevelsQA(prev => {
-      const next = [...prev]
-      const lvl = next[index]
-      if (!lvl) return prev
+    if (!file) return
 
-      if (file) {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          setLevelsQA(current => {
-            const updated = [...current]
-            updated[index] = {
-              ...updated[index],
-              questionImageFile: file,
-              questionImagePreview: reader.result as string,
-            }
-            return updated
-          })
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setLevelsQA(current => {
+        const updated = [...current]
+        const lvl = updated[index]
+        if (!lvl) return current
+
+        updated[index] = {
+          ...lvl,
+          questionImageFiles: [
+            ...lvl.questionImageFiles,
+            { file, preview: reader.result as string },
+          ],
         }
-        reader.readAsDataURL(file)
-      } else {
-        next[index] = { ...lvl, questionImageFile: undefined, questionImagePreview: undefined }
-        return next
+        return updated
+      })
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const removeLevelQuestionImage = (index: number, imageIndex: number) => {
+    setLevelsQA(current => {
+      const updated = [...current]
+      const lvl = updated[index]
+      if (!lvl) return current
+
+      updated[index] = {
+        ...lvl,
+        questionImageFiles: lvl.questionImageFiles.filter((_, i) => i !== imageIndex),
       }
-      return prev
+      return updated
     })
   }
 
   const setLevelAnswerImage = (index: number, file: File | null) => {
-    setLevelsQA(prev => {
-      const next = [...prev]
-      const lvl = next[index]
-      if (!lvl) return prev
+    if (!file) return
 
-      if (file) {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          setLevelsQA(current => {
-            const updated = [...current]
-            updated[index] = {
-              ...updated[index],
-              answerImageFile: file,
-              answerImagePreview: reader.result as string,
-            }
-            return updated
-          })
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setLevelsQA(current => {
+        const updated = [...current]
+        const lvl = updated[index]
+        if (!lvl) return current
+
+        updated[index] = {
+          ...lvl,
+          answerImageFiles: [...lvl.answerImageFiles, { file, preview: reader.result as string }],
         }
-        reader.readAsDataURL(file)
-      } else {
-        next[index] = { ...lvl, answerImageFile: undefined, answerImagePreview: undefined }
-        return next
+        return updated
+      })
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const removeLevelAnswerImage = (index: number, imageIndex: number) => {
+    setLevelsQA(current => {
+      const updated = [...current]
+      const lvl = updated[index]
+      if (!lvl) return current
+
+      updated[index] = {
+        ...lvl,
+        answerImageFiles: lvl.answerImageFiles.filter((_, i) => i !== imageIndex),
       }
-      return prev
+      return updated
     })
   }
 
@@ -318,58 +362,76 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
   }
 
   const setLevelQuestionAudio = (index: number, file: File | null) => {
-    setLevelsQA(prev => {
-      const next = [...prev]
-      const lvl = next[index]
-      if (!lvl) return prev
+    if (!file) return
 
-      if (file) {
-        const url = URL.createObjectURL(file)
-        setLevelsQA(current => {
-          const updated = [...current]
-          updated[index] = {
-            ...updated[index],
-            questionAudioFile: file,
-            questionAudioPreview: url,
-          }
-          return updated
-        })
-      } else {
-        if (lvl.questionAudioPreview) {
-          URL.revokeObjectURL(lvl.questionAudioPreview)
-        }
-        next[index] = { ...lvl, questionAudioFile: undefined, questionAudioPreview: undefined }
-        return next
+    const url = URL.createObjectURL(file)
+    setLevelsQA(current => {
+      const updated = [...current]
+      const lvl = updated[index]
+      if (!lvl) return current
+
+      updated[index] = {
+        ...lvl,
+        questionAudioFiles: [...lvl.questionAudioFiles, { file, preview: url }],
       }
-      return prev
+      return updated
+    })
+  }
+
+  const removeLevelQuestionAudio = (index: number, audioIndex: number) => {
+    setLevelsQA(current => {
+      const updated = [...current]
+      const lvl = updated[index]
+      if (!lvl) return current
+
+      // Revoke the blob URL to free memory
+      const audioToRemove = lvl.questionAudioFiles[audioIndex]
+      if (audioToRemove) {
+        URL.revokeObjectURL(audioToRemove.preview)
+      }
+
+      updated[index] = {
+        ...lvl,
+        questionAudioFiles: lvl.questionAudioFiles.filter((_, i) => i !== audioIndex),
+      }
+      return updated
     })
   }
 
   const setLevelAnswerAudio = (index: number, file: File | null) => {
-    setLevelsQA(prev => {
-      const next = [...prev]
-      const lvl = next[index]
-      if (!lvl) return prev
+    if (!file) return
 
-      if (file) {
-        const url = URL.createObjectURL(file)
-        setLevelsQA(current => {
-          const updated = [...current]
-          updated[index] = {
-            ...updated[index],
-            answerAudioFile: file,
-            answerAudioPreview: url,
-          }
-          return updated
-        })
-      } else {
-        if (lvl.answerAudioPreview) {
-          URL.revokeObjectURL(lvl.answerAudioPreview)
-        }
-        next[index] = { ...lvl, answerAudioFile: undefined, answerAudioPreview: undefined }
-        return next
+    const url = URL.createObjectURL(file)
+    setLevelsQA(current => {
+      const updated = [...current]
+      const lvl = updated[index]
+      if (!lvl) return current
+
+      updated[index] = {
+        ...lvl,
+        answerAudioFiles: [...lvl.answerAudioFiles, { file, preview: url }],
       }
-      return prev
+      return updated
+    })
+  }
+
+  const removeLevelAnswerAudio = (index: number, audioIndex: number) => {
+    setLevelsQA(current => {
+      const updated = [...current]
+      const lvl = updated[index]
+      if (!lvl) return current
+
+      // Revoke the blob URL to free memory
+      const audioToRemove = lvl.answerAudioFiles[audioIndex]
+      if (audioToRemove) {
+        URL.revokeObjectURL(audioToRemove.preview)
+      }
+
+      updated[index] = {
+        ...lvl,
+        answerAudioFiles: lvl.answerAudioFiles.filter((_, i) => i !== audioIndex),
+      }
+      return updated
     })
   }
 
@@ -466,11 +528,15 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
     removeMcqOption,
 
     setLevelQuestionImage,
+    removeLevelQuestionImage,
     setLevelAnswerImage,
+    removeLevelAnswerImage,
     setOptionImage,
 
     setLevelQuestionAudio,
+    removeLevelQuestionAudio,
     setLevelAnswerAudio,
+    removeLevelAnswerAudio,
 
     cleanedLevelsQA,
     cleanedLevelsMCQ,

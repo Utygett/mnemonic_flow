@@ -16,7 +16,7 @@ vi.mock('../model/useCardImageUpload', () => ({
 }))
 
 // Mock ImageWithFallback
-vi.mock('@/shared/ui/ImageWithFallback/ImageWithFallback', () => ({
+vi.mock('@/shared/ui/ImageWithFallback', () => ({
   ImageWithFallback: ({ src, alt }: { src: string; alt: string }) => (
     <img src={src} alt={alt} data-testid="image" />
   ),
@@ -25,14 +25,14 @@ vi.mock('@/shared/ui/ImageWithFallback/ImageWithFallback', () => ({
 import { useCardImageUpload } from '../model/useCardImageUpload'
 
 describe('CardImageUpload', () => {
-  const mockOnImageChange = vi.fn()
+  const mockOnImagesChange = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
-    // Reset default mock behavior
+    // Reset default mock behavior - returns array of URLs
     vi.mocked(useCardImageUpload).mockReturnValue({
       uploadImage: mockUploadImage.mockResolvedValue({
-        imageUrl: '/images/test.jpg',
+        imageUrls: ['/images/test.jpg'],
         imageName: 'test.jpg',
       }),
       deleteImage: mockDeleteImage.mockResolvedValue(undefined),
@@ -43,20 +43,40 @@ describe('CardImageUpload', () => {
 
   describe('without existing image', () => {
     it('should render upload button when no image', () => {
-      render(<CardImageUpload cardId="test-id" side="question" onImageChange={mockOnImageChange} />)
+      render(
+        <CardImageUpload
+          cardId="test-id"
+          levelIndex={0}
+          side="question"
+          onImagesChange={mockOnImagesChange}
+        />
+      )
 
-      expect(screen.getByText('Add Question Image')).toBeInTheDocument()
+      expect(screen.getByText('Add Image')).toBeInTheDocument()
     })
 
     it('should render answer side label correctly', () => {
-      render(<CardImageUpload cardId="test-id" side="answer" onImageChange={mockOnImageChange} />)
+      render(
+        <CardImageUpload
+          cardId="test-id"
+          levelIndex={0}
+          side="answer"
+          onImagesChange={mockOnImagesChange}
+        />
+      )
 
-      expect(screen.getByText('Answer Image')).toBeInTheDocument()
-      expect(screen.getByText('Add Answer Image')).toBeInTheDocument()
+      expect(screen.getByText('Answer Images')).toBeInTheDocument()
     })
 
     it('should trigger file input when clicking upload button', () => {
-      render(<CardImageUpload cardId="test-id" side="question" onImageChange={mockOnImageChange} />)
+      render(
+        <CardImageUpload
+          cardId="test-id"
+          levelIndex={0}
+          side="question"
+          onImagesChange={mockOnImagesChange}
+        />
+      )
 
       const input = document.querySelector('input[type="file"]') as HTMLInputElement
 
@@ -65,7 +85,14 @@ describe('CardImageUpload', () => {
     })
 
     it('should call uploadImage when file is selected', async () => {
-      render(<CardImageUpload cardId="test-id" side="question" onImageChange={mockOnImageChange} />)
+      render(
+        <CardImageUpload
+          cardId="test-id"
+          levelIndex={0}
+          side="question"
+          onImagesChange={mockOnImagesChange}
+        />
+      )
 
       const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
       const input = document.querySelector('input[type="file"]') as HTMLInputElement
@@ -77,13 +104,20 @@ describe('CardImageUpload', () => {
       })
     })
 
-    it('should call onImageChange with URL after successful upload', async () => {
+    it('should call onImagesChange with URLs array after successful upload', async () => {
       mockUploadImage.mockResolvedValueOnce({
-        imageUrl: '/images/uploaded.jpg',
+        imageUrls: ['/images/uploaded.jpg'],
         imageName: 'uploaded.jpg',
       })
 
-      render(<CardImageUpload cardId="test-id" side="question" onImageChange={mockOnImageChange} />)
+      render(
+        <CardImageUpload
+          cardId="test-id"
+          levelIndex={0}
+          side="question"
+          onImagesChange={mockOnImagesChange}
+        />
+      )
 
       const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
       const input = document.querySelector('input[type="file"]') as HTMLInputElement
@@ -91,73 +125,82 @@ describe('CardImageUpload', () => {
       fireEvent.change(input, { target: { files: [file] } })
 
       await waitFor(() => {
-        expect(mockOnImageChange).toHaveBeenCalledWith('/images/uploaded.jpg')
+        expect(mockOnImagesChange).toHaveBeenCalledWith(['/images/uploaded.jpg'])
       })
     })
   })
 
-  describe('with existing image', () => {
-    it('should render image when currentImageUrl is provided', () => {
+  describe('with existing images', () => {
+    it('should render images when currentImageUrls is provided', () => {
       render(
         <CardImageUpload
           cardId="test-id"
+          levelIndex={0}
           side="question"
-          currentImageUrl="/images/existing.jpg"
-          onImageChange={mockOnImageChange}
+          currentImageUrls={['/images/existing.jpg', '/images/existing2.jpg']}
+          onImagesChange={mockOnImagesChange}
         />
       )
 
-      const img = screen.getByAltText('Question image')
-      expect(img).toHaveAttribute('src', '/images/existing.jpg')
+      const images = screen.getAllByTestId('image') as HTMLImageElement[]
+      expect(images).toHaveLength(2)
+      expect(images[0]).toHaveAttribute('src', '/images/existing.jpg')
+      expect(images[1]).toHaveAttribute('src', '/images/existing2.jpg')
     })
 
-    it('should render delete button when image exists', () => {
+    it('should render delete buttons when images exist', () => {
       render(
         <CardImageUpload
           cardId="test-id"
+          levelIndex={0}
           side="question"
-          currentImageUrl="/images/existing.jpg"
-          onImageChange={mockOnImageChange}
+          currentImageUrls={['/images/existing.jpg']}
+          onImagesChange={mockOnImagesChange}
         />
       )
 
-      const deleteButton = screen.getByRole('button')
-      expect(deleteButton).toBeInTheDocument()
+      const deleteButtons = screen.getAllByTitle(/Remove image/i)
+      expect(deleteButtons).toHaveLength(1)
+      expect(deleteButtons[0]).toBeInTheDocument()
     })
 
-    it('should call deleteImage when delete button is clicked', async () => {
+    it('should call deleteImage with index when delete button is clicked', async () => {
       render(
         <CardImageUpload
           cardId="test-id"
+          levelIndex={0}
           side="question"
-          currentImageUrl="/images/existing.jpg"
-          onImageChange={mockOnImageChange}
+          currentImageUrls={['/images/existing.jpg']}
+          onImagesChange={mockOnImagesChange}
         />
       )
 
-      const deleteButton = screen.getByRole('button')
+      const deleteButton = screen.getByTitle(/Remove image/i)
       fireEvent.click(deleteButton)
 
       await waitFor(() => {
-        expect(mockDeleteImage).toHaveBeenCalled()
+        expect(mockDeleteImage).toHaveBeenCalledWith(0)
       })
     })
 
-    it('should call onImageChange with undefined after deletion', async () => {
+    it('should call onImagesChange with updated array after deletion', async () => {
+      mockDeleteImage.mockResolvedValue(undefined)
+
       render(
         <CardImageUpload
           cardId="test-id"
+          levelIndex={0}
           side="question"
-          currentImageUrl="/images/existing.jpg"
-          onImageChange={mockOnImageChange}
+          currentImageUrls={['/images/existing.jpg']}
+          onImagesChange={mockOnImagesChange}
         />
       )
 
-      const deleteButton = screen.getByRole('button')
+      const deleteButton = screen.getByTitle(/Remove image/i)
       fireEvent.click(deleteButton)
 
       await waitFor(() => {
-        expect(mockOnImageChange).toHaveBeenCalledWith(undefined)
+        expect(mockOnImagesChange).toHaveBeenCalledWith(undefined)
       })
     })
   })
@@ -171,9 +214,17 @@ describe('CardImageUpload', () => {
         error: null,
       })
 
-      render(<CardImageUpload cardId="test-id" side="question" onImageChange={mockOnImageChange} />)
+      render(
+        <CardImageUpload
+          cardId="test-id"
+          levelIndex={0}
+          side="question"
+          onImagesChange={mockOnImagesChange}
+        />
+      )
 
-      expect(screen.getByText('Uploading...')).toBeInTheDocument()
+      const addButton = screen.getByText('Add Image').closest('button')
+      expect(addButton).toBeDisabled()
     })
   })
 
@@ -186,7 +237,14 @@ describe('CardImageUpload', () => {
         error: 'Upload failed',
       })
 
-      render(<CardImageUpload cardId="test-id" side="question" onImageChange={mockOnImageChange} />)
+      render(
+        <CardImageUpload
+          cardId="test-id"
+          levelIndex={0}
+          side="question"
+          onImagesChange={mockOnImagesChange}
+        />
+      )
 
       expect(screen.getByText('Upload failed')).toBeInTheDocument()
     })
@@ -194,9 +252,18 @@ describe('CardImageUpload', () => {
 
   describe('hint text', () => {
     it('should display hint text', () => {
-      render(<CardImageUpload cardId="test-id" side="question" onImageChange={mockOnImageChange} />)
+      render(
+        <CardImageUpload
+          cardId="test-id"
+          levelIndex={0}
+          side="question"
+          onImagesChange={mockOnImagesChange}
+        />
+      )
 
-      expect(screen.getByText('Max 5MB. JPG, PNG, WebP')).toBeInTheDocument()
+      expect(
+        screen.getByText('Max 5MB per image. JPG, PNG, WebP. Max 10 images.')
+      ).toBeInTheDocument()
     })
   })
 })

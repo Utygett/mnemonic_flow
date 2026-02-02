@@ -9,10 +9,16 @@
   color: var(--color-text-primary, #333);
 }
 
+.imagesList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
 .imageWrapper {
   position: relative;
   width: 100%;
-  max-width: 400px;
   aspect-ratio: 16 / 9;
   border-radius: 8px;
   overflow: hidden;
@@ -54,16 +60,15 @@
   justify-content: center;
 }
 
-.uploadButton {
+.addButton {
   width: 100%;
   max-width: 400px;
-  aspect-ratio: 16 / 9;
+  padding: 12px;
   border: 2px dashed #ccc;
   border-radius: 8px;
   background: #f9f9f9;
   color: #666;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 8px;
@@ -72,12 +77,12 @@
   font-size: 14px;
 }
 
-.uploadButton:hover:not(:disabled) {
+.addButton:hover:not(:disabled) {
   border-color: #999;
   background: #f0f0f0;
 }
 
-.uploadButton:disabled {
+.addButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

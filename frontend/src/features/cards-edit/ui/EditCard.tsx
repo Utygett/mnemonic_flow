@@ -6,5 +6,5 @@ import { EditCardView } from './EditCardView'
 
 export function EditCard(props: Props) {
   const vm = useEditCardModel(props)
-  return <EditCardView {...vm} onCancel={props.onCancel} />
+  return <EditCardView {...vm} onCancel={props.onCancel} onDone={props.onDone} />
 }

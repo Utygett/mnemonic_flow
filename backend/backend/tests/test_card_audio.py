@@ -50,8 +50,10 @@ class TestLevelAudioUpload:
 
         assert response.status_code == 200
         data = response.json()
-        assert "question_audio_url" in data
-        assert data["question_audio_url"].startswith("/audio/")
+        assert "question_audio_urls" in data
+        assert isinstance(data["question_audio_urls"], list)
+        assert len(data["question_audio_urls"]) == 1
+        assert data["question_audio_urls"][0].startswith("/audio/")
 
     def test_upload_level_answer_audio_success(self, client: TestClient, test_card, auth_headers):
         """Test successful answer audio upload for a specific level."""
@@ -65,8 +67,36 @@ class TestLevelAudioUpload:
 
         assert response.status_code == 200
         data = response.json()
-        assert "answer_audio_url" in data
-        assert data["answer_audio_url"].startswith("/audio/")
+        assert "answer_audio_urls" in data
+        assert isinstance(data["answer_audio_urls"], list)
+        assert len(data["answer_audio_urls"]) == 1
+        assert data["answer_audio_urls"][0].startswith("/audio/")
+
+    def test_upload_multiple_audio_to_same_level(self, client: TestClient, test_card, auth_headers):
+        """Test that multiple audio files can be uploaded to the same level."""
+        audio_data = b"ID3" + b"\x00" * 100 + b"fake_audio_data" * 500
+
+        # Upload first audio
+        response1 = client.post(
+            f"/api/cards/{test_card.id}/levels/0/question-audio",
+            headers=auth_headers,
+            files={"file": ("test1.mp3", BytesIO(audio_data), "audio/mpeg")},
+        )
+        assert response1.status_code == 200
+        urls1 = response1.json()["question_audio_urls"]
+        assert len(urls1) == 1
+
+        # Upload second audio
+        response2 = client.post(
+            f"/api/cards/{test_card.id}/levels/0/question-audio",
+            headers=auth_headers,
+            files={"file": ("test2.mp3", BytesIO(audio_data), "audio/mpeg")},
+        )
+        assert response2.status_code == 200
+        urls2 = response2.json()["question_audio_urls"]
+        assert len(urls2) == 2
+        # First audio should still be there
+        assert urls2[0] == urls1[0]
 
     def test_upload_different_levels_different_audio(
         self, client: TestClient, test_card, auth_headers
@@ -81,7 +111,7 @@ class TestLevelAudioUpload:
             files={"file": ("test1.mp3", BytesIO(audio_data), "audio/mpeg")},
         )
         assert response1.status_code == 200
-        url1 = response1.json()["question_audio_url"]
+        url1 = response1.json()["question_audio_urls"][0]
 
         # Upload to level 1
         response2 = client.post(
@@ -90,10 +120,32 @@ class TestLevelAudioUpload:
             files={"file": ("test2.mp3", BytesIO(audio_data), "audio/mpeg")},
         )
         assert response2.status_code == 200
-        url2 = response2.json()["question_audio_url"]
+        url2 = response2.json()["question_audio_urls"][0]
 
         # URLs should be different
         assert url1 != url2
+
+    def test_upload_level_audio_max_limit(self, client: TestClient, test_card, auth_headers):
+        """Test that max 10 audio files per side is enforced."""
+        audio_data = b"ID3" + b"\x00" * 100 + b"fake_audio_data" * 500
+
+        # Upload 10 audio files (should succeed)
+        for i in range(10):
+            response = client.post(
+                f"/api/cards/{test_card.id}/levels/0/question-audio",
+                headers=auth_headers,
+                files={"file": (f"test{i}.mp3", BytesIO(audio_data), "audio/mpeg")},
+            )
+            assert response.status_code == 200
+
+        # Try to upload 11th audio file (should fail)
+        response = client.post(
+            f"/api/cards/{test_card.id}/levels/0/question-audio",
+            headers=auth_headers,
+            files={"file": ("test11.mp3", BytesIO(audio_data), "audio/mpeg")},
+        )
+        assert response.status_code == 422
+        assert "Maximum" in response.json()["detail"]
 
     def test_upload_level_audio_unauthorized(self, client: TestClient, test_card):
         """Test upload without auth fails."""
@@ -122,32 +174,10 @@ class TestLevelAudioUpload:
             files={"file": ("large.mp3", BytesIO(large_data), "audio/mpeg")},
         )
         assert response.status_code == 422
-        assert "File too large" in response.json()["detail"]
-
-    def test_upload_level_audio_replaces_old(self, client: TestClient, test_card, auth_headers):
-        """Test that uploading a new audio file replaces the old one."""
-        audio_data = b"ID3" + b"\x00" * 100 + b"fake_audio_data" * 500
-
-        # Upload first audio
-        response1 = client.post(
-            f"/api/cards/{test_card.id}/levels/0/question-audio",
-            headers=auth_headers,
-            files={"file": ("test1.mp3", BytesIO(audio_data), "audio/mpeg")},
+        assert (
+            "File too large" in response.json()["detail"]
+            or "File size must be less than 10MB" in response.json()["detail"]
         )
-        assert response1.status_code == 200
-        first_url = response1.json()["question_audio_url"]
-
-        # Upload second audio
-        response2 = client.post(
-            f"/api/cards/{test_card.id}/levels/0/question-audio",
-            headers=auth_headers,
-            files={"file": ("test2.mp3", BytesIO(audio_data), "audio/mpeg")},
-        )
-        assert response2.status_code == 200
-        second_url = response2.json()["question_audio_url"]
-
-        # URLs should be different
-        assert first_url != second_url
 
     def test_upload_level_audio_not_found(self, client: TestClient, test_card, auth_headers):
         """Test upload to non-existent level."""
@@ -177,88 +207,109 @@ class TestLevelAudioUpload:
                 files={"file": (filename, BytesIO(audio_data), content_type)},
             )
             assert response.status_code == 200, f"Failed for {content_type}"
-            assert "question_audio_url" in response.json()
+            assert "question_audio_urls" in response.json()
+            assert len(response.json()["question_audio_urls"]) > 0
 
 
 class TestLevelAudioDelete:
     """Tests for level audio deletion endpoints."""
 
-    def test_delete_level_question_audio_success(
+    def test_delete_level_question_audio_by_index(
         self, client: TestClient, test_card, auth_headers, db
     ):
-        """Test successful question audio deletion for a level."""
+        """Test successful question audio deletion by index."""
         audio_data = b"ID3" + b"\x00" * 100 + b"fake_audio_data" * 500
 
-        # First upload an audio
+        # Upload two audio files first
         client.post(
             f"/api/cards/{test_card.id}/levels/0/question-audio",
             headers=auth_headers,
-            files={"file": ("test.mp3", BytesIO(audio_data), "audio/mpeg")},
+            files={"file": ("test1.mp3", BytesIO(audio_data), "audio/mpeg")},
+        )
+        client.post(
+            f"/api/cards/{test_card.id}/levels/0/question-audio",
+            headers=auth_headers,
+            files={"file": ("test2.mp3", BytesIO(audio_data), "audio/mpeg")},
         )
 
-        # Then delete it
+        # Delete the first audio (index 0)
         response = client.delete(
-            f"/api/cards/{test_card.id}/levels/0/question-audio",
+            f"/api/cards/{test_card.id}/levels/0/question-audio/0",
             headers=auth_headers,
         )
         assert response.status_code == 204
 
-        # Verify it's deleted from DB
+        # Verify from DB - should have 1 audio left
         level = (
             db.query(CardLevel)
             .filter(CardLevel.card_id == test_card.id, CardLevel.level_index == 0)
             .first()
         )
-        assert level.question_audio_url is None
+        assert len(level.question_audio_urls) == 1
 
-    def test_delete_level_answer_audio_success(
+    def test_delete_level_answer_audio_by_index(
         self, client: TestClient, test_card, auth_headers, db
     ):
-        """Test successful answer audio deletion for a level."""
+        """Test successful answer audio deletion by index."""
         audio_data = b"ID3" + b"\x00" * 100 + b"fake_audio_data" * 500
 
-        # First upload an audio
+        # Upload an audio first
         client.post(
             f"/api/cards/{test_card.id}/levels/1/answer-audio",
             headers=auth_headers,
             files={"file": ("test.mp3", BytesIO(audio_data), "audio/mpeg")},
         )
 
-        # Then delete it
+        # Delete it
         response = client.delete(
-            f"/api/cards/{test_card.id}/levels/1/answer-audio",
+            f"/api/cards/{test_card.id}/levels/1/answer-audio/0",
             headers=auth_headers,
         )
         assert response.status_code == 204
 
-        # Verify it's deleted from DB
+        # Verify it's deleted from DB (array should be None or empty)
         level = (
             db.query(CardLevel)
             .filter(CardLevel.card_id == test_card.id, CardLevel.level_index == 1)
             .first()
         )
-        assert level.answer_audio_url is None
+        assert level.answer_audio_urls is None or len(level.answer_audio_urls) == 0
 
     def test_delete_level_audio_unauthorized(self, client: TestClient, test_card):
         """Test delete without auth fails."""
-        response = client.delete(f"/api/cards/{test_card.id}/levels/0/question-audio")
+        response = client.delete(f"/api/cards/{test_card.id}/levels/0/question-audio/0")
         assert response.status_code == 401
 
-    def test_delete_level_audio_when_none(self, client: TestClient, test_card, auth_headers):
-        """Test delete when no audio exists returns 404 (level exists but no audio)."""
-        # Note: The endpoint returns 404 if audio_url is None (no audio to delete)
-        # This is different from the image endpoint behavior
-        response = client.delete(
+    def test_delete_level_audio_invalid_index(self, client: TestClient, test_card, auth_headers):
+        """Test delete with invalid index."""
+        audio_data = b"ID3" + b"\x00" * 100 + b"fake_audio_data" * 500
+
+        # Upload an audio first
+        client.post(
             f"/api/cards/{test_card.id}/levels/0/question-audio",
             headers=auth_headers,
+            files={"file": ("test.mp3", BytesIO(audio_data), "audio/mpeg")},
         )
-        # Currently returns 404 when audio_url is None
+
+        # Try to delete index 5 (doesn't exist)
+        response = client.delete(
+            f"/api/cards/{test_card.id}/levels/0/question-audio/5",
+            headers=auth_headers,
+        )
         assert response.status_code == 404
 
-    def test_delete_level_audio_not_found(self, client: TestClient, test_card, auth_headers):
+    def test_delete_level_audio_when_empty(self, client: TestClient, test_card, auth_headers):
+        """Test delete when no audio files exist."""
+        response = client.delete(
+            f"/api/cards/{test_card.id}/levels/0/question-audio/0",
+            headers=auth_headers,
+        )
+        assert response.status_code == 404
+
+    def test_delete_level_audio_not_found_level(self, client: TestClient, test_card, auth_headers):
         """Test delete from non-existent level."""
         response = client.delete(
-            f"/api/cards/{test_card.id}/levels/99/question-audio",
+            f"/api/cards/{test_card.id}/levels/99/question-audio/0",
             headers=auth_headers,
         )
         assert response.status_code == 404
@@ -276,8 +327,8 @@ class TestLevelAudioInResponses:
             .filter(CardLevel.card_id == test_card.id, CardLevel.level_index == 0)
             .first()
         )
-        level.question_audio_url = "/audio/test/question.mp3"
-        level.answer_audio_url = "/audio/test/answer.mp3"
+        level.question_audio_urls = ["/audio/test/question1.mp3", "/audio/test/question2.mp3"]
+        level.answer_audio_urls = ["/audio/test/answer.mp3"]
         db.commit()
 
         response = client.get("/api/cards/review_with_levels", headers=auth_headers)
@@ -287,10 +338,13 @@ class TestLevelAudioInResponses:
         if cards:
             card_data = cards[0]
             level_data = card_data["levels"][0]
-            assert "question_audio_url" in level_data
-            assert "answer_audio_url" in level_data
-            assert level_data["question_audio_url"] == "/audio/test/question.mp3"
-            assert level_data["answer_audio_url"] == "/audio/test/answer.mp3"
+            assert "question_audio_urls" in level_data
+            assert "answer_audio_urls" in level_data
+            assert level_data["question_audio_urls"] == [
+                "/audio/test/question1.mp3",
+                "/audio/test/question2.mp3",
+            ]
+            assert level_data["answer_audio_urls"] == ["/audio/test/answer.mp3"]
 
     def test_study_cards_includes_level_audio_urls(
         self, client: TestClient, test_card, test_deck, auth_headers, db
@@ -301,8 +355,8 @@ class TestLevelAudioInResponses:
             .filter(CardLevel.card_id == test_card.id, CardLevel.level_index == 0)
             .first()
         )
-        level.question_audio_url = "/audio/test/question.mp3"
-        level.answer_audio_url = "/audio/test/answer.mp3"
+        level.question_audio_urls = ["/audio/test/question.mp3"]
+        level.answer_audio_urls = ["/audio/test/answer.mp3"]
         db.commit()
 
         response = client.get(
@@ -316,10 +370,10 @@ class TestLevelAudioInResponses:
         if data["cards"]:
             card_data = data["cards"][0]
             level_data = card_data["levels"][0]
-            assert "questionAudioUrl" in level_data
-            assert "answerAudioUrl" in level_data
-            assert level_data["questionAudioUrl"] == "/audio/test/question.mp3"
-            assert level_data["answerAudioUrl"] == "/audio/test/answer.mp3"
+            assert "questionAudioUrls" in level_data
+            assert "answerAudioUrls" in level_data
+            assert level_data["questionAudioUrls"] == ["/audio/test/question.mp3"]
+            assert level_data["answerAudioUrls"] == ["/audio/test/answer.mp3"]
 
     def test_deck_session_includes_level_audio_urls(
         self, client: TestClient, test_card, test_deck, auth_headers, db
@@ -330,8 +384,8 @@ class TestLevelAudioInResponses:
             .filter(CardLevel.card_id == test_card.id, CardLevel.level_index == 0)
             .first()
         )
-        level.question_audio_url = "/audio/test/question.mp3"
-        level.answer_audio_url = "/audio/test/answer.mp3"
+        level.question_audio_urls = ["/audio/test/question.mp3"]
+        level.answer_audio_urls = ["/audio/test/answer.mp3"]
         db.commit()
 
         response = client.get(
@@ -344,7 +398,7 @@ class TestLevelAudioInResponses:
         if cards:
             card_data = cards[0]
             level_data = card_data["levels"][0]
-            assert "question_audio_url" in level_data
-            assert "answer_audio_url" in level_data
-            assert level_data["question_audio_url"] == "/audio/test/question.mp3"
-            assert level_data["answer_audio_url"] == "/audio/test/answer.mp3"
+            assert "question_audio_urls" in level_data
+            assert "answer_audio_urls" in level_data
+            assert level_data["question_audio_urls"] == ["/audio/test/question.mp3"]
+            assert level_data["answer_audio_urls"] == ["/audio/test/answer.mp3"]

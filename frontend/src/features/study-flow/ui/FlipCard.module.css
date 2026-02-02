@@ -82,10 +82,18 @@
   composes: flipcardLevelBtn;
 }
 
+/* Multiple images container */
+.cardImages {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 0.5rem;
+}
+
 .cardImage {
   width: 100%;
-  max-height: 200px;
-  margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -93,14 +101,21 @@
 
 .cardImageElement {
   max-width: 100%;
-  max-height: 200px;
+  max-height: 180px;
   object-fit: contain;
   border-radius: 8px;
 }
 
+/* Multiple audio container */
+.cardAudios {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 0.5rem;
+}
+
 .cardAudio {
   width: 100%;
-  margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -109,6 +124,7 @@
 .cardAudioElement {
   width: 100%;
   max-width: 320px;
-  height: 40px;
+  height: 48px;
+  min-height: 40px;
   border-radius: 8px;
 }

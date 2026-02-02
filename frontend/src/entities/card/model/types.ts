@@ -7,10 +7,10 @@ export type DifficultyRating = 'again' | 'hard' | 'good' | 'easy'
 export interface CardLevel {
   levelindex: number
   content: CardContent
-  questionImageUrl?: string
-  answerImageUrl?: string
-  questionAudioUrl?: string
-  answerAudioUrl?: string
+  questionImageUrls?: string[]
+  answerImageUrls?: string[]
+  questionAudioUrls?: string[]
+  answerAudioUrls?: string[]
 }
 
 export interface StudyCard {
@@ -47,6 +47,10 @@ export interface CardReviewInput {
 export type ApiLevelIn = {
   level_index: number
   content: Record<string, unknown>
+  question_image_urls?: string[]
+  answer_image_urls?: string[]
+  question_audio_urls?: string[]
+  answer_audio_urls?: string[]
 }
 
 export type ApiReplaceLevelsRequest = {

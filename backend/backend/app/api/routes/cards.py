@@ -5,6 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 from starlette import status
 
 from app.auth.dependencies import get_current_user_id
@@ -238,8 +239,10 @@ def get_cards_for_review(
                 stability=progress.stability,
                 difficulty=progress.difficulty,
                 next_review=progress.next_review,
-                question_image_url=level.question_image_url,
-                answer_image_url=level.answer_image_url,
+                question_image_urls=level.question_image_urls,
+                answer_image_urls=level.answer_image_urls,
+                question_audio_urls=level.question_audio_urls,
+                answer_audio_urls=level.answer_audio_urls,
             )
         )
     return result
@@ -474,8 +477,10 @@ def get_cards_for_review_with_levels(
                     CardLevelContent(
                         level_index=card_level.level_index,
                         content=card_level.content,
-                        question_image_url=card_level.question_image_url,
-                        answer_image_url=card_level.answer_image_url,
+                        question_image_urls=card_level.question_image_urls,
+                        answer_image_urls=card_level.answer_image_urls,
+                        question_audio_urls=card_level.question_audio_urls,
+                        answer_audio_urls=card_level.answer_audio_urls,
                     )
                     for card_level in levels_by_card.get(card.id, [])
                 ],
@@ -572,6 +577,10 @@ def update_card_levels(
             card_id=card_id,
             level_index=idx,
             content=content,
+            question_image_urls=lvl.question_image_urls,
+            answer_image_urls=lvl.answer_image_urls,
+            question_audio_urls=lvl.question_audio_urls,
+            answer_audio_urls=lvl.answer_audio_urls,
         )
         new_rows.append(row)
 
@@ -586,8 +595,10 @@ def update_card_levels(
             CardLevelContent(
                 level_index=r.level_index,
                 content=r.content,
-                question_image_url=r.question_image_url,
-                answer_image_url=r.answer_image_url,
+                question_image_urls=r.question_image_urls,
+                answer_image_urls=r.answer_image_urls,
+                question_audio_urls=r.question_audio_urls,
+                answer_audio_urls=r.answer_audio_urls,
             )
             for r in new_rows
         ],
@@ -670,8 +681,10 @@ def update_card(
             CardLevelContent(
                 level_index=card_level.level_index,
                 content=card_level.content,
-                question_image_url=card_level.question_image_url,
-                answer_image_url=card_level.answer_image_url,
+                question_image_urls=card_level.question_image_urls,
+                answer_image_urls=card_level.answer_image_urls,
+                question_audio_urls=card_level.question_audio_urls,
+                answer_audio_urls=card_level.answer_audio_urls,
             )
             for card_level in levels
         ],
@@ -686,7 +699,10 @@ def upload_level_question_image(
     user_id: UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Upload an image for the question side of a specific card level."""
+    """Upload an image for the question side of a specific card level.
+
+    Appends to existing images.
+    """
     card = db.get(Card, card_id)
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
@@ -699,6 +715,11 @@ def upload_level_question_image(
     card_level = db.query(CardLevel).filter_by(card_id=card_id, level_index=level_index).first()
     if not card_level:
         raise HTTPException(status_code=404, detail="Card level not found")
+
+    # Check limit (max 10 images per side)
+    MAX_IMAGES = 10
+    if card_level.question_image_urls and len(card_level.question_image_urls) >= MAX_IMAGES:
+        raise HTTPException(status_code=422, detail=f"Maximum {MAX_IMAGES} images per side allowed")
 
     # Read file data
     file_data = file.file.read()
@@ -713,7 +734,7 @@ def upload_level_question_image(
             file_data=file_data,
             filename=file.filename or "image.jpg",
             content_type=file.content_type or "image/jpeg",
-            card_id=f"{card_id}_{level_index}",
+            card_id=f"{card_id}_{level_index}_{len(card_level.question_image_urls or [])}",
             side="question",
             file_type=FileType.IMAGE,
         )
@@ -722,23 +743,21 @@ def upload_level_question_image(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    # Delete old image if exists
-    if card_level.question_image_url:
-        storage_service.delete_file(card_level.question_image_url)
-
-    # Update card level
-    card_level.question_image_url = image_url
-    card_level.question_image_name = file.filename
+    # Append to array
+    if card_level.question_image_urls is None:
+        card_level.question_image_urls = []
+    card_level.question_image_urls.append(image_url)
+    flag_modified(card_level, "question_image_urls")
     db.commit()
     db.refresh(card_level)
 
     return CardLevelContent(
         level_index=card_level.level_index,
         content=card_level.content,
-        question_image_url=card_level.question_image_url,
-        answer_image_url=card_level.answer_image_url,
-        question_audio_url=card_level.question_audio_url,
-        answer_audio_url=card_level.answer_audio_url,
+        question_image_urls=card_level.question_image_urls,
+        answer_image_urls=card_level.answer_image_urls,
+        question_audio_urls=card_level.question_audio_urls,
+        answer_audio_urls=card_level.answer_audio_urls,
     )
 
 
@@ -750,7 +769,7 @@ def upload_level_answer_image(
     user_id: UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Upload an image for the answer side of a specific card level."""
+    """Upload an image for the answer side of a specific card level. Appends to existing images."""
     card = db.get(Card, card_id)
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
@@ -764,6 +783,11 @@ def upload_level_answer_image(
     if not card_level:
         raise HTTPException(status_code=404, detail="Card level not found")
 
+    # Check limit (max 10 images per side)
+    MAX_IMAGES = 10
+    if card_level.answer_image_urls and len(card_level.answer_image_urls) >= MAX_IMAGES:
+        raise HTTPException(status_code=422, detail=f"Maximum {MAX_IMAGES} images per side allowed")
+
     # Read file data
     file_data = file.file.read()
 
@@ -773,43 +797,43 @@ def upload_level_answer_image(
             file_data=file_data,
             filename=file.filename or "image.jpg",
             content_type=file.content_type or "image/jpeg",
-            card_id=f"{card_id}_{level_index}",
+            card_id=f"{card_id}_{level_index}_{len(card_level.answer_image_urls or [])}",
             side="answer",
             file_type=FileType.IMAGE,
         )
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
 
-    # Delete old image if exists
-    if card_level.answer_image_url:
-        storage_service.delete_file(card_level.answer_image_url)
-
-    # Update card level
-    card_level.answer_image_url = image_url
-    card_level.answer_image_name = file.filename
+    # Append to array
+    if card_level.answer_image_urls is None:
+        card_level.answer_image_urls = []
+    card_level.answer_image_urls.append(image_url)
+    flag_modified(card_level, "answer_image_urls")
     db.commit()
     db.refresh(card_level)
 
     return CardLevelContent(
         level_index=card_level.level_index,
         content=card_level.content,
-        question_image_url=card_level.question_image_url,
-        answer_image_url=card_level.answer_image_url,
-        question_audio_url=card_level.question_audio_url,
-        answer_audio_url=card_level.answer_audio_url,
+        question_image_urls=card_level.question_image_urls,
+        answer_image_urls=card_level.answer_image_urls,
+        question_audio_urls=card_level.question_audio_urls,
+        answer_audio_urls=card_level.answer_audio_urls,
     )
 
 
 @router.delete(
-    "/{card_id}/levels/{level_index}/question-image", status_code=status.HTTP_204_NO_CONTENT
+    "/{card_id}/levels/{level_index}/question-image/{array_index}",
+    status_code=status.HTTP_204_NO_CONTENT,
 )
 def delete_level_question_image(
     card_id: UUID,
     level_index: int,
+    array_index: int,
     user_id: UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Delete the question image associated with a specific card level."""
+    """Delete a specific question image from the array by index."""
     card = db.get(Card, card_id)
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
@@ -822,28 +846,39 @@ def delete_level_question_image(
     if not card_level:
         raise HTTPException(status_code=404, detail="Card level not found")
 
-    # Delete from storage
-    if card_level.question_image_url:
-        storage_service.delete_file(card_level.question_image_url)
+    if (
+        not card_level.question_image_urls
+        or array_index < 0
+        or array_index >= len(card_level.question_image_urls)
+    ):
+        raise HTTPException(status_code=404, detail="Image index not found")
 
-    # Update card level
-    card_level.question_image_url = None
-    card_level.question_image_name = None
+    # Delete from storage
+    image_url = card_level.question_image_urls[array_index]
+    storage_service.delete_file(image_url)
+
+    # Remove from array
+    card_level.question_image_urls.pop(array_index)
+    flag_modified(card_level, "question_image_urls")
+    if not card_level.question_image_urls:
+        card_level.question_image_urls = None
     db.commit()
 
     return Response(status_code=204)
 
 
 @router.delete(
-    "/{card_id}/levels/{level_index}/answer-image", status_code=status.HTTP_204_NO_CONTENT
+    "/{card_id}/levels/{level_index}/answer-image/{array_index}",
+    status_code=status.HTTP_204_NO_CONTENT,
 )
 def delete_level_answer_image(
     card_id: UUID,
     level_index: int,
+    array_index: int,
     user_id: UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Delete the answer image associated with a specific card level."""
+    """Delete a specific answer image from the array by index."""
     card = db.get(Card, card_id)
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
@@ -856,13 +891,22 @@ def delete_level_answer_image(
     if not card_level:
         raise HTTPException(status_code=404, detail="Card level not found")
 
-    # Delete from storage
-    if card_level.answer_image_url:
-        storage_service.delete_file(card_level.answer_image_url)
+    if (
+        not card_level.answer_image_urls
+        or array_index < 0
+        or array_index >= len(card_level.answer_image_urls)
+    ):
+        raise HTTPException(status_code=404, detail="Image index not found")
 
-    # Update card level
-    card_level.answer_image_url = None
-    card_level.answer_image_name = None
+    # Delete from storage
+    image_url = card_level.answer_image_urls[array_index]
+    storage_service.delete_file(image_url)
+
+    # Remove from array
+    card_level.answer_image_urls.pop(array_index)
+    flag_modified(card_level, "answer_image_urls")
+    if not card_level.answer_image_urls:
+        card_level.answer_image_urls = None
     db.commit()
 
     return Response(status_code=204)
@@ -942,10 +986,10 @@ def upload_option_image(
     return CardLevelContent(
         level_index=card_level.level_index,
         content=card_level.content,
-        question_image_url=card_level.question_image_url,
-        answer_image_url=card_level.answer_image_url,
-        question_audio_url=card_level.question_audio_url,
-        answer_audio_url=card_level.answer_audio_url,
+        question_image_urls=card_level.question_image_urls,
+        answer_image_urls=card_level.answer_image_urls,
+        question_audio_urls=card_level.question_audio_urls,
+        answer_audio_urls=card_level.answer_audio_urls,
     )
 
 
@@ -957,7 +1001,10 @@ def upload_level_question_audio(
     user_id: UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Upload an audio file for the question side of a specific card level."""
+    """Upload an audio file for the question side of a card level.
+
+    Appends to existing audio files.
+    """
     card = db.get(Card, card_id)
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
@@ -970,6 +1017,13 @@ def upload_level_question_audio(
     card_level = db.query(CardLevel).filter_by(card_id=card_id, level_index=level_index).first()
     if not card_level:
         raise HTTPException(status_code=404, detail="Card level not found")
+
+    # Check limit (max 10 audio files per side)
+    MAX_AUDIO = 10
+    if card_level.question_audio_urls and len(card_level.question_audio_urls) >= MAX_AUDIO:
+        raise HTTPException(
+            status_code=422, detail=f"Maximum {MAX_AUDIO} audio files per side allowed"
+        )
 
     # Validate file type (audio)
     if file.content_type not in storage_service.AUDIO_ALLOWED_MIME_TYPES:
@@ -992,7 +1046,7 @@ def upload_level_question_audio(
             file_data=file_data,
             filename=file.filename or "audio.mp3",
             content_type=file.content_type or "audio/mpeg",
-            card_id=f"{card_id}_{level_index}",
+            card_id=f"{card_id}_{level_index}_{len(card_level.question_audio_urls or [])}",
             side="question",
             file_type=FileType.AUDIO,
         )
@@ -1001,23 +1055,21 @@ def upload_level_question_audio(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    # Delete old audio if exists
-    if card_level.question_audio_url:
-        storage_service.delete_file(card_level.question_audio_url)
-
-    # Update card level
-    card_level.question_audio_url = audio_url
-    card_level.question_audio_name = file.filename
+    # Append to array
+    if card_level.question_audio_urls is None:
+        card_level.question_audio_urls = []
+    card_level.question_audio_urls.append(audio_url)
+    flag_modified(card_level, "question_audio_urls")
     db.commit()
     db.refresh(card_level)
 
     return CardLevelContent(
         level_index=card_level.level_index,
         content=card_level.content,
-        question_image_url=card_level.question_image_url,
-        answer_image_url=card_level.answer_image_url,
-        question_audio_url=card_level.question_audio_url,
-        answer_audio_url=card_level.answer_audio_url,
+        question_image_urls=card_level.question_image_urls,
+        answer_image_urls=card_level.answer_image_urls,
+        question_audio_urls=card_level.question_audio_urls,
+        answer_audio_urls=card_level.answer_audio_urls,
     )
 
 
@@ -1029,7 +1081,10 @@ def upload_level_answer_audio(
     user_id: UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Upload an audio file for the answer side of a specific card level."""
+    """Upload an audio file for the answer side of a specific card level.
+
+    Appends to existing audio files.
+    """
     card = db.get(Card, card_id)
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
@@ -1042,6 +1097,13 @@ def upload_level_answer_audio(
     card_level = db.query(CardLevel).filter_by(card_id=card_id, level_index=level_index).first()
     if not card_level:
         raise HTTPException(status_code=404, detail="Card level not found")
+
+    # Check limit (max 10 audio files per side)
+    MAX_AUDIO = 10
+    if card_level.answer_audio_urls and len(card_level.answer_audio_urls) >= MAX_AUDIO:
+        raise HTTPException(
+            status_code=422, detail=f"Maximum {MAX_AUDIO} audio files per side allowed"
+        )
 
     # Validate file type (audio)
     if file.content_type not in storage_service.AUDIO_ALLOWED_MIME_TYPES:
@@ -1064,7 +1126,7 @@ def upload_level_answer_audio(
             file_data=file_data,
             filename=file.filename or "audio.mp3",
             content_type=file.content_type or "audio/mpeg",
-            card_id=f"{card_id}_{level_index}",
+            card_id=f"{card_id}_{level_index}_{len(card_level.answer_audio_urls or [])}",
             side="answer",
             file_type=FileType.AUDIO,
         )
@@ -1073,36 +1135,36 @@ def upload_level_answer_audio(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    # Delete old audio if exists
-    if card_level.answer_audio_url:
-        storage_service.delete_file(card_level.answer_audio_url)
-
-    # Update card level
-    card_level.answer_audio_url = audio_url
-    card_level.answer_audio_name = file.filename
+    # Append to array
+    if card_level.answer_audio_urls is None:
+        card_level.answer_audio_urls = []
+    card_level.answer_audio_urls.append(audio_url)
+    flag_modified(card_level, "answer_audio_urls")
     db.commit()
     db.refresh(card_level)
 
     return CardLevelContent(
         level_index=card_level.level_index,
         content=card_level.content,
-        question_image_url=card_level.question_image_url,
-        answer_image_url=card_level.answer_image_url,
-        question_audio_url=card_level.question_audio_url,
-        answer_audio_url=card_level.answer_audio_url,
+        question_image_urls=card_level.question_image_urls,
+        answer_image_urls=card_level.answer_image_urls,
+        question_audio_urls=card_level.question_audio_urls,
+        answer_audio_urls=card_level.answer_audio_urls,
     )
 
 
 @router.delete(
-    "/{card_id}/levels/{level_index}/question-audio", status_code=status.HTTP_204_NO_CONTENT
+    "/{card_id}/levels/{level_index}/question-audio/{array_index}",
+    status_code=status.HTTP_204_NO_CONTENT,
 )
 def delete_level_question_audio(
     card_id: UUID,
     level_index: int,
+    array_index: int,
     user_id: UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Delete audio file from the question side of a card level."""
+    """Delete a specific audio file from the question side by array index."""
     card = db.get(Card, card_id)
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
@@ -1116,30 +1178,39 @@ def delete_level_question_audio(
     if not card_level:
         raise HTTPException(status_code=404, detail="Card level not found")
 
-    if not card_level.question_audio_url:
-        raise HTTPException(status_code=404, detail="No audio file found")
+    if (
+        not card_level.question_audio_urls
+        or array_index < 0
+        or array_index >= len(card_level.question_audio_urls)
+    ):
+        raise HTTPException(status_code=404, detail="Audio file index not found")
 
     # Delete from storage
-    storage_service.delete_file(card_level.question_audio_url)
+    audio_url = card_level.question_audio_urls[array_index]
+    storage_service.delete_file(audio_url)
 
-    # Update card level
-    card_level.question_audio_url = None
-    card_level.question_audio_name = None
+    # Remove from array
+    card_level.question_audio_urls.pop(array_index)
+    flag_modified(card_level, "question_audio_urls")
+    if not card_level.question_audio_urls:
+        card_level.question_audio_urls = None
     db.commit()
 
     return Response(status_code=204)
 
 
 @router.delete(
-    "/{card_id}/levels/{level_index}/answer-audio", status_code=status.HTTP_204_NO_CONTENT
+    "/{card_id}/levels/{level_index}/answer-audio/{array_index}",
+    status_code=status.HTTP_204_NO_CONTENT,
 )
 def delete_level_answer_audio(
     card_id: UUID,
     level_index: int,
+    array_index: int,
     user_id: UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Delete audio file from the answer side of a card level."""
+    """Delete a specific audio file from the answer side by array index."""
     card = db.get(Card, card_id)
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
@@ -1153,15 +1224,22 @@ def delete_level_answer_audio(
     if not card_level:
         raise HTTPException(status_code=404, detail="Card level not found")
 
-    if not card_level.answer_audio_url:
-        raise HTTPException(status_code=404, detail="No audio file found")
+    if (
+        not card_level.answer_audio_urls
+        or array_index < 0
+        or array_index >= len(card_level.answer_audio_urls)
+    ):
+        raise HTTPException(status_code=404, detail="Audio file index not found")
 
     # Delete from storage
-    storage_service.delete_file(card_level.answer_audio_url)
+    audio_url = card_level.answer_audio_urls[array_index]
+    storage_service.delete_file(audio_url)
 
-    # Update card level
-    card_level.answer_audio_url = None
-    card_level.answer_audio_name = None
+    # Remove from array
+    card_level.answer_audio_urls.pop(array_index)
+    flag_modified(card_level, "answer_audio_urls")
+    if not card_level.answer_audio_urls:
+        card_level.answer_audio_urls = None
     db.commit()
 
     return Response(status_code=204)

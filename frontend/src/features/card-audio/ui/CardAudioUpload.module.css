@@ -10,6 +10,13 @@
   color: var(--color-text-secondary);
 }
 
+.audioList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
 .audioWrapper {
   position: relative;
   display: flex;
@@ -19,7 +26,8 @@
 
 .audioPlayer {
   flex: 1;
-  height: 40px;
+  height: 48px;
+  min-height: 40px;
   border-radius: 8px;
 }
 
