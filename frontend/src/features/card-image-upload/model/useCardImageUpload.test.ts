@@ -1,6 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useCardImageUpload } from './useCardImageUpload'
+import { apiRequest } from '@/shared/api'
 
 // Mock apiRequest
 vi.mock('@/shared/api', () => ({
@@ -18,7 +19,6 @@ describe('useCardImageUpload', () => {
 
   describe('validateFile', () => {
     it('should reject invalid file type', async () => {
-      const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockResolvedValue({})
 
       const { result } = renderHook(() => useCardImageUpload(cardId, levelIndex, side))
@@ -31,7 +31,6 @@ describe('useCardImageUpload', () => {
     })
 
     it('should reject file > 5MB', async () => {
-      const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockResolvedValue({})
 
       const { result } = renderHook(() => useCardImageUpload(cardId, levelIndex, side))
@@ -45,7 +44,6 @@ describe('useCardImageUpload', () => {
     })
 
     it('should accept valid file', async () => {
-      const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockResolvedValue({
         question_image_urls: ['/images/cards/test/test.jpg'],
         answer_image_urls: undefined,
@@ -65,7 +63,6 @@ describe('useCardImageUpload', () => {
 
   describe('uploadImage', () => {
     it('should call correct endpoint for question side', async () => {
-      const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockResolvedValue({
         question_image_urls: ['/images/test.jpg'],
         answer_image_urls: undefined,
@@ -85,7 +82,6 @@ describe('useCardImageUpload', () => {
     })
 
     it('should call correct endpoint for answer side', async () => {
-      const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockResolvedValue({
         question_image_urls: undefined,
         answer_image_urls: ['/images/test.jpg'],
@@ -105,7 +101,6 @@ describe('useCardImageUpload', () => {
     })
 
     it('should set uploading state during upload', async () => {
-      const { apiRequest } = await import('@/shared/api')
       let resolveUpload: (value: any) => void
       const uploadPromise = new Promise(resolve => {
         resolveUpload = resolve
@@ -130,7 +125,6 @@ describe('useCardImageUpload', () => {
     })
 
     it('should return image URLs array on success', async () => {
-      const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockResolvedValue({
         question_image_urls: ['/images/cards/abc123/test.jpg'],
         answer_image_urls: undefined,
@@ -146,7 +140,6 @@ describe('useCardImageUpload', () => {
     })
 
     it('should set error on failure', async () => {
-      const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockRejectedValue(new Error('Upload failed'))
 
       const { result } = renderHook(() => useCardImageUpload(cardId, levelIndex, side))
@@ -163,7 +156,6 @@ describe('useCardImageUpload', () => {
 
   describe('deleteImage', () => {
     it('should call correct delete endpoint for question with index', async () => {
-      const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockResolvedValue(undefined)
 
       const { result } = renderHook(() => useCardImageUpload(cardId, levelIndex, 'question'))
@@ -179,7 +171,6 @@ describe('useCardImageUpload', () => {
     })
 
     it('should call correct delete endpoint for answer with index', async () => {
-      const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockResolvedValue(undefined)
 
       const { result } = renderHook(() => useCardImageUpload(cardId, levelIndex, 'answer'))
@@ -195,7 +186,6 @@ describe('useCardImageUpload', () => {
     })
 
     it('should set error on delete failure', async () => {
-      const { apiRequest } = await import('@/shared/api')
       vi.mocked(apiRequest).mockRejectedValue(new Error('Delete failed'))
 
       const { result } = renderHook(() => useCardImageUpload(cardId, levelIndex, side))

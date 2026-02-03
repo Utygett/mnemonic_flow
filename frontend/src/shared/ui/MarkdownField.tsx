@@ -52,6 +52,7 @@ export function MarkdownField({
             preview="edit"
             extraCommands={[]}
             visibleDragbar={false}
+            height={200}
             textareaProps={{
               placeholder: 'Введите текст...',
             }}
