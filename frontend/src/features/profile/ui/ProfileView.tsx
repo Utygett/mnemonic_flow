@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { Settings, KeyRound, LogOut, Pencil, Sun, Moon } from 'lucide-react'
+import { Settings, KeyRound, LogOut, Pencil, Sun, Moon, Volume2 } from 'lucide-react'
 
 import type { ProfileViewProps, Theme } from '../model/types'
+import type { AudioAutoplayMode } from '@/shared/model'
+import {
+  getAudioAutoplayModeLabel,
+  setStoredAudioAutoplayMode,
+  getStoredAudioAutoplayMode,
+} from '@/shared/model'
 
 import styles from './ProfileView.module.css'
 
@@ -9,6 +15,12 @@ const THEME_OPTIONS: { value: Theme; label: string; icon: React.ReactNode }[] = 
   { value: 'light', label: 'Светлая', icon: <Sun size={16} /> },
   { value: 'blue', label: 'Синяя', icon: <Moon size={16} /> },
   { value: 'dark', label: 'Тёмная', icon: <Moon size={16} /> },
+]
+
+const AUDIO_AUTOPLAY_OPTIONS: { value: AudioAutoplayMode; label: string }[] = [
+  { value: 'all', label: 'Все файлы' },
+  { value: 'first', label: 'Первый файл' },
+  { value: 'disabled', label: 'Отключено' },
 ]
 
 export function ProfileView(props: ProfileViewProps) {
@@ -25,6 +37,9 @@ export function ProfileView(props: ProfileViewProps) {
   } = props
 
   const [open, setOpen] = useState(false)
+  const [audioAutoplayMode, setAudioAutoplayMode] = useState<AudioAutoplayMode>(
+    getStoredAudioAutoplayMode()
+  )
   const menuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -55,6 +70,11 @@ export function ProfileView(props: ProfileViewProps) {
   const handleChangePassword = () => {
     setOpen(false)
     onChangePassword()
+  }
+
+  const handleAudioAutoplayChange = (mode: AudioAutoplayMode) => {
+    setAudioAutoplayMode(mode)
+    setStoredAudioAutoplayMode(mode)
   }
 
   return (
@@ -145,6 +165,24 @@ export function ProfileView(props: ProfileViewProps) {
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className="profileRow">
+              <div className={styles.audioLabel}>
+                <Volume2 size={16} />
+                <span>Автовоспроизведение аудио</span>
+              </div>
+              <select
+                className={styles.audioSelect}
+                value={audioAutoplayMode}
+                onChange={e => handleAudioAutoplayChange(e.target.value as AudioAutoplayMode)}
+              >
+                {AUDIO_AUTOPLAY_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

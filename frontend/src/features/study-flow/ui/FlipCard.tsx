@@ -3,6 +3,8 @@ import type { StudyCard } from '../model/studyCardTypes'
 import { motion } from 'motion/react'
 import { MarkdownView } from '../../../shared/ui/MarkdownView'
 import { ImageWithFallback } from '@/shared/ui/ImageWithFallback'
+import { useAudioAutoplay } from '@/shared/ui/hooks/useAudioAutoplay'
+import { getStoredAudioAutoplayMode } from '@/shared/model'
 
 import styles from './FlipCard.module.css'
 
@@ -52,6 +54,16 @@ export function FlipCard({
   const canDown = hasPrev
   const canUp = hasNext
 
+  // Get user's audio autoplay preference
+  const autoplayMode = getStoredAudioAutoplayMode()
+
+  // Auto-play question audio when card loads (front side)
+  const questionAudio = useAudioAutoplay(questionAudioUrls, autoplayMode, !isFlipped, 0)
+
+  // Auto-play answer audio when card is flipped to back
+  // Add a small delay to let the flip animation start
+  const answerAudio = useAudioAutoplay(answerAudioUrls, autoplayMode, isFlipped, 300)
+
   const handleClick = () => {
     if (disableFlipOnClick) return
     onFlip()
@@ -85,7 +97,13 @@ export function FlipCard({
               <div className={styles.cardAudios}>
                 {questionAudioUrls.map((url: string, index: number) => (
                   <div key={index} className={styles.cardAudio}>
-                    <audio src={url} controls className={styles.cardAudioElement} />
+                    <audio
+                      ref={el => questionAudio.registerAudioRef(index, el)}
+                      src={url}
+                      controls
+                      className={styles.cardAudioElement}
+                      onEnded={() => questionAudio.handleEnded(index)}
+                    />
                   </div>
                 ))}
               </div>
@@ -115,7 +133,13 @@ export function FlipCard({
               <div className={styles.cardAudios}>
                 {answerAudioUrls.map((url: string, index: number) => (
                   <div key={index} className={styles.cardAudio}>
-                    <audio src={url} controls className={styles.cardAudioElement} />
+                    <audio
+                      ref={el => answerAudio.registerAudioRef(index, el)}
+                      src={url}
+                      controls
+                      className={styles.cardAudioElement}
+                      onEnded={() => answerAudio.handleEnded(index)}
+                    />
                   </div>
                 ))}
               </div>

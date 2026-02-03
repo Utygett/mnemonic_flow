@@ -14,9 +14,10 @@ services:
     build:
       context: ../frontend
       dockerfile: Dockerfile.ci
-    command: npm test -- --run
+    command: npm run test:ci
     environment:
       - CI=true
+      - NODE_OPTIONS=--max-old-space-size=2048
     volumes:
       - ../frontend:/app
       - /app/node_modules
