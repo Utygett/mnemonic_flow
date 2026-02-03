@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
 from app.auth.jwt import create_access_token, create_refresh_token, decode_refresh_token
@@ -39,9 +39,30 @@ class VerifyEmailRequest(BaseModel):
     token: str
 
 
+class UpdateUsernameRequest(BaseModel):
+    username: str = Field(min_length=1, max_length=50)
+
+
 # --- Существующие эндпоинты ---
 @router.get("/me", response_model=UserResponse)
 def me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+@router.patch("/me/username", response_model=UserResponse)
+def update_username(
+    data: UpdateUsernameRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Обновление имени пользователя"""
+    username = data.username.strip()
+    if not username:
+        raise HTTPException(status_code=400, detail="Username cannot be empty")
+
+    current_user.username = username
+    db.commit()
+    db.refresh(current_user)
     return current_user
 
 
@@ -57,7 +78,7 @@ async def register(data: RegisterRequest, db: Session = Depends(get_db)):
 
     user = User(
         id=uuid4(),
-        username="user",
+        username="",
         email=email,
         password_hash=hash_password(data.password),
         is_email_verified=False,

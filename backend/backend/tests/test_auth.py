@@ -5,8 +5,10 @@ import uuid
 from fastapi.testclient import TestClient
 
 
-def test_register_success(client: TestClient):
-    """Успешная регистрация нового пользователя."""
+def test_register_success(client: TestClient, db, cleanup_db):
+    """Успешная регистрация нового пользователя с пустым username."""
+    from app.models.user import User
+
     email = f"test_{uuid.uuid4().hex[:8]}@example.com"
 
     response = client.post(
@@ -18,6 +20,11 @@ def test_register_success(client: TestClient):
     data = response.json()
     assert "message" in data
     assert "успешна" in data["message"].lower()
+
+    # Проверяем, что пользователь создан с пустым username
+    user = db.query(User).filter(User.email == email).first()
+    assert user is not None
+    assert user.username == ""
 
 
 def test_register_duplicate_email_fails(client: TestClient, db):
@@ -421,3 +428,51 @@ def test_me_endpoint_returns_user(client: TestClient, auth_headers):
     assert "id" in data or "email" in data
     if "email" in data:
         assert "@" in data["email"]
+
+
+def test_update_username_success(client: TestClient, auth_headers, db):
+    """Успешное обновление имени пользователя."""
+    response = client.patch(
+        "/api/auth/me/username",
+        headers=auth_headers,
+        json={"username": "NewUsername"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["username"] == "NewUsername"
+    assert "id" in data
+    assert "email" in data
+
+
+def test_update_username_empty_fails(client: TestClient, auth_headers):
+    """Попытка обновить имя на пустую строку должна завершиться ошибкой."""
+    response = client.patch(
+        "/api/auth/me/username",
+        headers=auth_headers,
+        json={"username": "   "},  # Только пробелы
+    )
+
+    assert response.status_code == 400
+
+
+def test_update_username_too_long_fails(client: TestClient, auth_headers):
+    """Попытка обновить имя на слишком длинное должна завершиться ошибкой."""
+    long_username = "a" * 51  # Превышает лимит в 50 символов
+    response = client.patch(
+        "/api/auth/me/username",
+        headers=auth_headers,
+        json={"username": long_username},
+    )
+
+    assert response.status_code == 422  # Pydantic validation error
+
+
+def test_update_username_requires_auth(client: TestClient):
+    """Эндпоинт обновления имени требует аутентификации."""
+    response = client.patch(
+        "/api/auth/me/username",
+        json={"username": "NewUsername"},
+    )
+
+    assert response.status_code == 401

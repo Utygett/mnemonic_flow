@@ -13,6 +13,7 @@ interface AuthContextType {
   login: (accessToken: string, refreshToken: string) => Promise<void>
   logout: () => void
   refreshAccessToken: () => Promise<string | null>
+  refreshCurrentUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -64,6 +65,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const user: User = await res.json()
     setCurrentUser(user)
+  }
+
+  const refreshCurrentUser = async () => {
+    const currentToken = token ?? localStorage.getItem('access_token')
+    if (!currentToken) {
+      throw new Error('No token available')
+    }
+    await fetchMe(currentToken)
   }
 
   // Обновить access token через refresh
@@ -160,7 +169,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ token, refreshToken, currentUser, login, logout, refreshAccessToken }}
+      value={{
+        token,
+        refreshToken,
+        currentUser,
+        login,
+        logout,
+        refreshAccessToken,
+        refreshCurrentUser,
+      }}
     >
       {!loading ? (
         children
