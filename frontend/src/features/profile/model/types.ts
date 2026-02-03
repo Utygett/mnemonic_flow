@@ -9,5 +9,5 @@ export type ProfileViewProps = {
   onThemeChange: (theme: Theme) => void
   onLogout: () => void
   onChangePassword: () => void
-  onEditUsername: () => void
+  onUpdateUsername: (username: string) => Promise<void>
 }

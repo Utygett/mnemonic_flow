@@ -87,3 +87,28 @@ export async function getMe(token: string) {
   if (!res.ok) throw new Error('Unauthorized')
   return res.json()
 }
+
+export async function updateUsername(username: string, token: string) {
+  const res = await fetch(`${API_URL}/auth/me/username`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ username }),
+  })
+
+  const rawText = await res.text()
+  let payload: any = null
+  try {
+    payload = rawText ? JSON.parse(rawText) : null
+  } catch {
+    payload = null
+  }
+
+  if (!res.ok) {
+    throw new Error(extractFastApiError(payload, `Update username failed (${res.status})`))
+  }
+
+  return payload
+}

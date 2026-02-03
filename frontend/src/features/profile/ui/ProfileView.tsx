@@ -8,6 +8,7 @@ import {
   setStoredAudioAutoplayMode,
   getStoredAudioAutoplayMode,
 } from '@/shared/model'
+import { UsernameEditModal } from '@/shared/ui/UsernameEditModal'
 
 import styles from './ProfileView.module.css'
 
@@ -33,10 +34,11 @@ export function ProfileView(props: ProfileViewProps) {
     onThemeChange,
     onLogout,
     onChangePassword,
-    onEditUsername,
+    onUpdateUsername,
   } = props
 
   const [open, setOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [audioAutoplayMode, setAudioAutoplayMode] = useState<AudioAutoplayMode>(
     getStoredAudioAutoplayMode()
   )
@@ -75,6 +77,14 @@ export function ProfileView(props: ProfileViewProps) {
   const handleAudioAutoplayChange = (mode: AudioAutoplayMode) => {
     setAudioAutoplayMode(mode)
     setStoredAudioAutoplayMode(mode)
+  }
+
+  const handleEditUsername = () => {
+    setIsEditModalOpen(true)
+  }
+
+  const handleUpdateUsername = async (username: string) => {
+    await onUpdateUsername(username)
   }
 
   return (
@@ -136,7 +146,7 @@ export function ProfileView(props: ProfileViewProps) {
                   type="button"
                   className={styles.editBtn}
                   aria-label="Редактировать имя"
-                  onClick={onEditUsername}
+                  onClick={handleEditUsername}
                 >
                   <Pencil size={14} />
                 </button>
@@ -197,6 +207,13 @@ export function ProfileView(props: ProfileViewProps) {
           </div>
         </div>
       </div>
+
+      <UsernameEditModal
+        currentUsername={name}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleUpdateUsername}
+      />
     </div>
   )
 }

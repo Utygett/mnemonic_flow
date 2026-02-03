@@ -1,11 +1,42 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { ProfileView } from './ProfileView'
 import type { Theme } from '../model/types'
 import { APP_VERSION } from '@/shared/lib/version'
+import { getMe, updateUsername } from '@/shared/api'
+
+type UserData = {
+  id: string
+  email: string
+  username: string
+}
 
 export function ProfileContainer() {
   const [theme, setTheme] = useState<Theme>('dark')
+  const [userData, setUserData] = useState<UserData | null>(null)
+
+  useEffect(() => {
+    // Загружаем данные пользователя при монтировании
+    const token = localStorage.getItem('access_token')
+    if (token) {
+      getMe(token)
+        .then(data => {
+          setUserData(data)
+        })
+        .catch(err => {
+          console.error('Failed to load user data:', err)
+        })
+    }
+  }, [])
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('access_token')
@@ -17,26 +48,31 @@ export function ProfileContainer() {
     alert('Смена пароля (заглушка)')
   }
 
-  const handleEditUsername = () => {
-    alert('Редактирование имени (заглушка)')
+  const handleUpdateUsername = async (username: string) => {
+    const token = localStorage.getItem('access_token')
+    if (!token) {
+      throw new Error('Not authenticated')
+    }
+
+    const updated = await updateUsername(username, token)
+    setUserData(updated)
   }
 
-  const handleThemeChange = (newTheme: Theme) => {
-    setTheme(newTheme)
-    // TODO: persist to localStorage or backend
+  if (!userData) {
+    return <div>Загрузка...</div>
   }
 
   return (
     <ProfileView
-      initials="У"
-      name="АБД"
-      email="user@example.com"
+      initials={getInitials(userData.username)}
+      name={userData.username}
+      email={userData.email}
       version={APP_VERSION}
       theme={theme}
-      onThemeChange={handleThemeChange}
+      onThemeChange={setTheme}
       onLogout={handleLogout}
       onChangePassword={handleChangePassword}
-      onEditUsername={handleEditUsername}
+      onUpdateUsername={handleUpdateUsername}
     />
   )
 }
