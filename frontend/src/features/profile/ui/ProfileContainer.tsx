@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import { ProfileView } from './ProfileView'
 import type { Theme } from '../model/types'
+import { APP_VERSION } from '@/shared/lib/version'
 
 export function ProfileContainer() {
   const [theme, setTheme] = useState<Theme>('dark')
@@ -30,7 +31,7 @@ export function ProfileContainer() {
       initials="У"
       name="АБД"
       email="user@example.com"
-      version="0.1.0"
+      version={APP_VERSION}
       theme={theme}
       onThemeChange={handleThemeChange}
       onLogout={handleLogout}
