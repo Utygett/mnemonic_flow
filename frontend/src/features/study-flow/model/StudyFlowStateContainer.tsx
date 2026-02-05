@@ -287,6 +287,10 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
     spentMs,
   }
 
+  const currentCard = cards[currentIndex]
+  const ratingHistoryForCurrentCard: DifficultyRating[] =
+    (currentCard?.reviewHistory ?? []).map(h => h.rating as DifficultyRating)
+
   return (
     <>
       {showStudy ? (
@@ -305,6 +309,7 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
           onClose={handleCloseStudy}
           onBackToHome={handleBackToHome}
           sessionStats={sessionStats}
+          ratingHistory={ratingHistoryForCurrentCard}
           onCardSaved={handleCardSaved}
         />
       ) : (

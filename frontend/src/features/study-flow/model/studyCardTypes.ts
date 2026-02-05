@@ -1,4 +1,4 @@
-import type { CardContent } from '@/entities/card'
+import type { CardContent, CardReviewHistoryEntry, DifficultyRating } from '@/entities/card'
 
 export type StudyMode = 'random' | 'ordered' | 'new_random' | 'new_ordered'
 
@@ -16,6 +16,7 @@ export interface StudyCard {
   activeLevel: number
   questionImageUrl?: string
   answerImageUrl?: string
+  reviewHistory?: CardReviewHistoryEntry[]
 }
 
 // helper’ы (удобно для StudySession/Create/Edit)

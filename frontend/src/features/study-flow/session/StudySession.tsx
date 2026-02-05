@@ -3,8 +3,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { isMultipleChoice } from '../model/studyCardTypes'
 import { StudyCard } from '../model/studyCardTypes'
 
-import type { CardReviewInput, DifficultyRating } from '@/entities/card'
-import { getReviewPreview } from '@/entities/card'
+import type { CardReviewInput, DifficultyRating, getReviewPreview } from '@/entities/card'
 import type { CardSavedPayload } from '@/features/cards-edit/model/types'
 
 import { FlipCard } from '../ui/FlipCard'
@@ -19,6 +18,13 @@ import { X, SkipForward, Trash2, Pencil } from 'lucide-react'
 import { EditCardModal } from '@/features/cards-edit/ui/EditCardModal'
 
 import styles from './StudySession.module.css'
+
+const ratingColorMap: Record<DifficultyRating, string> = {
+  again: '#ef4444',
+  hard: '#f97316',
+  good: '#22c55e',
+  easy: '#3b82f6',
+}
 
 function getLevelIndex(l: any): number {
   return typeof l?.level_index === 'number' ? l.level_index : l?.levelindex
@@ -37,6 +43,7 @@ export function StudySession({
   onLevelDown,
   onSkip,
   onRemoveFromProgress,
+  ratingHistory = [],
   onCardSaved,
 }: {
   cards: StudyCard[]
@@ -47,6 +54,7 @@ export function StudySession({
   onLevelDown: () => void
   onSkip: () => void
   onRemoveFromProgress: () => void
+  ratingHistory?: DifficultyRating[]
   onCardSaved?: (payload: CardSavedPayload) => void
 }) {
   const [isFlipped, setIsFlipped] = useState(false)
@@ -389,6 +397,88 @@ export function StudySession({
               </div>
             </div>
 
+          >
+            <button
+              onClick={onClose}
+              className={styles.iconBtn}
+              aria-label="Закрыть сессию"
+              type="button"
+            >
+              <X size={18} />
+            </button>
+
+            <span className={`${styles.textSmall} ${styles.textMuted}`}>
+              {currentIndex + 1} / {cards.length}
+            </span>
+
+            <div className={`${styles.row} ${styles.rowCentered}`} style={{ columnGap: 32 }}>
+              <button
+                onClick={handleSkip}
+                className={styles.iconBtn}
+                aria-label="Пропустить карточку"
+                type="button"
+              >
+                <SkipForward size={18} />
+              </button>
+
+              <button
+                onClick={handleRemoveFromProgress}
+                className={styles.iconBtn}
+                aria-label="Удалить прогресс карточки"
+                type="button"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
+          </div>
+
+          {ratingHistory.length > 0 ? (
+            <div className={styles.historyRow}>
+              {ratingHistory.map((rating, index) => (
+                <span
+                  key={`${index}-${rating}`}
+                  className={styles.historyDot}
+                  style={{ backgroundColor: ratingColorMap[rating] }}
+                  aria-hidden="true"
+                />
+              ))}
+            </div>
+          ) : null}
+
+          <ProgressBar progress={progress} color="#FF9A76" />
+        </div>
+      </div>
+
+      <div className={styles.studyCardArea}>
+        {isMultipleChoice(currentCard) ? (
+          <FlipCard
+            card={currentCard}
+            isFlipped={isFlipped}
+            onFlip={() => {
+              if (!isFlipped && !revealedAtRef.current) revealedAtRef.current = nowIso()
+              setIsFlipped(v => !v)
+            }}
+            disableFlipOnClick
+            onLevelUp={onLevelUp}
+            onLevelDown={onLevelDown}
+            frontContent={renderMcqFront()}
+            backContent={renderMcqBack()}
+          />
+        ) : (
+          <FlipCard
+            card={currentCard}
+            isFlipped={isFlipped}
+            onFlip={handleFlip}
+            onLevelUp={onLevelUp}
+            onLevelDown={onLevelDown}
+          />
+        )}
+      </div>
+
+      <div className={styles.studyActions}>
+        {!isFlipped ? (
+          <Button onClick={handleFlip} variant="primary" size="large" fullWidth>
+            Показать ответ
             <ProgressBar progress={progress} color="#FF9A76" />
           </div>
         </div>

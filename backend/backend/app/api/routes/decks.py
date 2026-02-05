@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.auth.dependencies import get_current_user_id
 from app.db.session import SessionLocal
 from app.models.card import Card
+from app.models.card_review_history import CardReviewHistory
 from app.models.card_level import CardLevel
 from app.models.card_progress import CardProgress
 from app.models.deck import Deck
@@ -525,6 +526,20 @@ def get_study_cards(
     for lvl in levels_all:
         levels_by_card.setdefault(lvl.card_id, []).append(lvl)
 
+    # История ревью для каждой карточки текущего пользователя
+    history_all: List[CardReviewHistory] = (
+        db.query(CardReviewHistory)
+        .filter(
+            CardReviewHistory.user_id == user_id,
+            CardReviewHistory.card_id.in_(card_ids),
+        )
+        .order_by(CardReviewHistory.card_id.asc(), CardReviewHistory.reviewed_at.asc())
+        .all()
+    )
+    history_by_card: dict[UUID, List[CardReviewHistory]] = {}
+    for h in history_all:
+        history_by_card.setdefault(h.card_id, []).append(h)
+
     # activeLevel: читаем ТОЛЬКО активный прогресс (ничего не создаём)
     active_level_index_by_card: dict[UUID, int] = {}
     if mode in ("random", "ordered"):
@@ -565,6 +580,14 @@ def get_study_cards(
                     for card_level in lvls
                 ],
                 "activeLevel": active_level_index_by_card.get(c.id, 0),
+                # История оценок для карточки (ограничим последние 50 записей)
+                "reviewHistory": [
+                    {
+                        "rating": (h.rating.value if hasattr(h.rating, "value") else str(h.rating)),
+                        "reviewedAt": h.reviewed_at.isoformat(),
+                    }
+                    for h in history_by_card.get(c.id, [])[-50:]
+                ],
             }
         )
 
