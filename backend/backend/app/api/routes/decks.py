@@ -580,13 +580,13 @@ def get_study_cards(
                     for card_level in lvls
                 ],
                 "activeLevel": active_level_index_by_card.get(c.id, 0),
-                # История оценок для карточки (ограничим последние 50 записей)
+                # История оценок для карточки (ограничим последние 20 записей)
                 "reviewHistory": [
                     {
                         "rating": h.rating.value if hasattr(h.rating, "value") else str(h.rating),
                         "reviewedAt": h.reviewed_at.isoformat(),
                     }
-                    for h in history_by_card.get(c.id, [])[-50:]
+                    for h in history_by_card.get(c.id, [])[-20:]
                 ],
             }
         )
