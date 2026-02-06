@@ -387,3 +387,13 @@
 .audioUploadColumn {
   width: 100%;
 }
+
+/* Native <select> visibility fix */
+select.input {
+  cursor: pointer;
+}
+
+select.input option {
+  background: var(--surface);
+  color: var(--text);
+}
