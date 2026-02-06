@@ -67,9 +67,7 @@ export function StudyFlowView(props: Props) {
 
   if (props.isCompleted) {
     const stats = props.sessionStats
-    const startedAtMs = stats?.startedAtMs ?? 0
-    const finishedAtMs = stats?.finishedAtMs ?? Date.now()
-    const durationMs = startedAtMs > 0 ? finishedAtMs - startedAtMs : 0
+    const durationMs = stats?.spentMs ?? 0
     const ratedCount = stats?.ratedCount ?? 0
     const avgMs = ratedCount > 0 ? Math.round(durationMs / ratedCount) : 0
     const counts = stats?.ratingCounts
