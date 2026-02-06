@@ -26,6 +26,8 @@ const NONE_VALUE = '__none__'
 
 export function EditCardView(props: Props) {
   const {
+    mode,
+
     decks,
     deckId,
     setDeckId,
@@ -75,6 +77,8 @@ export function EditCardView(props: Props) {
     onCancel,
   } = props
 
+  const isSessionMode = mode === 'session'
+
   const active = levels[activeLevel]
 
   return (
@@ -85,7 +89,9 @@ export function EditCardView(props: Props) {
             <button onClick={onCancel} className={styles.iconButton}>
               <X size={24} />
             </button>
-            <h2 className={styles.headerTitle}>Редактирование уровней</h2>
+            <h2 className={styles.headerTitle}>
+              {isSessionMode ? 'Редактировать карточку' : 'Редактирование уровней'}
+            </h2>
             <div className={styles.headerSpacer} />
           </div>
         </div>
@@ -99,96 +105,102 @@ export function EditCardView(props: Props) {
         )}
 
         {/* Deck */}
-        <div className={styles.formRow}>
-          <label className={styles.formLabel}>Колода</label>
+        {isSessionMode ? null : (
+          <div className={styles.formRow}>
+            <label className={styles.formLabel}>Колода</label>
 
-          <div className={styles.rowWithActions}>
-            <Select
-              value={String(deckId ?? '')}
-              onValueChange={setDeckId}
-              disabled={decks.length === 0 || saving}
-            >
-              <SelectTrigger className={styles.input}>
-                <SelectValue
-                  placeholder={decks.length === 0 ? 'Нет доступных колод' : 'Выбери колоду'}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {decks.length === 0 ? (
-                  <SelectItem value="__empty" disabled>
-                    Нет доступных колод
-                  </SelectItem>
-                ) : (
-                  decks.map(d => (
-                    <SelectItem key={d.deck_id} value={String(d.deck_id)}>
-                      {d.title}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-
-            <button
-              onClick={deleteCurrentDeck}
-              disabled={!deckId || decks.length === 0 || saving}
-              title="Удалить колоду"
-              className={`${styles.squareButton} ${styles.squareButtonDanger}`}
-            >
-              <Trash2 size={18} />
-            </button>
-
-            {isOwnerOfCurrentDeck && onEditDeck && deckId ? (
-              <button
-                onClick={e => {
-                  e.stopPropagation()
-                  onEditDeck(deckId)
-                }}
-                title="Редактировать колоду"
-                className={`${styles.squareButton} ${styles.squareButtonNeutral}`}
+            <div className={styles.rowWithActions}>
+              <Select
+                value={String(deckId ?? '')}
+                onValueChange={setDeckId}
+                disabled={decks.length === 0 || saving}
               >
-                <Pencil size={18} />
+                <SelectTrigger className={styles.input}>
+                  <SelectValue
+                    placeholder={
+                      decks.length === 0 ? 'Нет доступных колод' : 'Выбери колоду'
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {decks.length === 0 ? (
+                    <SelectItem value="__empty" disabled>
+                      Нет доступных колод
+                    </SelectItem>
+                  ) : (
+                    decks.map(d => (
+                      <SelectItem key={d.deck_id} value={String(d.deck_id)}>
+                        {d.title}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+
+              <button
+                onClick={deleteCurrentDeck}
+                disabled={!deckId || decks.length === 0 || saving}
+                title="Удалить колоду"
+                className={`${styles.squareButton} ${styles.squareButtonDanger}`}
+              >
+                <Trash2 size={18} />
               </button>
-            ) : null}
+
+              {isOwnerOfCurrentDeck && onEditDeck && deckId ? (
+                <button
+                  onClick={e => {
+                    e.stopPropagation()
+                    onEditDeck(deckId)
+                  }}
+                  title="Редактировать колоду"
+                  className={`${styles.squareButton} ${styles.squareButtonNeutral}`}
+                >
+                  <Pencil size={18} />
+                </button>
+              ) : null}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Card */}
-        <div className={styles.formRow}>
-          <label className={styles.formLabel}>Карточка</label>
+        {isSessionMode ? null : (
+          <div className={styles.formRow}>
+            <label className={styles.formLabel}>Карточка</label>
 
-          <div className={styles.rowWithActions}>
-            <Select
-              value={String(selectedCardId ?? '')}
-              onValueChange={setSelectedCardId}
-              disabled={loading || cards.length === 0 || saving}
-            >
-              <SelectTrigger className={styles.input}>
-                <SelectValue placeholder={loading ? 'Загрузка…' : 'Выбери карточку'} />
-              </SelectTrigger>
-              <SelectContent>
-                {loading ? (
-                  <SelectItem value="__loading" disabled>
-                    Загрузка…
-                  </SelectItem>
-                ) : null}
-                {cards.map(c => (
-                  <SelectItem key={c.card_id} value={String(c.card_id)}>
-                    {c.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className={styles.rowWithActions}>
+              <Select
+                value={String(selectedCardId ?? '')}
+                onValueChange={setSelectedCardId}
+                disabled={loading || cards.length === 0 || saving}
+              >
+                <SelectTrigger className={styles.input}>
+                  <SelectValue placeholder={loading ? 'Загрузка…' : 'Выбери карточку'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {loading ? (
+                    <SelectItem value="__loading" disabled>
+                      Загрузка…
+                    </SelectItem>
+                  ) : null}
+                  {cards.map(c => (
+                    <SelectItem key={c.card_id} value={String(c.card_id)}>
+                      {c.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <button
-              onClick={deleteSelectedCard}
-              disabled={!selectedCard || saving}
-              title="Удалить карточку"
-              className={`${styles.squareButton} ${styles.squareButtonDanger}`}
-            >
-              <Trash2 size={18} />
-            </button>
+              <button
+                onClick={deleteSelectedCard}
+                disabled={!selectedCard || saving}
+                title="Удалить карточку"
+                className={`${styles.squareButton} ${styles.squareButtonDanger}`}
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {!selectedCard ? null : (
           <>

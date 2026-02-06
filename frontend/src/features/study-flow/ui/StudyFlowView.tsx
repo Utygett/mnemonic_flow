@@ -1,8 +1,9 @@
 import React from 'react'
 
-import type { CardReviewInput, StudyCard } from '@/entities/card'
+import type { CardReviewInput, StudyCard, ApiLevelIn } from '@/entities/card'
 import type { SessionStats } from '../model/StudyFlowStateContainer'
 import { StudySession } from '../session/StudySession'
+import type { CardSavedPayload } from '@/features/cards-edit/model/types'
 
 import styles from './StudyFlow.module.css'
 
@@ -24,6 +25,8 @@ type Props = {
 
   onBackToHome: () => void
   sessionStats?: SessionStats
+
+  onCardSaved?: (payload: CardSavedPayload) => void
 }
 
 function formatDuration(ms: number): string {
@@ -152,6 +155,7 @@ export function StudyFlowView(props: Props) {
       onClose={props.onClose}
       onSkip={props.onSkip}
       onRemoveFromProgress={props.onRemoveFromProgress}
+      onCardSaved={props.onCardSaved}
     />
   )
 }
