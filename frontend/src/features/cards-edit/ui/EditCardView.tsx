@@ -4,6 +4,13 @@ import { X, Plus, Trash2, ChevronUp, ChevronDown, Pencil } from 'lucide-react'
 
 import { Button } from '../../../shared/ui/Button/Button'
 import { MarkdownField } from '../../../shared/ui/MarkdownField'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/ui/kit/select'
 import { CardImageUpload } from '@/features/card-image-upload'
 import { CardAudioUpload } from '@/features/card-audio'
 
@@ -94,22 +101,28 @@ export function EditCardView(props: Props) {
           <label className={styles.formLabel}>Колода</label>
 
           <div className={styles.rowWithActions}>
-            <select
-              value={deckId}
-              onChange={e => setDeckId(e.target.value)}
-              className={styles.input}
+            <Select
+              value={String(deckId ?? '')}
+              onValueChange={setDeckId}
               disabled={decks.length === 0 || saving}
             >
-              {decks.length === 0 ? (
-                <option value="">Нет доступных колод</option>
-              ) : (
-                decks.map(d => (
-                  <option key={d.deck_id} value={d.deck_id}>
-                    {d.title}
-                  </option>
-                ))
-              )}
-            </select>
+              <SelectTrigger className={styles.input}>
+                <SelectValue placeholder={decks.length === 0 ? 'Нет доступных колод' : 'Выбери колоду'} />
+              </SelectTrigger>
+              <SelectContent>
+                {decks.length === 0 ? (
+                  <SelectItem value="__empty" disabled>
+                    Нет доступных колод
+                  </SelectItem>
+                ) : (
+                  decks.map(d => (
+                    <SelectItem key={d.deck_id} value={String(d.deck_id)}>
+                      {d.title}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
 
             <button
               onClick={deleteCurrentDeck}
@@ -140,19 +153,27 @@ export function EditCardView(props: Props) {
           <label className={styles.formLabel}>Карточка</label>
 
           <div className={styles.rowWithActions}>
-            <select
-              value={selectedCardId}
-              onChange={e => setSelectedCardId(e.target.value)}
-              className={styles.input}
+            <Select
+              value={String(selectedCardId ?? '')}
+              onValueChange={setSelectedCardId}
               disabled={loading || cards.length === 0 || saving}
             >
-              <option value="">{loading ? 'Загрузка…' : 'Выбери карточку'}</option>
-              {cards.map(c => (
-                <option key={c.card_id} value={c.card_id}>
-                  {c.title}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className={styles.input}>
+                <SelectValue placeholder={loading ? 'Загрузка…' : 'Выбери карточку'} />
+              </SelectTrigger>
+              <SelectContent>
+                {loading ? (
+                  <SelectItem value="__loading" disabled>
+                    Загрузка…
+                  </SelectItem>
+                ) : null}
+                {cards.map(c => (
+                  <SelectItem key={c.card_id} value={String(c.card_id)}>
+                    {c.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             <button
               onClick={deleteSelectedCard}
@@ -422,21 +443,25 @@ export function EditCardView(props: Props) {
 
                         <div className={styles.mt3}>
                           <label className={styles.formLabel}>Правильный вариант</label>
-                          <select
-                            className={styles.input}
-                            value={active.correctOptionId}
-                            onChange={e =>
-                              patchLevel(activeLevel, { correctOptionId: e.target.value } as any)
+                          <Select
+                            value={String(active.correctOptionId ?? '')}
+                            onValueChange={v =>
+                              patchLevel(activeLevel, { correctOptionId: String(v) } as any)
                             }
                             disabled={saving}
                           >
-                            <option value="">— выбери —</option>
-                            {active.options.map(o => (
-                              <option key={o.id} value={o.id}>
-                                {o.text || o.id}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger className={styles.input}>
+                              <SelectValue placeholder="— выбери —" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">— выбери —</SelectItem>
+                              {active.options.map(o => (
+                                <SelectItem key={o.id} value={String(o.id)}>
+                                  {o.text || o.id}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         <div className={styles.mt3}>
