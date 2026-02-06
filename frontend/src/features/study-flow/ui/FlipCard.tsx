@@ -1,10 +1,12 @@
-import React from 'react'
+import React, { useState } from 'react'
 import type { StudyCard } from '../model/studyCardTypes'
 import { motion } from 'motion/react'
 import { MarkdownView } from '../../../shared/ui/MarkdownView'
 import { ImageWithFallback } from '@/shared/ui/ImageWithFallback'
 import { useAudioAutoplay } from '@/shared/ui/hooks/useAudioAutoplay'
 import { getStoredAudioAutoplayMode } from '@/shared/model'
+
+import { ImageViewer } from './ImageViewer'
 
 import styles from './FlipCard.module.css'
 
@@ -25,6 +27,8 @@ function getLevelIndex(l: any): number {
   return typeof l?.level_index === 'number' ? l.level_index : l?.levelindex
 }
 
+type ViewerState = { src: string; alt: string } | null
+
 export function FlipCard({
   card,
   isFlipped,
@@ -35,6 +39,8 @@ export function FlipCard({
   backContent,
   disableFlipOnClick = false,
 }: FlipCardProps) {
+  const [viewer, setViewer] = useState<ViewerState>(null)
+
   const level =
     card.levels.find((l: any) => getLevelIndex(l) === card.activeLevel) ?? card.levels[0]
 
@@ -84,11 +90,27 @@ export function FlipCard({
               <div className={styles.cardImages}>
                 {questionImageUrls.map((url: string, index: number) => (
                   <div key={index} className={styles.cardImage}>
-                    <ImageWithFallback
-                      src={url}
-                      alt={`Question image ${index + 1}`}
-                      className={styles.cardImageElement}
-                    />
+                    <button
+                      type="button"
+                      aria-label={`Открыть изображение вопроса ${index + 1}`}
+                      onClick={e => {
+                        e.stopPropagation()
+                        setViewer({ src: url, alt: `Question image ${index + 1}` })
+                      }}
+                      style={{
+                        padding: 0,
+                        border: 'none',
+                        background: 'transparent',
+                        cursor: 'zoom-in',
+                        width: '100%',
+                      }}
+                    >
+                      <ImageWithFallback
+                        src={url}
+                        alt={`Question image ${index + 1}`}
+                        className={styles.cardImageElement}
+                      />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -120,11 +142,27 @@ export function FlipCard({
               <div className={styles.cardImages}>
                 {answerImageUrls.map((url: string, index: number) => (
                   <div key={index} className={styles.cardImage}>
-                    <ImageWithFallback
-                      src={url}
-                      alt={`Answer image ${index + 1}`}
-                      className={styles.cardImageElement}
-                    />
+                    <button
+                      type="button"
+                      aria-label={`Открыть изображение ответа ${index + 1}`}
+                      onClick={e => {
+                        e.stopPropagation()
+                        setViewer({ src: url, alt: `Answer image ${index + 1}` })
+                      }}
+                      style={{
+                        padding: 0,
+                        border: 'none',
+                        background: 'transparent',
+                        cursor: 'zoom-in',
+                        width: '100%',
+                      }}
+                    >
+                      <ImageWithFallback
+                        src={url}
+                        alt={`Answer image ${index + 1}`}
+                        className={styles.cardImageElement}
+                      />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -191,6 +229,12 @@ export function FlipCard({
           </div>
         </motion.div>
       </motion.div>
+
+      <ImageViewer
+        src={viewer?.src ?? null}
+        alt={viewer?.alt ?? 'Image'}
+        onClose={() => setViewer(null)}
+      />
     </div>
   )
 }
