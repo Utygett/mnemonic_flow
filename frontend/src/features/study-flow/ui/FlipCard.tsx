@@ -65,7 +65,9 @@ export function FlipCard({
   const answerAudio = useAudioAutoplay(answerAudioUrls, autoplayMode, isFlipped, 300)
 
   const handleClick = () => {
-    if (disableFlipOnClick) return
+    // In MCQ we disable flip from the front side (to avoid interfering with option clicks),
+    // but we still allow flipping back from the answer side.
+    if (disableFlipOnClick && !isFlipped) return
     onFlip()
   }
 
