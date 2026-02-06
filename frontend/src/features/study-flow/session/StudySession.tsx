@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { isMultipleChoice } from '../model/studyCardTypes'
 import { StudyCard } from '../model/studyCardTypes'
 
-import type { CardReviewInput, DifficultyRating, ApiLevelIn } from '@/entities/card'
+import type { CardReviewInput, DifficultyRating } from '@/entities/card'
 import type { CardSavedPayload } from '@/features/cards-edit/model/types'
 
 import { FlipCard } from '../ui/FlipCard'
@@ -113,10 +113,10 @@ export function StudySession({
     setIsFlipped(false)
     setSelectedOptionId(null)
 
-    // reset timing for new card/level
+    // reset timing for new card/level (and after card edit)
     shownAtRef.current = nowIso()
     revealedAtRef.current = null
-  }, [currentCard?.id, currentCard?.activeLevel])
+  }, [currentCard?.id, currentCard?.activeLevel, currentCard?.levels])
 
   const level =
     (currentCard.levels as any[]).find(l => getLevelIndex(l) === currentCard.activeLevel) ??
@@ -202,7 +202,7 @@ export function StudySession({
                   key={optId}
                   type="button"
                   className={optionClasses}
-                  disabled={isFlipped}
+                  disabled={showResult}
                   aria-pressed={isSelected}
                   onClick={e => {
                     e.stopPropagation()
