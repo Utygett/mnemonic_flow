@@ -52,7 +52,7 @@ export function ImageViewer({ src, alt = 'Image', onClose }: Props) {
 
   if (!isOpen || !src) return null
 
-  const handleWheel: React.WheelEventHandler<HTMLDivElement> = e => {
+  const handleWheel: React.WheelEventHandler<HTMLImageElement> = e => {
     e.preventDefault()
     e.stopPropagation()
 
@@ -61,6 +61,7 @@ export function ImageViewer({ src, alt = 'Image', onClose }: Props) {
     const next = clamp(scale * factor, 0.5, 5)
 
     setScale(next)
+    if (next <= 1) setOffset({ x: 0, y: 0 })
   }
 
   const handlePointerDown: React.PointerEventHandler<HTMLImageElement> = e => {
@@ -106,9 +107,9 @@ export function ImageViewer({ src, alt = 'Image', onClose }: Props) {
   }
 
   return (
-    <div className={styles.overlay} onClick={onClose} onWheel={handleWheel}>
+    <div className={styles.overlay} onClick={onClose}>
       <div className={styles.topBar} onClick={e => e.stopPropagation()}>
-        <div className={styles.hint}>Колёсико — зум, Esc — закрыть</div>
+        <div className={styles.hint}>Колёсико — зум, клик по картинке — закрыть</div>
         <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Закрыть">
           <X size={20} />
         </button>
@@ -122,6 +123,13 @@ export function ImageViewer({ src, alt = 'Image', onClose }: Props) {
           className={styles.image}
           style={{
             transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${scale})`,
+            cursor: 'zoom-out',
+          }}
+          onWheel={handleWheel}
+          onClick={e => {
+            e.preventDefault()
+            e.stopPropagation()
+            onClose()
           }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
