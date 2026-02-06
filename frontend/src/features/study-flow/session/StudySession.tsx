@@ -228,26 +228,59 @@ export function StudySession({
     if (!mcq) return null
 
     const options: any[] = mcq.options ?? []
-    const correct = options.find(o => String(o.id) === String(mcq.correctOptionId))
+    const correctId = String(mcq.correctOptionId ?? '')
+
+    const correct = options.find(o => String(o.id) === correctId)
     const selected = options.find(o => String(o.id) === String(selectedOptionId))
 
+    const hasSelection = selectedOptionId != null && selected != null
+    const isCorrectSelection = hasSelection && String(selectedOptionId) === correctId
+
+    const noticeClasses = [
+      styles.mcqBackNotice,
+      hasSelection
+        ? isCorrectSelection
+          ? styles.mcqBackNoticeCorrect
+          : styles.mcqBackNoticeWrong
+        : styles.mcqBackNoticeMuted,
+    ]
+      .filter(Boolean)
+      .join(' ')
+
     return (
-      <div style={{ width: '100%', maxWidth: 520 }}>
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ opacity: 0.85, fontSize: 12, marginBottom: 6 }}>Правильный ответ</div>
-          <MarkdownView value={String(correct?.text ?? '')} />
+      <div className={styles.mcqBack}>
+        <div className={noticeClasses}>
+          {!hasSelection
+            ? 'Ответ не выбран'
+            : isCorrectSelection
+              ? 'Вы выбрали правильный ответ'
+              : 'Неправильно — ниже правильный ответ'}
         </div>
 
-        {selectedOptionId ? (
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ opacity: 0.85, fontSize: 12, marginBottom: 6 }}>Вы выбрали</div>
-            <MarkdownView value={String(selected?.text ?? '')} />
+        {isCorrectSelection ? (
+          <div className={`${styles.mcqBackBlock} ${styles.mcqBackBlockCorrect}`}>
+            <div className={styles.mcqBackBlockTitle}>Правильный ответ</div>
+            <MarkdownView value={String(correct?.text ?? '')} />
           </div>
-        ) : null}
+        ) : (
+          <>
+            <div className={`${styles.mcqBackBlock} ${styles.mcqBackBlockCorrect}`}>
+              <div className={styles.mcqBackBlockTitle}>Правильный ответ</div>
+              <MarkdownView value={String(correct?.text ?? '')} />
+            </div>
+
+            {hasSelection ? (
+              <div className={`${styles.mcqBackBlock} ${styles.mcqBackBlockWrong}`}>
+                <div className={styles.mcqBackBlockTitle}>Вы выбрали</div>
+                <MarkdownView value={String(selected?.text ?? '')} />
+              </div>
+            ) : null}
+          </>
+        )}
 
         {mcq.explanation ? (
-          <div>
-            <div style={{ opacity: 0.85, fontSize: 12, marginBottom: 6 }}>Пояснение</div>
+          <div className={styles.mcqBackBlock}>
+            <div className={styles.mcqBackBlockTitle}>Пояснение</div>
             <MarkdownView value={String(mcq.explanation)} />
           </div>
         ) : null}

@@ -245,6 +245,60 @@
   background: rgba(229, 62, 62, 0.18);
 }
 
+.mcqBack {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mcqBackNotice {
+  border-radius: 12px;
+  border: 1px solid rgba(30, 41, 59, 0.9);
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.mcqBackNoticeCorrect {
+  border-color: rgba(56, 161, 105, 0.85);
+  background: rgba(56, 161, 105, 0.18);
+}
+
+.mcqBackNoticeWrong {
+  border-color: rgba(229, 62, 62, 0.85);
+  background: rgba(229, 62, 62, 0.14);
+}
+
+.mcqBackNoticeMuted {
+  opacity: 0.85;
+}
+
+.mcqBackBlock {
+  border-radius: 12px;
+  border: 1px solid rgba(30, 41, 59, 0.9);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 12px;
+}
+
+.mcqBackBlockTitle {
+  opacity: 0.85;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.mcqBackBlockCorrect {
+  border-color: rgba(56, 161, 105, 0.65);
+  background: rgba(56, 161, 105, 0.12);
+}
+
+.mcqBackBlockWrong {
+  border-color: rgba(229, 62, 62, 0.65);
+  background: rgba(229, 62, 62, 0.1);
+}
+
 .mcqTimer {
   margin-top: 0;
 }
