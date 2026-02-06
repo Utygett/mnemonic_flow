@@ -206,7 +206,7 @@ export function useEditCardModel(props: Props): EditCardViewModel {
     setActiveLevel(0)
     setQPreview(false)
     setAPreview(false)
-  }, [selectedCardId])
+  }, [selectedCardId, selectedCard])
 
   // title draft
   useEffect(() => {
