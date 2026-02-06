@@ -190,7 +190,9 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
     const shownAtMs = Date.parse(String((review as any)?.shownAt ?? ''))
     const ratedAtMs = Date.parse(String((review as any)?.ratedAt ?? ''))
     const raw =
-      Number.isFinite(shownAtMs) && Number.isFinite(ratedAtMs) ? Math.max(0, ratedAtMs - shownAtMs) : 0
+      Number.isFinite(shownAtMs) && Number.isFinite(ratedAtMs)
+        ? Math.max(0, ratedAtMs - shownAtMs)
+        : 0
     const capped = Math.min(raw, MAX_CARD_VIEW_MS)
     setSpentMs(prev => prev + capped)
 
