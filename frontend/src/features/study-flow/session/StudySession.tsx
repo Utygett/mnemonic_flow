@@ -167,42 +167,49 @@ export function StudySession({
 
     return (
       <div className={styles.mcq}>
-        <div className={styles.mcqQuestion}>
-          <MarkdownView value={String(c.question ?? '')} />
+        <div className={styles.mcqQuestionHeader}>
+          <div className={styles.mcqQuestion}>
+            <MarkdownView value={String(c.question ?? '')} />
+          </div>
+          <div className={styles.mcqQuestionDivider} />
         </div>
 
-        <div className={styles.mcqOptions}>
-          {(c.options ?? []).map((opt: any) => {
-            const optId = String(opt.id)
+        <div className={styles.mcqOptionsScroll}>
+          <div className={styles.mcqOptions}>
+            {(c.options ?? []).map((opt: any) => {
+              const optId = String(opt.id)
 
-            const isSelected = selectedOptionId === optId
-            const isCorrect = optId === correctId
+              const isSelected = selectedOptionId === optId
+              const isCorrect = optId === correctId
 
-            const optionClasses = [
-              styles.mcqOption,
-              showResult && isCorrect ? styles.mcqOptionCorrect : '',
-              showResult && isSelected && !isCorrect ? styles.mcqOptionWrong : '',
-            ]
-              .filter(Boolean)
-              .join(' ')
+              const optionClasses = [
+                styles.mcqOption,
+                isSelected ? styles.mcqOptionSelected : '',
+                showResult && isCorrect ? styles.mcqOptionCorrect : '',
+                showResult && isSelected && !isCorrect ? styles.mcqOptionWrong : '',
+              ]
+                .filter(Boolean)
+                .join(' ')
 
-            return (
-              <button
-                key={optId}
-                type="button"
-                className={optionClasses}
-                disabled={isFlipped}
-                onClick={e => {
-                  e.stopPropagation()
-                  setSelectedOptionId(optId)
-                  if (!revealedAtRef.current) revealedAtRef.current = nowIso()
-                  setIsFlipped(true)
-                }}
-              >
-                <MarkdownView value={String(opt.text ?? '')} />
-              </button>
-            )
-          })}
+              return (
+                <button
+                  key={optId}
+                  type="button"
+                  className={optionClasses}
+                  disabled={isFlipped}
+                  aria-pressed={isSelected}
+                  onClick={e => {
+                    e.stopPropagation()
+                    setSelectedOptionId(optId)
+                    if (!revealedAtRef.current) revealedAtRef.current = nowIso()
+                    setIsFlipped(true)
+                  }}
+                >
+                  <MarkdownView value={String(opt.text ?? '')} />
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         {timerSec > 0 ? (
