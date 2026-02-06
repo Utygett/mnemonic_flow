@@ -183,9 +183,11 @@ export function FlipCard({
               {backContent ?? <MarkdownView value={backText} />}
             </div>
 
-            <div className={styles.flipcardHint}>
-              Уровень {card.activeLevel + 1} из {card.levels.length}
-            </div>
+            {card.levels.length > 1 ? (
+              <div className={styles.flipcardHint}>
+                Уровень {card.activeLevel + 1} из {card.levels.length}
+              </div>
+            ) : null}
           </div>
         </motion.div>
       </motion.div>
