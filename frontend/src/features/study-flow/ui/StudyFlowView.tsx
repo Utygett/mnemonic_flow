@@ -33,8 +33,6 @@ function formatDuration(ms: number): string {
   return `${minutes}:${String(seconds).padStart(2, '0')}`
 }
 
-const MAX_CARD_VIEW_MS = 60_000
-
 export function StudyFlowView(props: Props) {
   if (!props.isStudying) return null
 
@@ -69,19 +67,8 @@ export function StudyFlowView(props: Props) {
 
   if (props.isCompleted) {
     const stats = props.sessionStats
-    const startedAtMs = stats?.startedAtMs ?? 0
-    const finishedAtMs = stats?.finishedAtMs ?? Date.now()
-
+    const durationMs = stats?.spentMs ?? 0
     const ratedCount = stats?.ratedCount ?? 0
-
-    const rawDurationMs =
-      startedAtMs > 0 ? Math.max(0, finishedAtMs - startedAtMs) : 0
-
-    // Cap "time spent" to 1 minute per rated card to avoid huge numbers
-    // when the user leaves the session in background.
-    const durationMs =
-      ratedCount > 0 ? Math.min(rawDurationMs, ratedCount * MAX_CARD_VIEW_MS) : 0
-
     const avgMs = ratedCount > 0 ? Math.round(durationMs / ratedCount) : 0
     const counts = stats?.ratingCounts
 

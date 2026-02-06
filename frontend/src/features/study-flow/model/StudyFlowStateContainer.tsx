@@ -37,6 +37,9 @@ export type SessionStats = {
   finishedAtMs: number | null
   ratedCount: number
   ratingCounts: RatingCounts
+
+  // Total time spent for stats, accumulated per rated card (capped per card).
+  spentMs: number
 }
 
 const emptyRatingCounts = (): RatingCounts => ({
@@ -45,6 +48,8 @@ const emptyRatingCounts = (): RatingCounts => ({
   good: 0,
   easy: 0,
 })
+
+const MAX_CARD_VIEW_MS = 60_000
 
 export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Props) {
   const [isStudying, setIsStudying] = React.useState(false)
@@ -63,6 +68,7 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
   const [sessionFinishedAtMs, setSessionFinishedAtMs] = React.useState<number | null>(null)
   const [ratingCounts, setRatingCounts] = React.useState<RatingCounts>(emptyRatingCounts())
   const [ratedCount, setRatedCount] = React.useState(0)
+  const [spentMs, setSpentMs] = React.useState(0)
 
   const { cards, currentIndex, isCompleted, rateCard, skipCard, resetSession } = useStudySession(
     deckCards,
@@ -121,6 +127,7 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
     setSessionFinishedAtMs(null)
     setRatingCounts(emptyRatingCounts())
     setRatedCount(0)
+    setSpentMs(0)
   }, [showStudy, loadingDeckCards, deckCards.length, sessionStartedAtMs])
 
   React.useEffect(() => {
@@ -179,6 +186,14 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
     setRatingCounts(prev => ({ ...prev, [rating]: (prev[rating] ?? 0) + 1 }))
     setRatedCount(prev => prev + 1)
 
+    // Accumulate per-card spent time and cap it to 1 minute.
+    const shownAtMs = Date.parse(String((review as any)?.shownAt ?? ''))
+    const ratedAtMs = Date.parse(String((review as any)?.ratedAt ?? ''))
+    const raw =
+      Number.isFinite(shownAtMs) && Number.isFinite(ratedAtMs) ? Math.max(0, ratedAtMs - shownAtMs) : 0
+    const capped = Math.min(raw, MAX_CARD_VIEW_MS)
+    setSpentMs(prev => prev + capped)
+
     await rateCard(review)
     onRated()
   }
@@ -188,6 +203,7 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
     setSessionFinishedAtMs(null)
     setRatingCounts(emptyRatingCounts())
     setRatedCount(0)
+    setSpentMs(0)
   }
 
   const handleCloseStudy = () => {
@@ -227,6 +243,7 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
     finishedAtMs: sessionFinishedAtMs,
     ratedCount,
     ratingCounts,
+    spentMs,
   }
 
   return (
