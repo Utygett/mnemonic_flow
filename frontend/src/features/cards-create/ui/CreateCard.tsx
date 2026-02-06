@@ -483,9 +483,15 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
       <main className={styles.main}>
         <div className={styles.formRow}>
           <label className={styles.formLabel}>Колода</label>
-          <Select value={String(deckId ?? '')} onValueChange={setDeckId} disabled={decks.length === 0}>
+          <Select
+            value={String(deckId ?? '')}
+            onValueChange={setDeckId}
+            disabled={decks.length === 0}
+          >
             <SelectTrigger className={styles.input}>
-              <SelectValue placeholder={decks.length === 0 ? 'Нет доступных колод' : 'Выбери колоду'} />
+              <SelectValue
+                placeholder={decks.length === 0 ? 'Нет доступных колод' : 'Выбери колоду'}
+              />
             </SelectTrigger>
             <SelectContent>
               {decks.length === 0 ? (

@@ -109,7 +109,9 @@ export function EditCardView(props: Props) {
               disabled={decks.length === 0 || saving}
             >
               <SelectTrigger className={styles.input}>
-                <SelectValue placeholder={decks.length === 0 ? 'Нет доступных колод' : 'Выбери колоду'} />
+                <SelectValue
+                  placeholder={decks.length === 0 ? 'Нет доступных колод' : 'Выбери колоду'}
+                />
               </SelectTrigger>
               <SelectContent>
                 {decks.length === 0 ? (
@@ -446,7 +448,9 @@ export function EditCardView(props: Props) {
                         <div className={styles.mt3}>
                           <label className={styles.formLabel}>Правильный вариант</label>
                           <Select
-                            value={active.correctOptionId ? String(active.correctOptionId) : NONE_VALUE}
+                            value={
+                              active.correctOptionId ? String(active.correctOptionId) : NONE_VALUE
+                            }
                             onValueChange={v =>
                               patchLevel(activeLevel, {
                                 correctOptionId: v === NONE_VALUE ? '' : String(v),
