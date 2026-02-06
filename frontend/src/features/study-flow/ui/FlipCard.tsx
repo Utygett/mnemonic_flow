@@ -99,13 +99,7 @@ export function FlipCard({
                         e.stopPropagation()
                         setViewer({ src: url, alt: `Question image ${index + 1}` })
                       }}
-                      style={{
-                        padding: 0,
-                        border: 'none',
-                        background: 'transparent',
-                        cursor: 'zoom-in',
-                        width: '100%',
-                      }}
+                      className={styles.cardImageButton}
                     >
                       <ImageWithFallback
                         src={url}
@@ -151,13 +145,7 @@ export function FlipCard({
                         e.stopPropagation()
                         setViewer({ src: url, alt: `Answer image ${index + 1}` })
                       }}
-                      style={{
-                        padding: 0,
-                        border: 'none',
-                        background: 'transparent',
-                        cursor: 'zoom-in',
-                        width: '100%',
-                      }}
+                      className={styles.cardImageButton}
                     >
                       <ImageWithFallback
                         src={url}
