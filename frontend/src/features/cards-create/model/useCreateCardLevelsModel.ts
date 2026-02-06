@@ -340,10 +340,7 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
 
           updated[index] = {
             ...lvl,
-            answerImageFiles: [
-              ...lvl.answerImageFiles,
-              { file, preview: reader.result as string },
-            ],
+            answerImageFiles: [...lvl.answerImageFiles, { file, preview: reader.result as string }],
           }
           return updated
         })
