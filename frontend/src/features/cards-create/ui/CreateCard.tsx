@@ -184,11 +184,34 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
               }
             }
           } else {
-            // Upload MCQ option images
+            // Upload MCQ question/answer images and option images
             for (let levelIndex = 0; levelIndex < cleanedLevelsMCQ.length; levelIndex++) {
               const level = levelsMCQ[levelIndex]
               if (!level) continue
 
+              // Upload question images
+              for (const img of level.questionImageFiles ?? []) {
+                setUploadProgress(`Загрузка изображений вопроса для уровня ${levelIndex + 1}...`)
+                const formData = new FormData()
+                formData.append('file', img.file)
+                await apiRequest(`/cards/${cardId}/levels/${levelIndex}/question-image`, {
+                  method: 'POST',
+                  body: formData,
+                })
+              }
+
+              // Upload answer images (back side)
+              for (const img of level.answerImageFiles ?? []) {
+                setUploadProgress(`Загрузка изображений ответа для уровня ${levelIndex + 1}...`)
+                const formData = new FormData()
+                formData.append('file', img.file)
+                await apiRequest(`/cards/${cardId}/levels/${levelIndex}/answer-image`, {
+                  method: 'POST',
+                  body: formData,
+                })
+              }
+
+              // Upload option images
               for (const option of level.options || []) {
                 if (option.imageFile) {
                   setUploadProgress(`Загрузка изображения для варианта...`)
@@ -787,6 +810,42 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
                   onTogglePreview={() => setMcqQPreview(!mcqQPreview)}
                 />
 
+                {/* MCQ Question Image Upload */}
+                <div className={styles.inlineImageUpload}>
+                  <div className={styles.imagesList}>
+                    {activeMCQ?.questionImageFiles?.map((img, idx) => (
+                      <div key={idx} className={styles.imagePreviewSmall}>
+                        <img
+                          src={img.preview}
+                          alt={`MCQ question image ${idx + 1}`}
+                          className={styles.previewImgSmall}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeLevelQuestionImage(activeLevel, idx)}
+                          className={styles.removeImageButton}
+                          disabled={saveBusy}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {activeMCQ?.questionImageFiles?.length < 10 && (
+                    <label className={styles.inlineUploadButton}>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleQuestionImageSelect}
+                        disabled={saveBusy}
+                        style={{ display: 'none' }}
+                      />
+                      <ImageIcon size={18} />
+                      <span>Добавить изображение</span>
+                    </label>
+                  )}
+                </div>
+
                 <div className={styles.formRow} style={{ marginTop: '1rem' }}>
                   <label className={styles.formLabel}>Таймер (сек) — опционально</label>
                   <input
@@ -925,6 +984,42 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
                   onTogglePreview={() => setMcqExplanationPreview(!mcqExplanationPreview)}
                   className={styles.mt4}
                 />
+
+                {/* MCQ Answer (back side) Image Upload */}
+                <div className={styles.inlineImageUpload}>
+                  <div className={styles.imagesList}>
+                    {activeMCQ?.answerImageFiles?.map((img, idx) => (
+                      <div key={idx} className={styles.imagePreviewSmall}>
+                        <img
+                          src={img.preview}
+                          alt={`MCQ answer image ${idx + 1}`}
+                          className={styles.previewImgSmall}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeLevelAnswerImage(activeLevel, idx)}
+                          className={styles.removeImageButton}
+                          disabled={saveBusy}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {activeMCQ?.answerImageFiles?.length < 10 && (
+                    <label className={styles.inlineUploadButton}>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleAnswerImageSelect}
+                        disabled={saveBusy}
+                        style={{ display: 'none' }}
+                      />
+                      <ImageIcon size={18} />
+                      <span>Добавить изображение</span>
+                    </label>
+                  )}
+                </div>
               </>
             )}
           </div>

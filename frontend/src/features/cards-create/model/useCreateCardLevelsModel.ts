@@ -1,3 +1,4 @@
+// src\features\cards-create\model\useCreateCardLevelsModel.ts
 import { useEffect, useMemo, useState } from 'react'
 
 export type CardType = 'flashcard' | 'multiple_choice'
@@ -34,6 +35,8 @@ export type LevelMCQ = {
   options: McqOption[]
   correctOptionId: string
   explanation?: string
+  questionImageFiles: ImageFile[]
+  answerImageFiles: ImageFile[]
   timerSec?: number
 }
 
@@ -52,6 +55,8 @@ function makeDefaultMcqLevel(): LevelMCQ {
     ],
     correctOptionId: a,
     explanation: '',
+    questionImageFiles: [],
+    answerImageFiles: [],
     timerSec: undefined,
   }
 }
@@ -257,7 +262,25 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
 
     const reader = new FileReader()
     reader.onloadend = () => {
-      setLevelsQA(current => {
+      if (cardType === 'flashcard') {
+        setLevelsQA(current => {
+          const updated = [...current]
+          const lvl = updated[index]
+          if (!lvl) return current
+
+          updated[index] = {
+            ...lvl,
+            questionImageFiles: [
+              ...lvl.questionImageFiles,
+              { file, preview: reader.result as string },
+            ],
+          }
+          return updated
+        })
+        return
+      }
+
+      setLevelsMCQ(current => {
         const updated = [...current]
         const lvl = updated[index]
         if (!lvl) return current
@@ -265,7 +288,7 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
         updated[index] = {
           ...lvl,
           questionImageFiles: [
-            ...lvl.questionImageFiles,
+            ...(lvl.questionImageFiles ?? []),
             { file, preview: reader.result as string },
           ],
         }
@@ -276,14 +299,29 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
   }
 
   const removeLevelQuestionImage = (index: number, imageIndex: number) => {
-    setLevelsQA(current => {
+    if (cardType === 'flashcard') {
+      setLevelsQA(current => {
+        const updated = [...current]
+        const lvl = updated[index]
+        if (!lvl) return current
+
+        updated[index] = {
+          ...lvl,
+          questionImageFiles: lvl.questionImageFiles.filter((_, i) => i !== imageIndex),
+        }
+        return updated
+      })
+      return
+    }
+
+    setLevelsMCQ(current => {
       const updated = [...current]
       const lvl = updated[index]
       if (!lvl) return current
 
       updated[index] = {
         ...lvl,
-        questionImageFiles: lvl.questionImageFiles.filter((_, i) => i !== imageIndex),
+        questionImageFiles: (lvl.questionImageFiles ?? []).filter((_, i) => i !== imageIndex),
       }
       return updated
     })
@@ -294,14 +332,35 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
 
     const reader = new FileReader()
     reader.onloadend = () => {
-      setLevelsQA(current => {
+      if (cardType === 'flashcard') {
+        setLevelsQA(current => {
+          const updated = [...current]
+          const lvl = updated[index]
+          if (!lvl) return current
+
+          updated[index] = {
+            ...lvl,
+            answerImageFiles: [
+              ...lvl.answerImageFiles,
+              { file, preview: reader.result as string },
+            ],
+          }
+          return updated
+        })
+        return
+      }
+
+      setLevelsMCQ(current => {
         const updated = [...current]
         const lvl = updated[index]
         if (!lvl) return current
 
         updated[index] = {
           ...lvl,
-          answerImageFiles: [...lvl.answerImageFiles, { file, preview: reader.result as string }],
+          answerImageFiles: [
+            ...(lvl.answerImageFiles ?? []),
+            { file, preview: reader.result as string },
+          ],
         }
         return updated
       })
@@ -310,14 +369,29 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
   }
 
   const removeLevelAnswerImage = (index: number, imageIndex: number) => {
-    setLevelsQA(current => {
+    if (cardType === 'flashcard') {
+      setLevelsQA(current => {
+        const updated = [...current]
+        const lvl = updated[index]
+        if (!lvl) return current
+
+        updated[index] = {
+          ...lvl,
+          answerImageFiles: lvl.answerImageFiles.filter((_, i) => i !== imageIndex),
+        }
+        return updated
+      })
+      return
+    }
+
+    setLevelsMCQ(current => {
       const updated = [...current]
       const lvl = updated[index]
       if (!lvl) return current
 
       updated[index] = {
         ...lvl,
-        answerImageFiles: lvl.answerImageFiles.filter((_, i) => i !== imageIndex),
+        answerImageFiles: (lvl.answerImageFiles ?? []).filter((_, i) => i !== imageIndex),
       }
       return updated
     })
