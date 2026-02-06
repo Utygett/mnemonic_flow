@@ -10,9 +10,9 @@ from sqlalchemy.orm import Session
 from app.auth.dependencies import get_current_user_id
 from app.db.session import SessionLocal
 from app.models.card import Card
-from app.models.card_review_history import CardReviewHistory
 from app.models.card_level import CardLevel
 from app.models.card_progress import CardProgress
+from app.models.card_review_history import CardReviewHistory
 from app.models.deck import Deck
 from app.models.user_learning_settings import UserLearningSettings
 from app.models.user_study_group import UserStudyGroup
@@ -583,7 +583,7 @@ def get_study_cards(
                 # История оценок для карточки (ограничим последние 50 записей)
                 "reviewHistory": [
                     {
-                        "rating": (h.rating.value if hasattr(h.rating, "value") else str(h.rating)),
+                        "rating": h.rating.value if hasattr(h.rating, "value") else str(h.rating),
                         "reviewedAt": h.reviewed_at.isoformat(),
                     }
                     for h in history_by_card.get(c.id, [])[-50:]
