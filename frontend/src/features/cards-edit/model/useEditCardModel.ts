@@ -3,8 +3,15 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/app/providers/auth/AuthContext'
 import { getErrorMessage } from '@/shared/lib/errors/getErrorMessage'
 
-import type { Props, CardSummary, LevelDraft } from './types'
+import type {
+  Props,
+  CardSummary,
+  LevelDraft,
+  CardsEditMode,
+  CardSavedPayload,
+} from './types'
 import type { ApiLevelIn } from '@/entities/card'
+import type { PublicDeckSummary } from '@/entities/deck'
 
 import { isMcqType } from '../lib/cardType'
 import { moveItem } from '../lib/array'
@@ -26,8 +33,11 @@ import {
 } from '../api/cardsEditApi'
 
 export type EditCardViewModel = {
+  // ui mode
+  mode: CardsEditMode
+
   // data
-  decks: Props['decks']
+  decks: PublicDeckSummary[]
   deckId: string
   setDeckId: (v: string) => void
 
@@ -80,18 +90,45 @@ export type EditCardViewModel = {
 }
 
 export function useEditCardModel(props: Props): EditCardViewModel {
-  const { decks, onDone, onEditDeck } = props
+  const {
+    onDone,
+    onEditDeck,
+    onSaved,
+    initialDeckId = '',
+    initialCardId = '',
+    mode: modeProp,
+  } = props
+
+  const mode: CardsEditMode = modeProp ?? 'full'
+  const isSessionMode = mode === 'session'
+
+  const decks = useMemo(() => props.decks ?? [], [props.decks])
+
   const { currentUser } = useAuth()
 
-  const defaultDeckId = useMemo(() => decks?.[0]?.deck_id ?? '', [decks])
-  const [deckId, setDeckId] = useState(defaultDeckId)
+  const defaultDeckId = useMemo(() => {
+    if (initialDeckId) return initialDeckId
+    return decks?.[0]?.deck_id ?? ''
+  }, [decks, initialDeckId])
+
+  const [deckId, setDeckIdRaw] = useState(defaultDeckId)
+
+  const setDeckId = (v: string) => {
+    if (isSessionMode) return
+    setDeckIdRaw(v)
+  }
 
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [errorText, setErrorText] = useState<string | null>(null)
 
   const [cards, setCards] = useState<CardSummary[]>([])
-  const [selectedCardId, setSelectedCardId] = useState<string>('')
+  const [selectedCardId, setSelectedCardIdRaw] = useState<string>(initialCardId || '')
+
+  const setSelectedCardId = (v: string) => {
+    if (isSessionMode) return
+    setSelectedCardIdRaw(v)
+  }
 
   const selectedCard = useMemo(
     () => cards.find(c => c.card_id === selectedCardId) || null,
@@ -105,10 +142,18 @@ export function useEditCardModel(props: Props): EditCardViewModel {
   const [qPreview, setQPreview] = useState(false)
   const [aPreview, setAPreview] = useState(false)
 
-  // decks могли прийти позже
+  // decks могли прийти позже (в обычном режиме)
   useEffect(() => {
-    if (!deckId && defaultDeckId) setDeckId(defaultDeckId)
-  }, [deckId, defaultDeckId])
+    if (isSessionMode) return
+    if (!deckId && defaultDeckId) setDeckIdRaw(defaultDeckId)
+  }, [deckId, defaultDeckId, isSessionMode])
+
+  // In session mode keep deckId locked to initialDeckId
+  useEffect(() => {
+    if (!isSessionMode) return
+    if (!initialDeckId) return
+    if (deckId !== initialDeckId) setDeckIdRaw(initialDeckId)
+  }, [deckId, initialDeckId, isSessionMode])
 
   // load cards for deck
   useEffect(() => {
@@ -118,19 +163,27 @@ export function useEditCardModel(props: Props): EditCardViewModel {
       setErrorText(null)
       try {
         const deck = await loadDeckWithCards(deckId)
-        setCards(deck.cards as any)
-        setSelectedCardId('')
+        const deckCards = (deck.cards as any) as CardSummary[]
+        setCards(deckCards)
+
+        if (isSessionMode && initialCardId) {
+          const exists = deckCards.some(c => String(c.card_id) === String(initialCardId))
+          setSelectedCardIdRaw(exists ? String(initialCardId) : '')
+        } else {
+          setSelectedCardIdRaw('')
+        }
+
         setLevels([defaultQaLevel()])
         setActiveLevel(0)
       } catch (e: unknown) {
         setErrorText(getErrorMessage(e) || 'Ошибка загрузки карточек')
         setCards([])
-        setSelectedCardId('')
+        setSelectedCardIdRaw('')
       } finally {
         setLoading(false)
       }
     })()
-  }, [deckId])
+  }, [deckId, isSessionMode, initialCardId])
 
   // fill levels when selecting a card
   useEffect(() => {
@@ -282,10 +335,10 @@ export function useEditCardModel(props: Props): EditCardViewModel {
       return {
         level_index,
         content,
-        question_image_urls: lvl.question_image_urls,
-        answer_image_urls: lvl.answer_image_urls,
-        question_audio_urls: lvl.question_audio_urls,
-        answer_audio_urls: lvl.answer_audio_urls,
+        question_image_urls: (lvl as any).question_image_urls,
+        answer_image_urls: (lvl as any).answer_image_urls,
+        question_audio_urls: (lvl as any).question_audio_urls,
+        answer_audio_urls: (lvl as any).answer_audio_urls,
       }
     })
   }
@@ -307,6 +360,15 @@ export function useEditCardModel(props: Props): EditCardViewModel {
 
       setCards(prev => prev.map(c => (c.card_id === selectedCardId ? { ...c, title: t } : c)))
 
+      const payload: CardSavedPayload = {
+        cardId: selectedCardId,
+        deckId,
+        title: t,
+        type: selectedCard?.type ?? '',
+        levels: apiLevels,
+      }
+      onSaved?.(payload)
+
       // Call onDone after successful save
       onDone()
     } catch (e: any) {
@@ -327,6 +389,7 @@ export function useEditCardModel(props: Props): EditCardViewModel {
   }
 
   const deleteSelectedCard = async () => {
+    if (isSessionMode) return
     if (!selectedCard) return
     if (!window.confirm('Удалить карточку?')) return
 
@@ -336,7 +399,7 @@ export function useEditCardModel(props: Props): EditCardViewModel {
       await deleteCard(selectedCard.card_id)
 
       setCards(prev => prev.filter(c => c.card_id !== selectedCard.card_id))
-      setSelectedCardId('')
+      setSelectedCardIdRaw('')
       setLevels([defaultQaLevel()])
       setActiveLevel(0)
     } catch (e: any) {
@@ -347,6 +410,7 @@ export function useEditCardModel(props: Props): EditCardViewModel {
   }
 
   const deleteCurrentDeck = async () => {
+    if (isSessionMode) return
     if (!deckId) return
     if (!window.confirm('Удалить колоду и все её карточки?')) return
 
@@ -356,7 +420,7 @@ export function useEditCardModel(props: Props): EditCardViewModel {
       await deleteDeck(deckId)
 
       setCards([])
-      setSelectedCardId('')
+      setSelectedCardIdRaw('')
       setLevels([defaultQaLevel()])
       setActiveLevel(0)
 
@@ -374,6 +438,8 @@ export function useEditCardModel(props: Props): EditCardViewModel {
   }, [decks, deckId, currentUser])
 
   return {
+    mode,
+
     decks,
     deckId,
     setDeckId,

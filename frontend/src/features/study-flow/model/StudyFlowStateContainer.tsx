@@ -1,6 +1,6 @@
 import React from 'react'
 
-import type { DifficultyRating, StudyCard, StudyMode, CardReviewInput } from '@/entities/card'
+import type { DifficultyRating, StudyCard, StudyMode, CardReviewInput, ApiLevelIn } from '@/entities/card'
 import { deleteCardProgress, levelDown, levelUp } from '@/entities/card'
 
 import type { PersistedSession } from '@/shared/lib/utils/session-store'
@@ -10,6 +10,8 @@ import { useStudySession } from './hooks/useStudySession'
 import { useResumeCandidate } from './hooks/useResumeCandidate'
 import { useStudyLauncher } from './hooks/useStudyLauncher'
 import { StudyFlowView } from '../ui/StudyFlowView'
+
+import type { CardSavedPayload } from '@/features/cards-edit/model/types'
 
 export type StudyController = {
   resumeCandidate: PersistedSession | null
@@ -240,6 +242,37 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
     onExitToHome()
   }
 
+  const handleCardSaved = (payload: CardSavedPayload) => {
+    const toCardLevels = (levels: ApiLevelIn[]): any[] =>
+      levels.map(l => ({
+        levelindex: l.level_index,
+        content: l.content as any,
+        questionImageUrls: l.question_image_urls,
+        answerImageUrls: l.answer_image_urls,
+        questionAudioUrls: l.question_audio_urls,
+        answerAudioUrls: l.answer_audio_urls,
+      }))
+
+    const nextLevels = toCardLevels(payload.levels)
+
+    setDeckCards(prev =>
+      prev.map(c => {
+        if (c.id !== payload.cardId) return c
+
+        const nextActiveLevel =
+          nextLevels.length > 0 ? Math.min(c.activeLevel, nextLevels.length - 1) : 0
+
+        return {
+          ...c,
+          title: payload.title,
+          type: payload.type || c.type,
+          levels: nextLevels as any,
+          activeLevel: nextActiveLevel,
+        }
+      })
+    )
+  }
+
   const sessionStats: SessionStats = {
     startedAtMs: sessionStartedAtMs,
     finishedAtMs: sessionFinishedAtMs,
@@ -266,6 +299,7 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
           onClose={handleCloseStudy}
           onBackToHome={handleBackToHome}
           sessionStats={sessionStats}
+          onCardSaved={handleCardSaved}
         />
       ) : (
         children({

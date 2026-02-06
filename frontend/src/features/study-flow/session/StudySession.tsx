@@ -3,7 +3,8 @@ import React, { useEffect, useRef, useState } from 'react'
 import { isMultipleChoice } from '../model/studyCardTypes'
 import { StudyCard } from '../model/studyCardTypes'
 
-import type { CardReviewInput, DifficultyRating } from '@/entities/card'
+import type { CardReviewInput, DifficultyRating, ApiLevelIn } from '@/entities/card'
+import type { CardSavedPayload } from '@/features/cards-edit/model/types'
 
 import { FlipCard } from '../ui/FlipCard'
 import { RatingButton } from '../ui/RatingButton'
@@ -12,7 +13,9 @@ import { Button } from '@/shared/ui/Button/Button'
 import { ProgressBar } from '@/shared/ui/ProgressBar'
 import { MarkdownView } from '@/shared/ui/MarkdownView'
 
-import { X, SkipForward, Trash2 } from 'lucide-react'
+import { X, SkipForward, Trash2, Pencil } from 'lucide-react'
+
+import { EditCardModal } from '@/features/cards-edit/ui/EditCardModal'
 
 import styles from './StudySession.module.css'
 
@@ -33,6 +36,7 @@ export function StudySession({
   onLevelDown,
   onSkip,
   onRemoveFromProgress,
+  onCardSaved,
 }: {
   cards: StudyCard[]
   currentIndex: number
@@ -42,10 +46,12 @@ export function StudySession({
   onLevelDown: () => void
   onSkip: () => void
   onRemoveFromProgress: () => void
+  onCardSaved?: (payload: CardSavedPayload) => void
 }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)
   const [timeLeftMs, setTimeLeftMs] = useState<number | null>(null)
+  const [isEditOpen, setIsEditOpen] = useState(false)
 
   const currentCard = cards[currentIndex]
 
@@ -289,92 +295,113 @@ export function StudySession({
   }
 
   return (
-    <div className={styles.studyPage}>
-      <div className={`${styles.pageHeader} ${styles.headerPadding}`}>
-        <div className={styles.pageHeaderInner}>
-          <div
-            className={`${styles.row} ${styles.rowSpaceBetween} ${styles.rowCentered} ${styles.marginBottom}`}
-          >
-            <button
-              onClick={onClose}
-              className={styles.iconBtn}
-              aria-label="Закрыть сессию"
-              type="button"
+    <>
+      <div className={styles.studyPage}>
+        <div className={`${styles.pageHeader} ${styles.headerPadding}`}>
+          <div className={styles.pageHeaderInner}>
+            <div
+              className={`${styles.row} ${styles.rowSpaceBetween} ${styles.rowCentered} ${styles.marginBottom}`}
             >
-              <X size={18} />
-            </button>
-
-            <span className={`${styles.textSmall} ${styles.textMuted}`}>
-              {currentIndex + 1} / {cards.length}
-            </span>
-
-            <div className={`${styles.row} ${styles.rowCentered}`} style={{ columnGap: 32 }}>
               <button
-                onClick={handleSkip}
+                onClick={onClose}
                 className={styles.iconBtn}
-                aria-label="Пропустить карточку"
+                aria-label="Закрыть сессию"
                 type="button"
               >
-                <SkipForward size={18} />
+                <X size={18} />
               </button>
 
-              <button
-                onClick={handleRemoveFromProgress}
-                className={styles.iconBtn}
-                aria-label="Удалить прогресс карточки"
-                type="button"
-              >
-                <Trash2 size={18} />
-              </button>
+              <span className={`${styles.textSmall} ${styles.textMuted}`}>
+                {currentIndex + 1} / {cards.length}
+              </span>
+
+              <div className={`${styles.row} ${styles.rowCentered}`} style={{ columnGap: 32 }}>
+                <button
+                  onClick={() => setIsEditOpen(true)}
+                  className={styles.iconBtn}
+                  aria-label="Редактировать карточку"
+                  type="button"
+                >
+                  <Pencil size={18} />
+                </button>
+
+                <button
+                  onClick={handleSkip}
+                  className={styles.iconBtn}
+                  aria-label="Пропустить карточку"
+                  type="button"
+                >
+                  <SkipForward size={18} />
+                </button>
+
+                <button
+                  onClick={handleRemoveFromProgress}
+                  className={styles.iconBtn}
+                  aria-label="Удалить прогресс карточки"
+                  type="button"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
             </div>
-          </div>
 
-          <ProgressBar progress={progress} color="#FF9A76" />
+            <ProgressBar progress={progress} color="#FF9A76" />
+          </div>
+        </div>
+
+        <div className={styles.studyCardArea}>
+          {isMultipleChoice(currentCard) ? (
+            <FlipCard
+              card={currentCard}
+              isFlipped={isFlipped}
+              onFlip={() => {
+                if (!isFlipped && !revealedAtRef.current) revealedAtRef.current = nowIso()
+                setIsFlipped(v => !v)
+              }}
+              disableFlipOnClick
+              onLevelUp={onLevelUp}
+              onLevelDown={onLevelDown}
+              frontContent={renderMcqFront()}
+              backContent={renderMcqBack()}
+            />
+          ) : (
+            <FlipCard
+              card={currentCard}
+              isFlipped={isFlipped}
+              onFlip={handleFlip}
+              onLevelUp={onLevelUp}
+              onLevelDown={onLevelDown}
+            />
+          )}
+        </div>
+
+        <div className={styles.studyActions}>
+          {!isFlipped ? (
+            <Button onClick={handleFlip} variant="primary" size="large" fullWidth>
+              Показать ответ
+            </Button>
+          ) : (
+            <div className={styles.studyActionsInner}>
+              <div className={styles.ratingRow}>
+                <RatingButton rating="again" label="Снова" onClick={() => submitReview('again')} />
+                <RatingButton rating="hard" label="Трудно" onClick={() => submitReview('hard')} />
+                <RatingButton rating="good" label="Хорошо" onClick={() => submitReview('good')} />
+                <RatingButton rating="easy" label="Легко" onClick={() => submitReview('easy')} />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className={styles.studyCardArea}>
-        {isMultipleChoice(currentCard) ? (
-          <FlipCard
-            card={currentCard}
-            isFlipped={isFlipped}
-            onFlip={() => {
-              if (!isFlipped && !revealedAtRef.current) revealedAtRef.current = nowIso()
-              setIsFlipped(v => !v)
-            }}
-            disableFlipOnClick
-            onLevelUp={onLevelUp}
-            onLevelDown={onLevelDown}
-            frontContent={renderMcqFront()}
-            backContent={renderMcqBack()}
-          />
-        ) : (
-          <FlipCard
-            card={currentCard}
-            isFlipped={isFlipped}
-            onFlip={handleFlip}
-            onLevelUp={onLevelUp}
-            onLevelDown={onLevelDown}
-          />
-        )}
-      </div>
-
-      <div className={styles.studyActions}>
-        {!isFlipped ? (
-          <Button onClick={handleFlip} variant="primary" size="large" fullWidth>
-            Показать ответ
-          </Button>
-        ) : (
-          <div className={styles.studyActionsInner}>
-            <div className={styles.ratingRow}>
-              <RatingButton rating="again" label="Снова" onClick={() => submitReview('again')} />
-              <RatingButton rating="hard" label="Трудно" onClick={() => submitReview('hard')} />
-              <RatingButton rating="good" label="Хорошо" onClick={() => submitReview('good')} />
-              <RatingButton rating="easy" label="Легко" onClick={() => submitReview('easy')} />
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+      <EditCardModal
+        isOpen={isEditOpen}
+        deckId={currentCard.deckId}
+        cardId={currentCard.id}
+        onClose={() => setIsEditOpen(false)}
+        onSaved={payload => {
+          onCardSaved?.(payload)
+        }}
+      />
+    </>
   )
 }
