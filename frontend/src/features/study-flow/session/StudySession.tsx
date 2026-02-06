@@ -358,7 +358,7 @@ export function StudySession({
                 if (!isFlipped && !revealedAtRef.current) revealedAtRef.current = nowIso()
                 setIsFlipped(v => !v)
               }}
-              disableFlipOnClick
+              disableFlipOnClick={!revealedAtRef.current}
               onLevelUp={onLevelUp}
               onLevelDown={onLevelDown}
               frontContent={renderMcqFront()}
