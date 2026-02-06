@@ -1,6 +1,6 @@
 /*
   Local styles for Radix Select wrapper.
-  Kept aligned with project tokens: --surface / --surface-2 / --text / --muted / --border / --primary.
+  Kept aligned with project tokens: --surface / --surface-2 / --bg / --text / --muted / --border / --primary.
 */
 
 [data-slot="select-trigger"].trigger {
@@ -46,12 +46,12 @@
 [data-slot="select-content"].content {
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
-  background: var(--surface);
+  background: var(--bg);
   color: var(--text);
 
   box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.35),
-    0 2px 6px rgba(0, 0, 0, 0.25);
+    0 12px 28px rgba(0, 0, 0, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.35);
 
   overflow: hidden;
 }
@@ -127,6 +127,6 @@
   align-items: center;
   justify-content: center;
   height: 28px;
-  background: var(--surface);
+  background: var(--bg);
   color: var(--muted);
 }

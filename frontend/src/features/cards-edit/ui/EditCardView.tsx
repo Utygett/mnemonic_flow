@@ -22,6 +22,8 @@ type Props = EditCardViewModel & {
   onCancel: () => void
 }
 
+const NONE_VALUE = '__none__'
+
 export function EditCardView(props: Props) {
   const {
     decks,
@@ -444,9 +446,11 @@ export function EditCardView(props: Props) {
                         <div className={styles.mt3}>
                           <label className={styles.formLabel}>Правильный вариант</label>
                           <Select
-                            value={String(active.correctOptionId ?? '')}
+                            value={active.correctOptionId ? String(active.correctOptionId) : NONE_VALUE}
                             onValueChange={v =>
-                              patchLevel(activeLevel, { correctOptionId: String(v) } as any)
+                              patchLevel(activeLevel, {
+                                correctOptionId: v === NONE_VALUE ? '' : String(v),
+                              } as any)
                             }
                             disabled={saving}
                           >
@@ -454,7 +458,7 @@ export function EditCardView(props: Props) {
                               <SelectValue placeholder="— выбери —" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">— выбери —</SelectItem>
+                              <SelectItem value={NONE_VALUE}>— выбери —</SelectItem>
                               {active.options.map(o => (
                                 <SelectItem key={o.id} value={String(o.id)}>
                                   {o.text || o.id}

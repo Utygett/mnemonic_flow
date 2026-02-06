@@ -9,6 +9,13 @@ import { useCreateCardModel } from '../model/useCreateCardModel'
 import { useCreateCardLevelsModel } from '../model/useCreateCardLevelsModel'
 import type { CardType, CreateCardProps } from '../model/types'
 import { apiRequest } from '@/shared/api'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/ui/kit/select'
 
 import styles from './CreateCard.module.css'
 
@@ -476,34 +483,37 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
       <main className={styles.main}>
         <div className={styles.formRow}>
           <label className={styles.formLabel}>Колода</label>
-          <select
-            value={deckId}
-            onChange={e => setDeckId(e.target.value)}
-            className={styles.input}
-            disabled={decks.length === 0}
-          >
-            {decks.length === 0 ? (
-              <option value="">Нет доступных колод</option>
-            ) : (
-              decks.map(d => (
-                <option key={d.deck_id} value={d.deck_id}>
-                  {d.title}
-                </option>
-              ))
-            )}
-          </select>
+          <Select value={String(deckId ?? '')} onValueChange={setDeckId} disabled={decks.length === 0}>
+            <SelectTrigger className={styles.input}>
+              <SelectValue placeholder={decks.length === 0 ? 'Нет доступных колод' : 'Выбери колоду'} />
+            </SelectTrigger>
+            <SelectContent>
+              {decks.length === 0 ? (
+                <SelectItem value="__empty" disabled>
+                  Нет доступных колод
+                </SelectItem>
+              ) : (
+                decks.map(d => (
+                  <SelectItem key={d.deck_id} value={String(d.deck_id)}>
+                    {d.title}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className={styles.formRow}>
           <label className={styles.formLabel}>Тип карточки</label>
-          <select
-            value={cardType}
-            onChange={e => setCardType(e.target.value as CardType)}
-            className={styles.input}
-          >
-            <option value="flashcard">Flashcard</option>
-            <option value="multiple_choice">Multiple choice</option>
-          </select>
+          <Select value={String(cardType)} onValueChange={v => setCardType(v as CardType)}>
+            <SelectTrigger className={styles.input}>
+              <SelectValue placeholder="Выбери тип" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="flashcard">Flashcard</SelectItem>
+              <SelectItem value="multiple_choice">Multiple choice</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <Input
