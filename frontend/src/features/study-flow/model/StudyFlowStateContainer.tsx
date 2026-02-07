@@ -1,6 +1,12 @@
 import React from 'react'
 
-import type { DifficultyRating, StudyCard, StudyMode, CardReviewInput, ApiLevelIn } from '@/entities/card'
+import type {
+  DifficultyRating,
+  StudyCard,
+  StudyMode,
+  CardReviewInput,
+  ApiLevelIn,
+} from '@/entities/card'
 import { deleteCardProgress, levelDown, levelUp } from '@/entities/card'
 
 import type { PersistedSession } from '@/shared/lib/utils/session-store'

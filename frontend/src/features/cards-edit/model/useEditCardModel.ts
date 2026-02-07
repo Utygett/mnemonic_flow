@@ -3,13 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/app/providers/auth/AuthContext'
 import { getErrorMessage } from '@/shared/lib/errors/getErrorMessage'
 
-import type {
-  Props,
-  CardSummary,
-  LevelDraft,
-  CardsEditMode,
-  CardSavedPayload,
-} from './types'
+import type { Props, CardSummary, LevelDraft, CardsEditMode, CardSavedPayload } from './types'
 import type { ApiLevelIn } from '@/entities/card'
 import type { PublicDeckSummary } from '@/entities/deck'
 
@@ -163,7 +157,7 @@ export function useEditCardModel(props: Props): EditCardViewModel {
       setErrorText(null)
       try {
         const deck = await loadDeckWithCards(deckId)
-        const deckCards = (deck.cards as any) as CardSummary[]
+        const deckCards = deck.cards as any as CardSummary[]
         setCards(deckCards)
 
         if (isSessionMode && initialCardId) {
