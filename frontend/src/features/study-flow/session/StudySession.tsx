@@ -58,6 +58,8 @@ export function StudySession({
     Partial<Record<DifficultyRating, number>>
   >({})
 
+  const previewCacheRef = useRef(new Map<string, Partial<Record<DifficultyRating, number>>>())
+
   const currentCard = cards[currentIndex]
 
   const shownAtRef = useRef<string | null>(null)
@@ -127,6 +129,13 @@ export function StudySession({
   useEffect(() => {
     if (!isFlipped) return
 
+    const cacheKey = `${currentCard.id}:${currentCard.activeLevel}`
+    const cached = previewCacheRef.current.get(cacheKey)
+    if (cached) {
+      setRatingIntervals(cached)
+      return
+    }
+
     let cancelled = false
 
     const run = async () => {
@@ -140,6 +149,8 @@ export function StudySession({
           const sec = Number((it as any)?.intervalSeconds)
           if (rating && Number.isFinite(sec) && sec >= 0) m[rating] = sec
         }
+
+        previewCacheRef.current.set(cacheKey, m)
         setRatingIntervals(m)
       } catch {
         if (cancelled) return
@@ -152,7 +163,7 @@ export function StudySession({
     return () => {
       cancelled = true
     }
-  }, [isFlipped, currentCard.id])
+  }, [isFlipped, currentCard.id, currentCard.activeLevel])
 
   const level =
     (currentCard.levels as any[]).find(l => getLevelIndex(l) === currentCard.activeLevel) ??
