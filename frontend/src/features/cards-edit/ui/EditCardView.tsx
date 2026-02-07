@@ -117,9 +117,7 @@ export function EditCardView(props: Props) {
               >
                 <SelectTrigger className={styles.input}>
                   <SelectValue
-                    placeholder={
-                      decks.length === 0 ? 'Нет доступных колод' : 'Выбери колоду'
-                    }
+                    placeholder={decks.length === 0 ? 'Нет доступных колод' : 'Выбери колоду'}
                   />
                 </SelectTrigger>
                 <SelectContent>
