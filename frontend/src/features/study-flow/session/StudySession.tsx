@@ -18,6 +18,7 @@ import { X, SkipForward, Trash2, Pencil } from 'lucide-react'
 import { EditCardModal } from '@/features/cards-edit/ui/EditCardModal'
 
 import styles from './StudySession.module.css'
+import { MOCK_RATING_INTERVAL_SECONDS } from './lib/mockRatingIntervals'
 
 function getLevelIndex(l: any): number {
   return typeof l?.level_index === 'number' ? l.level_index : l?.levelindex
@@ -393,6 +394,82 @@ export function StudySession({
         </div>
       </div>
 
+                className={styles.iconBtn}
+                aria-label="Удалить прогресс карточки"
+                type="button"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
+          </div>
+
+          <ProgressBar progress={progress} color="#FF9A76" />
+        </div>
+      </div>
+
+      <div className={styles.studyCardArea}>
+        {isMultipleChoice(currentCard) ? (
+          <FlipCard
+            card={currentCard}
+            isFlipped={isFlipped}
+            onFlip={() => {
+              if (!isFlipped && !revealedAtRef.current) revealedAtRef.current = nowIso()
+              setIsFlipped(v => !v)
+            }}
+            disableFlipOnClick
+            onLevelUp={onLevelUp}
+            onLevelDown={onLevelDown}
+            frontContent={renderMcqFront()}
+            backContent={renderMcqBack()}
+          />
+        ) : (
+          <FlipCard
+            card={currentCard}
+            isFlipped={isFlipped}
+            onFlip={handleFlip}
+            onLevelUp={onLevelUp}
+            onLevelDown={onLevelDown}
+          />
+        )}
+      </div>
+
+      <div className={styles.studyActions}>
+        {!isFlipped ? (
+          <Button onClick={handleFlip} variant="primary" size="large" fullWidth>
+            Показать ответ
+          </Button>
+        ) : (
+          <div className={styles.studyActionsInner}>
+            <div className={styles.ratingRow}>
+              <RatingButton
+                rating="again"
+                label="Снова"
+                intervalSeconds={MOCK_RATING_INTERVAL_SECONDS.again}
+                onClick={() => submitReview('again')}
+              />
+              <RatingButton
+                rating="hard"
+                label="Трудно"
+                intervalSeconds={MOCK_RATING_INTERVAL_SECONDS.hard}
+                onClick={() => submitReview('hard')}
+              />
+              <RatingButton
+                rating="good"
+                label="Хорошо"
+                intervalSeconds={MOCK_RATING_INTERVAL_SECONDS.good}
+                onClick={() => submitReview('good')}
+              />
+              <RatingButton
+                rating="easy"
+                label="Легко"
+                intervalSeconds={MOCK_RATING_INTERVAL_SECONDS.easy}
+                onClick={() => submitReview('easy')}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
       <EditCardModal
         isOpen={isEditOpen}
         deckId={currentCard.deckId}
