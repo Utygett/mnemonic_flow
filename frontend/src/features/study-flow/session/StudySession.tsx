@@ -4,6 +4,7 @@ import { isMultipleChoice } from '../model/studyCardTypes'
 import { StudyCard } from '../model/studyCardTypes'
 
 import type { CardReviewInput, DifficultyRating } from '@/entities/card'
+import { getReviewPreview } from '@/entities/card'
 import type { CardSavedPayload } from '@/features/cards-edit/model/types'
 
 import { FlipCard } from '../ui/FlipCard'
@@ -18,7 +19,6 @@ import { X, SkipForward, Trash2, Pencil } from 'lucide-react'
 import { EditCardModal } from '@/features/cards-edit/ui/EditCardModal'
 
 import styles from './StudySession.module.css'
-import { MOCK_RATING_INTERVAL_SECONDS } from './lib/mockRatingIntervals'
 
 function getLevelIndex(l: any): number {
   return typeof l?.level_index === 'number' ? l.level_index : l?.levelindex
@@ -53,6 +53,10 @@ export function StudySession({
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)
   const [timeLeftMs, setTimeLeftMs] = useState<number | null>(null)
   const [isEditOpen, setIsEditOpen] = useState(false)
+
+  const [ratingIntervals, setRatingIntervals] = useState<
+    Partial<Record<DifficultyRating, number>>
+  >({})
 
   const currentCard = cards[currentIndex]
 
@@ -113,11 +117,42 @@ export function StudySession({
   useEffect(() => {
     setIsFlipped(false)
     setSelectedOptionId(null)
+    setRatingIntervals({})
 
     // reset timing for new card/level (and after card edit)
     shownAtRef.current = nowIso()
     revealedAtRef.current = null
   }, [currentCard?.id, currentCard?.activeLevel, currentCard?.levels])
+
+  useEffect(() => {
+    if (!isFlipped) return
+
+    let cancelled = false
+
+    const run = async () => {
+      try {
+        const items = await getReviewPreview(currentCard.id)
+        if (cancelled) return
+
+        const m: Partial<Record<DifficultyRating, number>> = {}
+        for (const it of items ?? []) {
+          const rating = String((it as any)?.rating) as DifficultyRating
+          const sec = Number((it as any)?.intervalSeconds)
+          if (rating && Number.isFinite(sec) && sec >= 0) m[rating] = sec
+        }
+        setRatingIntervals(m)
+      } catch {
+        if (cancelled) return
+        setRatingIntervals({})
+      }
+    }
+
+    run()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isFlipped, currentCard.id])
 
   const level =
     (currentCard.levels as any[]).find(l => getLevelIndex(l) === currentCard.activeLevel) ??
@@ -444,25 +479,25 @@ export function StudySession({
               <RatingButton
                 rating="again"
                 label="Снова"
-                intervalSeconds={MOCK_RATING_INTERVAL_SECONDS.again}
+                intervalSeconds={ratingIntervals.again}
                 onClick={() => submitReview('again')}
               />
               <RatingButton
                 rating="hard"
                 label="Трудно"
-                intervalSeconds={MOCK_RATING_INTERVAL_SECONDS.hard}
+                intervalSeconds={ratingIntervals.hard}
                 onClick={() => submitReview('hard')}
               />
               <RatingButton
                 rating="good"
                 label="Хорошо"
-                intervalSeconds={MOCK_RATING_INTERVAL_SECONDS.good}
+                intervalSeconds={ratingIntervals.good}
                 onClick={() => submitReview('good')}
               />
               <RatingButton
                 rating="easy"
                 label="Легко"
-                intervalSeconds={MOCK_RATING_INTERVAL_SECONDS.easy}
+                intervalSeconds={ratingIntervals.easy}
                 onClick={() => submitReview('easy')}
               />
             </div>

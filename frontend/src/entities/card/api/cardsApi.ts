@@ -11,6 +11,12 @@ import type {
   ApiCreateCardResponse,
 } from '../model/types'
 
+export type ReviewPreviewItem = {
+  rating: DifficultyRating
+  intervalSeconds: number
+  nextReview: string
+}
+
 export async function getStudyCards(
   deckId: string,
   params: { mode: StudyMode; limit?: number; seed?: number }
@@ -45,6 +51,10 @@ export async function reviewCardWithMeta(cardId: string, review: CardReviewInput
     method: 'POST',
     body: JSON.stringify(review),
   })
+}
+
+export async function getReviewPreview(cardId: string): Promise<ReviewPreviewItem[]> {
+  return apiRequest<ReviewPreviewItem[]>(`/cards/${cardId}/review_preview`)
 }
 
 export async function createCard(payload: ApiCreateCardRequest): Promise<ApiCreateCardResponse> {
