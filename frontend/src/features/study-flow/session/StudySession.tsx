@@ -54,9 +54,9 @@ export function StudySession({
   const [timeLeftMs, setTimeLeftMs] = useState<number | null>(null)
   const [isEditOpen, setIsEditOpen] = useState(false)
 
-  const [ratingIntervals, setRatingIntervals] = useState<
-    Partial<Record<DifficultyRating, number>>
-  >({})
+  const [ratingIntervals, setRatingIntervals] = useState<Partial<Record<DifficultyRating, number>>>(
+    {}
+  )
 
   const previewCacheRef = useRef(new Map<string, Partial<Record<DifficultyRating, number>>>())
 

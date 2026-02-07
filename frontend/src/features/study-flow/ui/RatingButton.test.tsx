@@ -10,9 +10,7 @@ describe('RatingButton', () => {
     })
 
     it('должен отображать интервал, если он передан', () => {
-      render(
-        <RatingButton rating="good" label="Хорошо" intervalSeconds={600} onClick={vi.fn()} />
-      )
+      render(<RatingButton rating="good" label="Хорошо" intervalSeconds={600} onClick={vi.fn()} />)
       expect(screen.getByText('через 10 мин')).toBeInTheDocument()
     })
 
