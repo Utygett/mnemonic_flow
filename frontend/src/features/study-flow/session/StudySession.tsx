@@ -92,7 +92,6 @@ export function StudySession({
   }
 
   const handleFlip = () => {
-    // mark reveal moment on first reveal
     if (!isFlipped && !revealedAtRef.current) {
       revealedAtRef.current = nowIso()
     }
@@ -121,7 +120,6 @@ export function StudySession({
     setSelectedOptionId(null)
     setRatingIntervals({})
 
-    // reset timing for new card/level (and after card edit)
     shownAtRef.current = nowIso()
     revealedAtRef.current = null
   }, [currentCard?.id, currentCard?.activeLevel, currentCard?.levels])
@@ -193,7 +191,6 @@ export function StudySession({
       if (left <= 0) {
         window.clearInterval(id)
         setTimeLeftMs(0)
-        // auto reveal
         if (!revealedAtRef.current) revealedAtRef.current = nowIso()
         setIsFlipped(true)
         return
@@ -405,7 +402,7 @@ export function StudySession({
                 if (!isFlipped && !revealedAtRef.current) revealedAtRef.current = nowIso()
                 setIsFlipped(v => !v)
               }}
-              disableFlipOnClick={!revealedAtRef.current}
+              disableFlipOnClick
               onLevelUp={onLevelUp}
               onLevelDown={onLevelDown}
               frontContent={renderMcqFront()}
@@ -430,92 +427,36 @@ export function StudySession({
           ) : (
             <div className={styles.studyActionsInner}>
               <div className={styles.ratingRow}>
-                <RatingButton rating="again" label="Снова" onClick={() => submitReview('again')} />
-                <RatingButton rating="hard" label="Трудно" onClick={() => submitReview('hard')} />
-                <RatingButton rating="good" label="Хорошо" onClick={() => submitReview('good')} />
-                <RatingButton rating="easy" label="Легко" onClick={() => submitReview('easy')} />
+                <RatingButton
+                  rating="again"
+                  label="Снова"
+                  intervalSeconds={ratingIntervals.again}
+                  onClick={() => submitReview('again')}
+                />
+                <RatingButton
+                  rating="hard"
+                  label="Трудно"
+                  intervalSeconds={ratingIntervals.hard}
+                  onClick={() => submitReview('hard')}
+                />
+                <RatingButton
+                  rating="good"
+                  label="Хорошо"
+                  intervalSeconds={ratingIntervals.good}
+                  onClick={() => submitReview('good')}
+                />
+                <RatingButton
+                  rating="easy"
+                  label="Легко"
+                  intervalSeconds={ratingIntervals.easy}
+                  onClick={() => submitReview('easy')}
+                />
               </div>
             </div>
           )}
         </div>
       </div>
 
-                className={styles.iconBtn}
-                aria-label="Удалить прогресс карточки"
-                type="button"
-              >
-                <Trash2 size={18} />
-              </button>
-            </div>
-          </div>
-
-          <ProgressBar progress={progress} color="#FF9A76" />
-        </div>
-      </div>
-
-      <div className={styles.studyCardArea}>
-        {isMultipleChoice(currentCard) ? (
-          <FlipCard
-            card={currentCard}
-            isFlipped={isFlipped}
-            onFlip={() => {
-              if (!isFlipped && !revealedAtRef.current) revealedAtRef.current = nowIso()
-              setIsFlipped(v => !v)
-            }}
-            disableFlipOnClick
-            onLevelUp={onLevelUp}
-            onLevelDown={onLevelDown}
-            frontContent={renderMcqFront()}
-            backContent={renderMcqBack()}
-          />
-        ) : (
-          <FlipCard
-            card={currentCard}
-            isFlipped={isFlipped}
-            onFlip={handleFlip}
-            onLevelUp={onLevelUp}
-            onLevelDown={onLevelDown}
-          />
-        )}
-      </div>
-
-      <div className={styles.studyActions}>
-        {!isFlipped ? (
-          <Button onClick={handleFlip} variant="primary" size="large" fullWidth>
-            Показать ответ
-          </Button>
-        ) : (
-          <div className={styles.studyActionsInner}>
-            <div className={styles.ratingRow}>
-              <RatingButton
-                rating="again"
-                label="Снова"
-                intervalSeconds={ratingIntervals.again}
-                onClick={() => submitReview('again')}
-              />
-              <RatingButton
-                rating="hard"
-                label="Трудно"
-                intervalSeconds={ratingIntervals.hard}
-                onClick={() => submitReview('hard')}
-              />
-              <RatingButton
-                rating="good"
-                label="Хорошо"
-                intervalSeconds={ratingIntervals.good}
-                onClick={() => submitReview('good')}
-              />
-              <RatingButton
-                rating="easy"
-                label="Легко"
-                intervalSeconds={ratingIntervals.easy}
-                onClick={() => submitReview('easy')}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
       <EditCardModal
         isOpen={isEditOpen}
         deckId={currentCard.deckId}
