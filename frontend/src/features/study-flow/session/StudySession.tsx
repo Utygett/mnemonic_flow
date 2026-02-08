@@ -20,6 +20,13 @@ import { EditCardModal } from '@/features/cards-edit/ui/EditCardModal'
 
 import styles from './StudySession.module.css'
 
+const ratingColorMap: Record<DifficultyRating, string> = {
+  again: '#ef4444',
+  hard: '#f97316',
+  good: '#22c55e',
+  easy: '#3b82f6',
+}
+
 function getLevelIndex(l: any): number {
   return typeof l?.level_index === 'number' ? l.level_index : l?.levelindex
 }
@@ -37,6 +44,7 @@ export function StudySession({
   onLevelDown,
   onSkip,
   onRemoveFromProgress,
+  ratingHistory = [],
   onCardSaved,
 }: {
   cards: StudyCard[]
@@ -47,6 +55,7 @@ export function StudySession({
   onLevelDown: () => void
   onSkip: () => void
   onRemoveFromProgress: () => void
+  ratingHistory?: DifficultyRating[]
   onCardSaved?: (payload: CardSavedPayload) => void
 }) {
   const [isFlipped, setIsFlipped] = useState(false)
@@ -388,6 +397,19 @@ export function StudySession({
                 </button>
               </div>
             </div>
+
+            {ratingHistory.length > 0 ? (
+              <div className={styles.historyRow}>
+                {ratingHistory.map((rating, index) => (
+                  <span
+                    key={`${index}-${rating}`}
+                    className={styles.historyDot}
+                    style={{ backgroundColor: ratingColorMap[rating] }}
+                    aria-hidden="true"
+                  />
+                ))}
+              </div>
+            ) : null}
 
             <ProgressBar progress={progress} color="#FF9A76" />
           </div>
