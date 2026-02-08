@@ -46,3 +46,11 @@ class ReviewResponse(BaseModel):
     stability: float
     difficulty: float
     next_review: datetime
+
+
+class ReviewPreviewItem(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    rating: ReviewRating
+    interval_seconds: int = Field(..., alias="intervalSeconds")
+    next_review: datetime = Field(..., alias="nextReview")

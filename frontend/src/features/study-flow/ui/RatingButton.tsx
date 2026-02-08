@@ -1,3 +1,5 @@
+import { formatInterval } from '@/shared/lib/formatInterval'
+
 export type DifficultyRating = 'again' | 'hard' | 'good' | 'easy'
 
 const ratingStyles: Record<
@@ -29,12 +31,17 @@ const ratingStyles: Record<
 export function RatingButton({
   rating,
   label,
+  intervalSeconds,
   onClick,
 }: {
   rating: DifficultyRating
   label: string
+  intervalSeconds?: number
   onClick: () => void
 }) {
+  const intervalText =
+    intervalSeconds === undefined ? undefined : `через ${formatInterval(intervalSeconds)}`
+
   return (
     <button
       type="button"
@@ -47,6 +54,7 @@ export function RatingButton({
         fontSize: '13px',
         fontWeight: 600,
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
@@ -61,7 +69,20 @@ export function RatingButton({
         e.currentTarget.style.transform = 'scale(1)'
       }}
     >
-      {label}
+      <span style={{ lineHeight: 1.1 }}>{label}</span>
+      {intervalText && (
+        <span
+          style={{
+            marginTop: '2px',
+            fontSize: '10px',
+            fontWeight: 500,
+            opacity: 0.9,
+            lineHeight: 1.1,
+          }}
+        >
+          {intervalText}
+        </span>
+      )}
     </button>
   )
 }

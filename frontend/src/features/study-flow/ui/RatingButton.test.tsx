@@ -9,6 +9,11 @@ describe('RatingButton', () => {
       expect(screen.getByText('Хорошо')).toBeInTheDocument()
     })
 
+    it('должен отображать интервал, если он передан', () => {
+      render(<RatingButton rating="good" label="Хорошо" intervalSeconds={600} onClick={vi.fn()} />)
+      expect(screen.getByText('через 10 мин')).toBeInTheDocument()
+    })
+
     it('должен иметь правильный цвет для "again" (красный)', () => {
       const { container } = render(<RatingButton rating="again" label="Снова" onClick={vi.fn()} />)
       const button = container.querySelector('button') as HTMLButtonElement

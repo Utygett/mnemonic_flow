@@ -25,6 +25,7 @@ export {
   getReviewSession,
   reviewCard,
   reviewCardWithMeta,
+  getReviewPreview,
   createCard,
   deleteCard,
   replaceCardLevels,
@@ -32,3 +33,5 @@ export {
   levelDown,
   deleteCardProgress,
 } from './api/cardsApi'
+
+export type { ReviewPreviewItem } from './api/cardsApi'

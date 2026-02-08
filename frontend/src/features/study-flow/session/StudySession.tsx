@@ -4,6 +4,7 @@ import { isMultipleChoice } from '../model/studyCardTypes'
 import { StudyCard } from '../model/studyCardTypes'
 
 import type { CardReviewInput, DifficultyRating } from '@/entities/card'
+import { getReviewPreview } from '@/entities/card'
 import type { CardSavedPayload } from '@/features/cards-edit/model/types'
 
 import { FlipCard } from '../ui/FlipCard'
@@ -53,6 +54,12 @@ export function StudySession({
   const [timeLeftMs, setTimeLeftMs] = useState<number | null>(null)
   const [isEditOpen, setIsEditOpen] = useState(false)
 
+  const [ratingIntervals, setRatingIntervals] = useState<Partial<Record<DifficultyRating, number>>>(
+    {}
+  )
+
+  const previewCacheRef = useRef(new Map<string, Partial<Record<DifficultyRating, number>>>())
+
   const currentCard = cards[currentIndex]
 
   const shownAtRef = useRef<string | null>(null)
@@ -85,7 +92,6 @@ export function StudySession({
   }
 
   const handleFlip = () => {
-    // mark reveal moment on first reveal
     if (!isFlipped && !revealedAtRef.current) {
       revealedAtRef.current = nowIso()
     }
@@ -112,11 +118,50 @@ export function StudySession({
   useEffect(() => {
     setIsFlipped(false)
     setSelectedOptionId(null)
+    setRatingIntervals({})
 
-    // reset timing for new card/level (and after card edit)
     shownAtRef.current = nowIso()
     revealedAtRef.current = null
   }, [currentCard?.id, currentCard?.activeLevel, currentCard?.levels])
+
+  useEffect(() => {
+    if (!isFlipped) return
+
+    const cacheKey = `${currentCard.id}:${currentCard.activeLevel}`
+    const cached = previewCacheRef.current.get(cacheKey)
+    if (cached) {
+      setRatingIntervals(cached)
+      return
+    }
+
+    let cancelled = false
+
+    const run = async () => {
+      try {
+        const items = await getReviewPreview(currentCard.id)
+        if (cancelled) return
+
+        const m: Partial<Record<DifficultyRating, number>> = {}
+        for (const it of items ?? []) {
+          const rating = String((it as any)?.rating) as DifficultyRating
+          const sec = Number((it as any)?.intervalSeconds)
+          if (rating && Number.isFinite(sec) && sec >= 0) m[rating] = sec
+        }
+
+        previewCacheRef.current.set(cacheKey, m)
+        setRatingIntervals(m)
+      } catch {
+        if (cancelled) return
+        setRatingIntervals({})
+      }
+    }
+
+    run()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isFlipped, currentCard.id, currentCard.activeLevel])
 
   const level =
     (currentCard.levels as any[]).find(l => getLevelIndex(l) === currentCard.activeLevel) ??
@@ -146,7 +191,6 @@ export function StudySession({
       if (left <= 0) {
         window.clearInterval(id)
         setTimeLeftMs(0)
-        // auto reveal
         if (!revealedAtRef.current) revealedAtRef.current = nowIso()
         setIsFlipped(true)
         return
@@ -358,7 +402,7 @@ export function StudySession({
                 if (!isFlipped && !revealedAtRef.current) revealedAtRef.current = nowIso()
                 setIsFlipped(v => !v)
               }}
-              disableFlipOnClick={!revealedAtRef.current}
+              disableFlipOnClick
               onLevelUp={onLevelUp}
               onLevelDown={onLevelDown}
               frontContent={renderMcqFront()}
@@ -383,10 +427,30 @@ export function StudySession({
           ) : (
             <div className={styles.studyActionsInner}>
               <div className={styles.ratingRow}>
-                <RatingButton rating="again" label="Снова" onClick={() => submitReview('again')} />
-                <RatingButton rating="hard" label="Трудно" onClick={() => submitReview('hard')} />
-                <RatingButton rating="good" label="Хорошо" onClick={() => submitReview('good')} />
-                <RatingButton rating="easy" label="Легко" onClick={() => submitReview('easy')} />
+                <RatingButton
+                  rating="again"
+                  label="Снова"
+                  intervalSeconds={ratingIntervals.again}
+                  onClick={() => submitReview('again')}
+                />
+                <RatingButton
+                  rating="hard"
+                  label="Трудно"
+                  intervalSeconds={ratingIntervals.hard}
+                  onClick={() => submitReview('hard')}
+                />
+                <RatingButton
+                  rating="good"
+                  label="Хорошо"
+                  intervalSeconds={ratingIntervals.good}
+                  onClick={() => submitReview('good')}
+                />
+                <RatingButton
+                  rating="easy"
+                  label="Легко"
+                  intervalSeconds={ratingIntervals.easy}
+                  onClick={() => submitReview('easy')}
+                />
               </div>
             </div>
           )}

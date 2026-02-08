@@ -9,6 +9,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from starlette import status
 
 from app.auth.dependencies import get_current_user_id
+from app.core.enums import ReviewRating
 from app.db.session import SessionLocal
 from app.models.card import Card
 from app.models.card_level import CardLevel
@@ -16,7 +17,7 @@ from app.models.card_progress import CardProgress
 from app.models.card_review_history import CardReviewHistory
 from app.models.deck import Deck
 from app.models.user_learning_settings import UserLearningSettings
-from app.schemas.card_review import CardForReview, ReviewRequest, ReviewResponse
+from app.schemas.card_review import CardForReview, ReviewPreviewItem, ReviewRequest, ReviewResponse
 from app.schemas.cards import (
     CardForReviewWithLevels,
     CardLevelContent,
@@ -246,6 +247,48 @@ def get_cards_for_review(
             )
         )
     return result
+
+
+@router.get("/{card_id}/review_preview", response_model=list[ReviewPreviewItem])
+def review_preview(
+    card_id: UUID,
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    user_uuid = user_id
+
+    card = db.get(Card, card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+
+    settings = _ensure_settings(db, user_uuid)
+    progress = _ensure_active_progress(db, user_id=user_uuid, card=card, settings=settings)
+
+    rated_at = datetime.now(timezone.utc)
+
+    items: list[ReviewPreviewItem] = []
+    for rating in [
+        ReviewRating.again,
+        ReviewRating.hard,
+        ReviewRating.good,
+        ReviewRating.easy,
+    ]:
+        updated = ReviewService.review(
+            progress=progress,
+            rating=rating.value,
+            settings=settings,
+            rated_at=rated_at,
+        )
+        interval_seconds = int((updated.next_review - rated_at).total_seconds())
+        items.append(
+            ReviewPreviewItem(
+                rating=rating,
+                interval_seconds=max(0, interval_seconds),
+                next_review=updated.next_review,
+            )
+        )
+
+    return items
 
 
 @router.post("/{card_id}/review", response_model=ReviewResponse)
