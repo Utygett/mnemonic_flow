@@ -4,6 +4,11 @@ import type { CardContent } from './contentTypes'
 export type StudyMode = 'random' | 'ordered' | 'new_random' | 'new_ordered'
 export type DifficultyRating = 'again' | 'hard' | 'good' | 'easy'
 
+export interface CardReviewHistoryEntry {
+  rating: DifficultyRating
+  reviewedAt: string
+}
+
 export interface CardLevel {
   levelindex: number
   content: CardContent
@@ -24,6 +29,8 @@ export interface StudyCard {
   questionImageName?: string
   answerImageUrl?: string
   answerImageName?: string
+  // optional per-card review history loaded from backend
+  reviewHistory?: CardReviewHistoryEntry[]
 }
 
 export type StudyCardsResponse = {

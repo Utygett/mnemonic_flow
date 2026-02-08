@@ -1,6 +1,6 @@
 import React from 'react'
 
-import type { CardReviewInput, StudyCard, ApiLevelIn } from '@/entities/card'
+import type { CardReviewInput, DifficultyRating, StudyCard, ApiLevelIn } from '@/entities/card'
 import type { SessionStats } from '../model/StudyFlowStateContainer'
 import { StudySession } from '../session/StudySession'
 import type { CardSavedPayload } from '@/features/cards-edit/model/types'
@@ -25,7 +25,7 @@ type Props = {
 
   onBackToHome: () => void
   sessionStats?: SessionStats
-
+  ratingHistory?: DifficultyRating[]
   onCardSaved?: (payload: CardSavedPayload) => void
 }
 
@@ -155,6 +155,7 @@ export function StudyFlowView(props: Props) {
       onClose={props.onClose}
       onSkip={props.onSkip}
       onRemoveFromProgress={props.onRemoveFromProgress}
+      ratingHistory={props.ratingHistory ?? []}
       onCardSaved={props.onCardSaved}
     />
   )

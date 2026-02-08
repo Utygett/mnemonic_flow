@@ -15,6 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Копируем весь код бэкенда
 COPY . .
 
+# Нормализуем entrypoint.sh (Windows -> Unix) и делаем исполняемым
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+
 # PYTHONPATH должен указывать на директорию backend, где находится пакет app
 ENV PYTHONPATH=/app/backend
 
