@@ -19,6 +19,8 @@ import {
 
 import styles from './CreateCard.module.css'
 
+const RETURN_TO_DECK_KEY = 'mf_return_to_deck'
+
 export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardProps) {
   const { term, setTerm, cardType, setCardType, deckId, setDeckId } = useCreateCardModel(decks)
 
@@ -71,7 +73,7 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
     setLevelAnswerAudio,
     removeLevelAnswerAudio,
 
-    // cleaned (готово для onSave)
+    // cleaned
     cleanedLevelsQA,
     cleanedLevelsMCQ,
   } = useCreateCardLevelsModel(cardType)
@@ -134,12 +136,10 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
       if (cardId) {
         try {
           if (cardType === 'flashcard') {
-            // Upload level images for flashcard
             for (let levelIndex = 0; levelIndex < cleanedLevelsQA.length; levelIndex++) {
               const level = levelsQA[levelIndex]
               if (!level) continue
 
-              // Upload question images
               for (const img of level.questionImageFiles) {
                 setUploadProgress(`Загрузка изображений вопроса для уровня ${levelIndex + 1}...`)
                 const formData = new FormData()
@@ -150,7 +150,6 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
                 })
               }
 
-              // Upload answer images
               for (const img of level.answerImageFiles) {
                 setUploadProgress(`Загрузка изображений ответа для уровня ${levelIndex + 1}...`)
                 const formData = new FormData()
@@ -161,7 +160,6 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
                 })
               }
 
-              // Upload question audio
               for (const audio of level.questionAudioFiles) {
                 setUploadProgress(`Загрузка аудио вопроса для уровня ${levelIndex + 1}...`)
                 const formData = new FormData()
@@ -172,7 +170,6 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
                 })
               }
 
-              // Upload answer audio
               for (const audio of level.answerAudioFiles) {
                 setUploadProgress(`Загрузка аудио ответа для уровня ${levelIndex + 1}...`)
                 const formData = new FormData()
@@ -184,12 +181,10 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
               }
             }
           } else {
-            // Upload MCQ question/answer images and option images
             for (let levelIndex = 0; levelIndex < cleanedLevelsMCQ.length; levelIndex++) {
               const level = levelsMCQ[levelIndex]
               if (!level) continue
 
-              // Upload question images
               for (const img of level.questionImageFiles ?? []) {
                 setUploadProgress(`Загрузка изображений вопроса для уровня ${levelIndex + 1}...`)
                 const formData = new FormData()
@@ -200,7 +195,6 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
                 })
               }
 
-              // Upload answer images (back side)
               for (const img of level.answerImageFiles ?? []) {
                 setUploadProgress(`Загрузка изображений ответа для уровня ${levelIndex + 1}...`)
                 const formData = new FormData()
@@ -211,7 +205,6 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
                 })
               }
 
-              // Upload option images
               for (const option of level.options || []) {
                 if (option.imageFile) {
                   setUploadProgress(`Загрузка изображения для варианта...`)
@@ -233,6 +226,10 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
           )
         }
       }
+
+      // Card created (with or without upload errors) — remember deck and go back
+      sessionStorage.setItem(RETURN_TO_DECK_KEY, deckId)
+      onCancel()
     } finally {
       setSaveBusy(false)
       setUploadProgress(null)
@@ -243,13 +240,11 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       alert('Пожалуйста, выберите изображение (JPG, PNG, WebP)')
       return
     }
 
-    // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert('Размер файла не должен превышать 5МБ')
       return
@@ -262,13 +257,11 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       alert('Пожалуйста, выберите изображение (JPG, PNG, WebP)')
       return
     }
 
-    // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert('Размер файла не должен превышать 5МБ')
       return
@@ -281,14 +274,12 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type
     const allowedTypes = ['audio/mpeg', 'audio/mp4', 'audio/wav', 'audio/webm', 'audio/ogg']
     if (!allowedTypes.includes(file.type)) {
       alert('Пожалуйста, выберите аудиофайл (MP3, M4A, WAV, WebM, OGG)')
       return
     }
 
-    // Validate file size (10MB)
     if (file.size > 10 * 1024 * 1024) {
       alert('Размер файла не должен превышать 10МБ')
       return
@@ -301,14 +292,12 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type
     const allowedTypes = ['audio/mpeg', 'audio/mp4', 'audio/wav', 'audio/webm', 'audio/ogg']
     if (!allowedTypes.includes(file.type)) {
       alert('Пожалуйста, выберите аудиофайл (MP3, M4A, WAV, WebM, OGG)')
       return
     }
 
-    // Validate file size (10MB)
     if (file.size > 10 * 1024 * 1024) {
       alert('Размер файла не должен превышать 10МБ')
       return
@@ -394,13 +383,11 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
       const file = e.target.files?.[0]
       if (!file) return
 
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         alert('Пожалуйста, выберите изображение (JPG, PNG, WebP)')
         return
       }
 
-      // Validate file size (5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert('Размер файла не должен превышать 5МБ')
         return
@@ -423,7 +410,6 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
       const text = await file.text()
       const { rows, errors, total } = parseCsvNameFrontBack(text)
 
-      // 1) Если ошибки парсинга — ОТВЕРГАЕМ импорт полностью
       if (errors.length > 0) {
         const head = `Импорт отменён: ошибок парсинга ${errors.length} из ${total} строк.\nИсправь CSV и попробуй снова.`
         const body = `\n\nОшибки:\n- ${errors.slice(0, 20).join('\n- ')}${errors.length > 20 ? '\n- ...' : ''}`
@@ -435,7 +421,6 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
         return
       }
 
-      // 2) Парсинг ok → формируем payload и шлём
       const cards = rows.map(r => ({
         deckId,
         term: r.name,
@@ -504,34 +489,6 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
       </div>
 
       <main className={styles.main}>
-        <div className={styles.formRow}>
-          <label className={styles.formLabel}>Колода</label>
-          <Select
-            value={String(deckId ?? '')}
-            onValueChange={setDeckId}
-            disabled={decks.length === 0}
-          >
-            <SelectTrigger className={styles.input}>
-              <SelectValue
-                placeholder={decks.length === 0 ? 'Нет доступных колод' : 'Выбери колоду'}
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {decks.length === 0 ? (
-                <SelectItem value="__empty" disabled>
-                  Нет доступных колод
-                </SelectItem>
-              ) : (
-                decks.map(d => (
-                  <SelectItem key={d.deck_id} value={String(d.deck_id)}>
-                    {d.title}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
-        </div>
-
         <div className={styles.formRow}>
           <label className={styles.formLabel}>Тип карточки</label>
           <Select value={String(cardType)} onValueChange={v => setCardType(v as CardType)}>

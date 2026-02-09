@@ -1,66 +1,57 @@
 import React from 'react'
 
-import type { Deck, Group, StudyMode, Statistics } from '../../../../types'
+import type { Deck, Group, StudyMode } from '../../../../types'
 import type { PersistedSession } from '@/shared/lib/utils/session-store'
-
 import type { PublicDeckSummary } from '@/entities/deck'
 
 import { CreateGroup } from '../../../../features/group-create'
 import { DeckDetailsScreen } from '../../../../features/deck-details'
 import { AddDeck } from '../../../../features/deck-add'
 
-import { HomeTab } from './HomeTab'
+import { StudyTabView } from '../StudyTabView'
 
 type Props = {
-  // данные home
-  statistics: Statistics
   decks: Deck[]
   groups: Group[]
   activeGroupId: string | null
   setActiveGroupId: (id: string | null) => void
 
-  // из твоего useGroupsDecksController
   refreshGroups: () => Promise<void>
   refreshDecks: () => Promise<void>
   currentGroupDeckIds: string[]
   onDeleteActiveGroup: () => void
 
-  // resume
   resumeCandidate: PersistedSession | null
   onResume: () => void
   onDiscardResume: () => void
 
-  // действия, которые запускают study (остаются в App)
-  onStartReviewStudy: () => Promise<void>
   onStartDeckStudy: (deckId: string, mode: StudyMode, limit?: number) => Promise<void>
   onResumeDeckSession: (saved: PersistedSession) => void
   onRestartDeckSession: (deckId: string) => void
 
-  // пока оставляем редактирование колоды глобальным
   onOpenEditDeck: (deckId: string) => void
+  onEditCard?: (cardId: string, deckId: string) => void
+  onAddCard?: () => void
+  onCreateDeck: () => void
+
+  onSubScreenChange?: (isSubScreen: boolean) => void
 }
 
 type HomeView =
   | { kind: 'dashboard' }
   | { kind: 'createGroup' }
-  | { kind: 'addDeck' }
+  | { kind: 'addDeck'; groupId: string }
   | { kind: 'deckDetails'; deckId: string }
 
 function mapDeckToPublicSummary(deck: Deck): PublicDeckSummary {
-  // NOTE: это fallback-адаптер для старого типа Deck (из '../../../../types').
-  // Правильный источник для dashboard — API summary /decks/ (PublicDeckSummary).
   return {
     deck_id: deck.id,
     title: deck.name,
     description: deck.description ?? null,
     color: deck.color ?? null,
-
-    // Эти поля в старом типе Deck отсутствуют — подставляем безопасные значения,
-    // чтобы DeckCard мог корректно рисоваться.
     owner_id: '',
     is_public: false,
     can_edit: false,
-
     cards_count: deck.cardsCount ?? 0,
     completed_cards_count: Math.round(((deck.progress ?? 0) / 100) * (deck.cardsCount ?? 0)),
     count_repeat: 0,
@@ -68,16 +59,83 @@ function mapDeckToPublicSummary(deck: Deck): PublicDeckSummary {
   }
 }
 
+function buildResumeSession(
+  resume: PersistedSession,
+  decks: PublicDeckSummary[],
+  onResume: () => void,
+  onDiscard: () => void
+) {
+  const subtitle =
+    resume.mode === 'review'
+      ? 'РЈС‡РµР±РЅР°СЏ СЃРµСЃСЃРёСЏ'
+      : (decks.find(d => d.deck_id === resume.activeDeckId)?.title ?? 'РљРѕР»РѕРґР°')
+
+  return {
+    title: 'РџСЂРѕРґРѕР»Р¶РёС‚СЊ СЃРµСЃСЃРёСЋ',
+    subtitle,
+    cardInfo: `РљР°СЂС‚РѕС‡РєР° ${resume.currentIndex + 1} РёР· ${resume.deckCards.length}`,
+    onResume,
+    onDiscard,
+  }
+}
+
+const RETURN_TO_DECK_KEY = 'mf_return_to_deck'
+const RETURN_SCROLL_KEY = 'mf_return_scroll'
+
+function restoreScroll() {
+  const saved = sessionStorage.getItem(RETURN_SCROLL_KEY)
+  if (!saved) return
+  sessionStorage.removeItem(RETURN_SCROLL_KEY)
+
+  const targetY = Number(saved)
+  if (!targetY || targetY <= 0) return
+
+  let attempts = 0
+  const maxAttempts = 40 // 40 * 50ms = 2s max
+
+  const tryScroll = () => {
+    attempts++
+    window.scrollTo(0, targetY)
+
+    if (Math.abs(window.scrollY - targetY) < 5) return
+    if (attempts < maxAttempts) {
+      setTimeout(tryScroll, 50)
+    }
+  }
+
+  setTimeout(tryScroll, 50)
+}
+
 export function HomeTabContainer(props: Props) {
-  const [view, setView] = React.useState<HomeView>({ kind: 'dashboard' })
+  const [view, setViewRaw] = React.useState<HomeView>(() => {
+    const returnDeckId = sessionStorage.getItem(RETURN_TO_DECK_KEY)
+    if (returnDeckId) {
+      sessionStorage.removeItem(RETURN_TO_DECK_KEY)
+      return { kind: 'deckDetails', deckId: returnDeckId }
+    }
+    return { kind: 'dashboard' }
+  })
+
+  const setView = React.useCallback(
+    (next: HomeView) => {
+      setViewRaw(next)
+      props.onSubScreenChange?.(next.kind !== 'dashboard')
+    },
+    [props.onSubScreenChange]
+  )
 
   React.useEffect(() => {
-    if (view.kind === 'addDeck' && !props.activeGroupId) {
-      setView({ kind: 'dashboard' })
+    if (view.kind !== 'dashboard') {
+      props.onSubScreenChange?.(true)
     }
-  }, [view.kind, props.activeGroupId])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // --- экраны home ---
+  React.useEffect(() => {
+    if (view.kind === 'deckDetails' && sessionStorage.getItem(RETURN_SCROLL_KEY)) {
+      restoreScroll()
+    }
+  }, [view.kind])
+
   if (view.kind === 'createGroup') {
     return (
       <CreateGroup
@@ -92,11 +150,9 @@ export function HomeTabContainer(props: Props) {
   }
 
   if (view.kind === 'addDeck') {
-    if (!props.activeGroupId) return null
-
     return (
       <AddDeck
-        groupId={props.activeGroupId}
+        groupId={view.groupId}
         initialGroupDeckIds={props.currentGroupDeckIds}
         onClose={() => setView({ kind: 'dashboard' })}
         onChanged={async () => {
@@ -109,6 +165,12 @@ export function HomeTabContainer(props: Props) {
   if (view.kind === 'deckDetails') {
     const deckId = view.deckId
 
+    const savePositionAndNavigate = (callback: () => void) => {
+      sessionStorage.setItem(RETURN_TO_DECK_KEY, deckId)
+      sessionStorage.setItem(RETURN_SCROLL_KEY, String(window.scrollY))
+      callback()
+    }
+
     return (
       <DeckDetailsScreen
         deckId={deckId}
@@ -119,43 +181,51 @@ export function HomeTabContainer(props: Props) {
           props.onResumeDeckSession(saved)
         }}
         clearSavedSession={() => props.onRestartDeckSession(deckId)}
+        onEditCard={(cardId: string) => {
+          savePositionAndNavigate(() => {
+            if (props.onEditCard) props.onEditCard(cardId, deckId)
+          })
+        }}
+        onAddCard={() => {
+          savePositionAndNavigate(() => {
+            if (props.onAddCard) props.onAddCard()
+          })
+        }}
       />
     )
   }
 
-  // --- обычный home (dashboard) ---
-  // ВАЖНО: DashboardContainer ожидает PublicDeckSummary[] (deck_id, cards_count, count_repeat, ...),
-  // но сюда historically прокидывался Deck[] (id, name, progress...).
-  // Это и ломало отображение цифр (DeckCard читает поля *_count из summary).
-  const decksForDashboard = (props.decks as unknown as PublicDeckSummary[]).map((d: any) => {
-    // если это уже PublicDeckSummary из API — оставляем как есть
+  // dashboard view
+  const decksForStudy = (props.decks as unknown as PublicDeckSummary[]).map((d: any) => {
     if (typeof d?.deck_id === 'string') return d as PublicDeckSummary
-    // иначе адаптируем старый Deck
     return mapDeckToPublicSummary(d as Deck)
   })
 
+  const resumeSession = props.resumeCandidate
+    ? buildResumeSession(
+        props.resumeCandidate,
+        decksForStudy,
+        props.onResume,
+        props.onDiscardResume
+      )
+    : undefined
+
   return (
-    <HomeTab
-      statistics={props.statistics}
-      decks={decksForDashboard as unknown as Deck[]}
+    <StudyTabView
+      decks={decksForStudy}
       groups={props.groups}
       activeGroupId={props.activeGroupId}
-      resumeCandidate={props.resumeCandidate}
-      onResume={props.onResume}
-      onDiscardResume={props.onDiscardResume}
+      resumeSession={resumeSession}
       onGroupChange={props.setActiveGroupId}
       onCreateGroup={() => setView({ kind: 'createGroup' })}
       onDeleteActiveGroup={props.onDeleteActiveGroup}
-      onStartStudy={props.onStartReviewStudy}
       onDeckClick={deckId => setView({ kind: 'deckDetails', deckId })}
-      onOpenEditDeck={props.onOpenEditDeck}
+      onEditDeck={props.onOpenEditDeck}
       onAddDeck={() => {
         if (!props.activeGroupId) return
-        void (async () => {
-          await props.refreshDecks()
-          setView({ kind: 'addDeck' })
-        })()
+        setView({ kind: 'addDeck', groupId: props.activeGroupId })
       }}
+      onCreateDeck={props.onCreateDeck}
     />
   )
 }
