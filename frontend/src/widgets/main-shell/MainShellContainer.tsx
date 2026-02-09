@@ -53,12 +53,19 @@ export function MainShellContainer() {
   }
 
   const [activeTab, setActiveTab] = useState<MainTab>('home')
+  const [isStudySubScreen, setIsStudySubScreen] = useState(false)
 
   useRegisterServiceWorker()
   const isPWA = useIsPWA()
 
   return (
-    <StudyFlowStateContainer onExitToHome={() => setActiveTab('home')} onRated={refreshStats}>
+    <StudyFlowStateContainer
+      onExitToHome={() => {
+        setActiveTab('home')
+        setIsStudySubScreen(false)
+      }}
+      onRated={refreshStats}
+    >
       {study => (
         <DecksFlowContainer>
           {(decksFlow: DecksFlowApi) => (
@@ -78,7 +85,8 @@ export function MainShellContainer() {
                       cardsFlow.isCreatingCard ||
                       cardsFlow.isEditingCard ||
                       decksFlow.isCreatingDeck ||
-                      decksFlow.isEditingDeck
+                      decksFlow.isEditingDeck ||
+                      isStudySubScreen
 
                     return (
                       <CardsActionsContainer
@@ -122,6 +130,7 @@ export function MainShellContainer() {
                                   setActiveGroupId,
                                   deleteActiveGroup,
                                 }}
+                                onStudySubScreenChange={setIsStudySubScreen}
                               />
                             }
                           />
