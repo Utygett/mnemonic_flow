@@ -7,7 +7,7 @@ import type { DecksFlowApi } from '../../features/decks-flow'
 import type { DecksActionsApi } from '../../features/decks-actions'
 
 export type MnemonicRootSwitchProps = {
-  study: any // оставь как у тебя тип study
+  study: any
   activeTab: MainTab
   isPWA: boolean
 
@@ -47,4 +47,6 @@ export type MnemonicRootSwitchProps = {
     setActiveGroupId: (id: string | null) => void
     deleteActiveGroup: () => Promise<void>
   }
+
+  onStudySubScreenChange?: (isSubScreen: boolean) => void
 }

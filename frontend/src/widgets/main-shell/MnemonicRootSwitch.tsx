@@ -7,7 +7,9 @@ import { EditDeck } from '../../features/deck-edit'
 import { Statistics } from '../../features/statistics'
 import { ProfileContainer } from '../../features/profile'
 
-import { HomeTabContainer } from '../../features/dashboard'
+import { HomeTabContainer, HomeDashboardView } from '../../features/dashboard'
+
+import { addDeckToGroup } from '../../entities/group'
 
 import type { MnemonicRootSwitchProps } from './mnemonicRootSwitch.types'
 
@@ -15,8 +17,6 @@ import styles from './MnemonicRootSwitch.module.css'
 
 export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
   // loading
-  // IMPORTANT: don't unmount current UI during background refresh (e.g. when AddDeck triggers refreshDecks).
-  // Otherwise HomeTabContainer resets its local view state and user is "kicked out" of AddDeck screen.
   const isInitialDecksLoading = props.status.decksLoading && (props.data.decks?.length ?? 0) === 0
   const isInitialStatsLoading = props.status.statsLoading && !props.data.statistics
 
@@ -71,7 +71,15 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
     return (
       <CreateDeck
         onCancel={props.decks.flow.closeCreateDeck}
-        onSave={(createdDeckId?: string) => {
+        onSave={async (createdDeckId?: string) => {
+          // Add deck to active group if one is selected
+          if (createdDeckId && props.data.activeGroupId) {
+            try {
+              await addDeckToGroup(props.data.activeGroupId, createdDeckId)
+            } catch (e) {
+              console.error('Failed to add deck to group:', e)
+            }
+          }
           props.decks.actions.onDeckCreated()
           if (createdDeckId) {
             props.decks.flow.openEditDeck(createdDeckId)
@@ -94,6 +102,9 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
   if (props.cards.flow.isEditingCard) {
     return (
       <EditCard
+        mode="session"
+        initialCardId={props.cards.flow.editingCardId ?? undefined}
+        initialDeckId={props.cards.flow.editingDeckId ?? undefined}
         decks={props.data.decks}
         onCancel={props.cards.flow.closeEditCard}
         onDone={props.cards.actions.onEditCardDone}
@@ -114,8 +125,18 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
       )}
 
       {props.activeTab === 'home' && (
-        <HomeTabContainer
+        <HomeDashboardView
           statistics={props.data.dashboardStats}
+          decks={props.data.decks}
+          resumeCandidate={props.study.resumeCandidate}
+          onResume={props.study.onResume}
+          onDiscardResume={props.study.onDiscardResume}
+          onStartStudy={props.study.onStartReviewStudy}
+        />
+      )}
+
+      {props.activeTab === 'study' && (
+        <HomeTabContainer
           decks={props.data.decks}
           groups={props.data.groups}
           activeGroupId={props.data.activeGroupId}
@@ -127,59 +148,17 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
           resumeCandidate={props.study.resumeCandidate}
           onResume={props.study.onResume}
           onDiscardResume={props.study.onDiscardResume}
-          onStartReviewStudy={props.study.onStartReviewStudy}
           onStartDeckStudy={props.study.onStartDeckStudy}
           onResumeDeckSession={props.study.onResumeDeckSession}
           onRestartDeckSession={props.study.onRestartDeckSession}
           onOpenEditDeck={props.decks.flow.openEditDeck}
+          onEditCard={(cardId: string, deckId: string) =>
+            props.cards.flow.openEditCard(cardId, deckId)
+          }
+          onAddCard={() => props.cards.flow.openCreateCard()}
+          onCreateDeck={props.decks.flow.openCreateDeck}
+          onSubScreenChange={props.onStudySubScreenChange}
         />
-      )}
-
-      {props.activeTab === 'study' && (
-        <div className={styles.tabPage}>
-          <header className="page__header">
-            <div className="page__header-inner">
-              <h1 className="page__title">Обучение</h1>
-            </div>
-          </header>
-
-          <main className={`container-centered max-w-390 ${styles.tabMain}`}>
-            <div className={styles.emptyState}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📖</div>
-              <h2 style={{ marginBottom: '1rem', color: '#E8EAF0' }}>
-                Создайте свою первую карточку
-              </h2>
-              <p style={{ color: '#9CA3AF', marginBottom: '1.5rem' }}>
-                Начните изучение с создания карточек
-              </p>
-
-              <div className="actionsStack__study">
-                <button onClick={props.cards.flow.openCreateCard} className="btn-primary">
-                  Создать карточку
-                </button>
-
-                <button onClick={props.decks.flow.openCreateDeck} className="btn-primary">
-                  Создать колоду
-                </button>
-
-                <button onClick={props.cards.flow.openEditCard} className="btn-primary">
-                  Редактировать карточки
-                </button>
-              </div>
-
-              {!props.isPWA && (
-                <div className={`card ${styles.pwaTip}`}>
-                  <p style={{ color: '#9CA3AF', marginBottom: '0.5rem' }}>
-                    💡 Установите приложение для работы офлайн
-                  </p>
-                  <p style={{ color: '#6B7280', fontSize: '0.75rem' }}>
-                    Нажмите "Установить" в меню браузера
-                  </p>
-                </div>
-              )}
-            </div>
-          </main>
-        </div>
       )}
 
       {props.activeTab === 'stats' && props.data.statistics && (
