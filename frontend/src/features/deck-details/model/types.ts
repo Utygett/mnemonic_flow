@@ -6,5 +6,7 @@ export type DeckDetailsProps = {
   onBack: () => void
   onStart: (mode: StudyMode, limit?: number) => void
   onResume: (saved: PersistedSession) => void
-  clearSavedSession: () => void // без deckId
+  clearSavedSession: () => void
+  onEditCard?: (cardId: string) => void
+  onAddCard?: () => void
 }

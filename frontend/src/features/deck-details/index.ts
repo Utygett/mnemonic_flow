@@ -1,2 +1,6 @@
 export { DeckDetailsScreen } from './ui/DeckDetailsScreen'
+export { DeckDetailsView } from './ui/DeckDetailsView'
+export { CardListItem } from './ui/CardListItem'
+export { StudyModeSelector } from './ui/StudyModeSelector'
 export type { DeckDetailsProps } from './model/types'
+export { useDeckCards } from './model/useDeckCards'

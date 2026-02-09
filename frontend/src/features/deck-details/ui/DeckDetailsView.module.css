@@ -12,7 +12,7 @@
   max-width: 390px;
   margin: 0 auto;
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .title {
@@ -20,6 +20,13 @@
   font-size: 22px;
   font-weight: 800;
   color: var(--text);
+}
+
+.description {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.4;
 }
 
 .meta {
@@ -35,59 +42,51 @@
 
 .stack {
   display: grid;
-  gap: 16px;
+  gap: 20px;
 }
 
-.card {
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  padding: 16px;
+/* Card list section */
+
+.cardListSection {
+  display: grid;
+  gap: 12px;
 }
 
-.cardTitle {
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sectionTitle {
   margin: 0;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--text);
 }
 
-.cardMeta {
-  margin: 6px 0 0 0;
-  font-size: 13px;
-  color: var(--muted);
+.cardList {
+  display: grid;
+  gap: 10px;
 }
 
-.inlineActions {
-  margin-top: 12px;
-  display: flex;
+.cardsLoading {
+  padding: 32px 0;
+  text-align: center;
+}
+
+.cardsError {
+  padding: 24px 0;
+  text-align: center;
+  color: var(--muted);
+  display: grid;
   gap: 12px;
+  justify-items: center;
 }
 
-.sectionLabel {
-  color: var(--text);
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-
-.input {
-  width: 100%;
-  padding: 12px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 15px;
-  background: var(--bg);
-  color: var(--text);
-}
-
-.input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
-}
-
-.hint {
+.emptyCards {
+  padding: 24px 0;
+  text-align: center;
   color: var(--muted);
-  font-size: 12px;
-  margin-top: 8px;
+  font-size: 14px;
 }
