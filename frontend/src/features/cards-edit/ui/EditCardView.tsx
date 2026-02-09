@@ -1,6 +1,6 @@
 // src/features/cards-edit/ui/EditCardView.tsx
 import React from 'react'
-import { X, Plus, Trash2, ChevronUp, ChevronDown, Pencil } from 'lucide-react'
+import { X, Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 
 import { Button } from '../../../shared/ui/Button/Button'
 import { MarkdownField } from '../../../shared/ui/MarkdownField'
@@ -28,17 +28,11 @@ export function EditCardView(props: Props) {
   const {
     mode,
 
-    decks,
-    deckId,
-    setDeckId,
-
     loading,
     saving,
     errorText,
 
-    cards,
     selectedCardId,
-    setSelectedCardId,
     selectedCard,
 
     titleDraft,
@@ -69,10 +63,6 @@ export function EditCardView(props: Props) {
 
     saveCard,
     deleteSelectedCard,
-    deleteCurrentDeck,
-
-    isOwnerOfCurrentDeck,
-    onEditDeck,
 
     onCancel,
   } = props
@@ -104,99 +94,9 @@ export function EditCardView(props: Props) {
           </div>
         )}
 
-        {/* Deck */}
-        {isSessionMode ? null : (
-          <div className={styles.formRow}>
-            <label className={styles.formLabel}>Колода</label>
-
-            <div className={styles.rowWithActions}>
-              <Select
-                value={String(deckId ?? '')}
-                onValueChange={setDeckId}
-                disabled={decks.length === 0 || saving}
-              >
-                <SelectTrigger className={styles.input}>
-                  <SelectValue
-                    placeholder={decks.length === 0 ? 'Нет доступных колод' : 'Выбери колоду'}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {decks.length === 0 ? (
-                    <SelectItem value="__empty" disabled>
-                      Нет доступных колод
-                    </SelectItem>
-                  ) : (
-                    decks.map(d => (
-                      <SelectItem key={d.deck_id} value={String(d.deck_id)}>
-                        {d.title}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-
-              <button
-                onClick={deleteCurrentDeck}
-                disabled={!deckId || decks.length === 0 || saving}
-                title="Удалить колоду"
-                className={`${styles.squareButton} ${styles.squareButtonDanger}`}
-              >
-                <Trash2 size={18} />
-              </button>
-
-              {isOwnerOfCurrentDeck && onEditDeck && deckId ? (
-                <button
-                  onClick={e => {
-                    e.stopPropagation()
-                    onEditDeck(deckId)
-                  }}
-                  title="Редактировать колоду"
-                  className={`${styles.squareButton} ${styles.squareButtonNeutral}`}
-                >
-                  <Pencil size={18} />
-                </button>
-              ) : null}
-            </div>
-          </div>
-        )}
-
-        {/* Card */}
-        {isSessionMode ? null : (
-          <div className={styles.formRow}>
-            <label className={styles.formLabel}>Карточка</label>
-
-            <div className={styles.rowWithActions}>
-              <Select
-                value={String(selectedCardId ?? '')}
-                onValueChange={setSelectedCardId}
-                disabled={loading || cards.length === 0 || saving}
-              >
-                <SelectTrigger className={styles.input}>
-                  <SelectValue placeholder={loading ? 'Загрузка…' : 'Выбери карточку'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {loading ? (
-                    <SelectItem value="__loading" disabled>
-                      Загрузка…
-                    </SelectItem>
-                  ) : null}
-                  {cards.map(c => (
-                    <SelectItem key={c.card_id} value={String(c.card_id)}>
-                      {c.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <button
-                onClick={deleteSelectedCard}
-                disabled={!selectedCard || saving}
-                title="Удалить карточку"
-                className={`${styles.squareButton} ${styles.squareButtonDanger}`}
-              >
-                <Trash2 size={18} />
-              </button>
-            </div>
+        {loading && (
+          <div className={styles.errorCard}>
+            <div className={styles.errorText}>Загрузка…</div>
           </div>
         )}
 
@@ -285,7 +185,6 @@ export function EditCardView(props: Props) {
                 {/* QA */}
                 {active.kind === 'qa' ? (
                   <>
-                    {/* Question Section */}
                     <div className={styles.sideSection}>
                       <h4 className={styles.sideSectionTitle}>Вопрос</h4>
                       <div className={styles.sideSectionContent}>
@@ -322,7 +221,6 @@ export function EditCardView(props: Props) {
                       </div>
                     </div>
 
-                    {/* Answer Section */}
                     <div className={styles.sideSection}>
                       <h4 className={styles.sideSectionTitle}>Ответ</h4>
                       <div className={styles.sideSectionContent}>
@@ -362,7 +260,6 @@ export function EditCardView(props: Props) {
                 ) : (
                   /* MCQ */
                   <>
-                    {/* Question Section */}
                     <div className={styles.sideSection}>
                       <h4 className={styles.sideSectionTitle}>Вопрос</h4>
                       <div className={styles.sideSectionContent}>
@@ -399,7 +296,6 @@ export function EditCardView(props: Props) {
                       </div>
                     </div>
 
-                    {/* Answer Section */}
                     <div className={styles.sideSection}>
                       <h4 className={styles.sideSectionTitle}>Ответ</h4>
                       <div className={styles.sideSectionContent}>
@@ -550,13 +446,13 @@ export function EditCardView(props: Props) {
 
             <div className={styles.bottomActions}>
               <Button
-                onClick={onCancel}
+                onClick={deleteSelectedCard}
                 variant="secondary"
                 size="large"
                 fullWidth
-                disabled={saving}
+                disabled={!selectedCard || saving}
               >
-                Отмена
+                Удалить
               </Button>
               <Button
                 onClick={saveCard}

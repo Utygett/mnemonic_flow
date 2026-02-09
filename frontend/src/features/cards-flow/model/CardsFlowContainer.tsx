@@ -3,9 +3,11 @@ import React from 'react'
 export type CardsFlowApi = {
   isCreatingCard: boolean
   isEditingCard: boolean
+  editingCardId: string | null
+  editingDeckId: string | null
   openCreateCard: () => void
   closeCreateCard: () => void
-  openEditCard: () => void
+  openEditCard: (cardId?: string, deckId?: string) => void
   closeEditCard: () => void
 }
 
@@ -16,14 +18,26 @@ export function CardsFlowContainer({
 }) {
   const [isCreatingCard, setIsCreatingCard] = React.useState(false)
   const [isEditingCard, setIsEditingCard] = React.useState(false)
+  const [editingCardId, setEditingCardId] = React.useState<string | null>(null)
+  const [editingDeckId, setEditingDeckId] = React.useState<string | null>(null)
 
   const api: CardsFlowApi = {
     isCreatingCard,
     isEditingCard,
+    editingCardId,
+    editingDeckId,
     openCreateCard: () => setIsCreatingCard(true),
     closeCreateCard: () => setIsCreatingCard(false),
-    openEditCard: () => setIsEditingCard(true),
-    closeEditCard: () => setIsEditingCard(false),
+    openEditCard: (cardId?: string, deckId?: string) => {
+      setEditingCardId(cardId ?? null)
+      setEditingDeckId(deckId ?? null)
+      setIsEditingCard(true)
+    },
+    closeEditCard: () => {
+      setIsEditingCard(false)
+      setEditingCardId(null)
+      setEditingDeckId(null)
+    },
   }
 
   return <>{children(api)}</>

@@ -26,6 +26,8 @@ import {
   deleteDeck,
 } from '../api/cardsEditApi'
 
+const RETURN_TO_DECK_KEY = 'mf_return_to_deck'
+
 export type EditCardViewModel = {
   // ui mode
   mode: CardsEditMode
@@ -337,6 +339,10 @@ export function useEditCardModel(props: Props): EditCardViewModel {
     })
   }
 
+  const rememberDeckForReturn = () => {
+    if (deckId) sessionStorage.setItem(RETURN_TO_DECK_KEY, deckId)
+  }
+
   const saveCard = async () => {
     if (!selectedCardId) return
 
@@ -363,7 +369,7 @@ export function useEditCardModel(props: Props): EditCardViewModel {
       }
       onSaved?.(payload)
 
-      // Call onDone after successful save
+      rememberDeckForReturn()
       onDone()
     } catch (e: any) {
       setErrorText(e?.message ?? 'Ошибка сохранения')
@@ -396,6 +402,9 @@ export function useEditCardModel(props: Props): EditCardViewModel {
       setSelectedCardIdRaw('')
       setLevels([defaultQaLevel()])
       setActiveLevel(0)
+
+      rememberDeckForReturn()
+      onDone()
     } catch (e: any) {
       setErrorText(humanizeDeleteError(e, 'card'))
     } finally {
@@ -418,6 +427,7 @@ export function useEditCardModel(props: Props): EditCardViewModel {
       setLevels([defaultQaLevel()])
       setActiveLevel(0)
 
+      // Don't remember deck — it's deleted
       onDone()
     } catch (e: any) {
       setErrorText(humanizeDeleteError(e, 'deck'))
