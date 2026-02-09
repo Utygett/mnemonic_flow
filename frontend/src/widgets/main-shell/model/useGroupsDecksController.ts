@@ -55,14 +55,34 @@ export function useGroupsDecksController() {
 
     try {
       if (state.activeGroupId) {
-        const decks = await getGroupDecksSummary(state.activeGroupId)
-        setState(s => ({
-          ...s,
-          decks,
-          currentGroupDeckIds: decks.map(d => d.deck_id),
-          decksLoading: false,
-          decksError: null,
-        }))
+        try {
+          const decks = await getGroupDecksSummary(state.activeGroupId)
+          setState(s => ({
+            ...s,
+            decks,
+            currentGroupDeckIds: decks.map(d => d.deck_id),
+            decksLoading: false,
+            decksError: null,
+          }))
+        } catch (groupErr: any) {
+          // If group not found (404), reset activeGroupId and fallback to all decks
+          const status = groupErr?.status ?? groupErr?.response?.status
+          if (status === 404) {
+            console.warn('Active group not found, resetting to all decks')
+            localStorage.removeItem(LS_KEY)
+            setState(s => ({ ...s, activeGroupId: null }))
+            const decks = await getUserDecks()
+            setState(s => ({
+              ...s,
+              decks,
+              currentGroupDeckIds: [],
+              decksLoading: false,
+              decksError: null,
+            }))
+          } else {
+            throw groupErr
+          }
+        }
       } else {
         const decks = await getUserDecks()
         setState(s => ({
