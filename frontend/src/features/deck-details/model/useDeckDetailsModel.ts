@@ -4,9 +4,13 @@ import type { StudyMode } from '@/entities/card'
 import { loadSession, type PersistedSession } from '@/shared/lib/utils/session-store'
 
 import type { DeckDetailsProps } from './types'
+import { useDeckCards } from './useDeckCards'
 
 export type DeckDetailsViewModel = {
   deckId: string
+  deckTitle: string
+  deckDescription: string | null
+  canEdit: boolean
   limit: number
   setLimit: (v: number) => void
 
@@ -15,14 +19,29 @@ export type DeckDetailsViewModel = {
 
   limitClamped: number
 
+  cards: import('@/entities/deck').ApiCard[]
+  cardsLoading: boolean
+  cardsError: string | null
+  refreshCards: () => Promise<void>
+
   onBack: () => void
   onResume: () => void
   onStart: (mode: StudyMode) => void
+  onEditCard: (cardId: string) => void
+  onAddCard: () => void
 }
 
 export function useDeckDetailsModel(props: DeckDetailsProps): DeckDetailsViewModel {
   const [limit, setLimit] = useState<number>(20)
   const [sessionVersion, setSessionVersion] = useState(0)
+
+  const {
+    deck,
+    cards,
+    loading: cardsLoading,
+    error: cardsError,
+    refresh: refreshCards,
+  } = useDeckCards(props.deckId)
 
   const key = `deck:${props.deckId}` as const
 
@@ -50,8 +69,19 @@ export function useDeckDetailsModel(props: DeckDetailsProps): DeckDetailsViewMod
     props.onResume(saved)
   }
 
+  const onEditCard = (cardId: string) => {
+    if (props.onEditCard) props.onEditCard(cardId)
+  }
+
+  const onAddCard = () => {
+    if (props.onAddCard) props.onAddCard()
+  }
+
   return {
     deckId: props.deckId,
+    deckTitle: deck?.title ?? '',
+    deckDescription: deck?.description ?? null,
+    canEdit: deck?.can_edit ?? true,
     limit,
     setLimit,
 
@@ -60,8 +90,15 @@ export function useDeckDetailsModel(props: DeckDetailsProps): DeckDetailsViewMod
 
     limitClamped,
 
+    cards,
+    cardsLoading,
+    cardsError,
+    refreshCards,
+
     onBack: props.onBack,
     onResume,
     onStart,
+    onEditCard,
+    onAddCard,
   }
 }
