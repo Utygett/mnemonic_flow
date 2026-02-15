@@ -76,6 +76,30 @@
   display: none !important;
 }
 
+.editorWrapper :global(.w-md-editor-toolbar) {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+.editorWrapper :global(.w-md-editor-toolbar *) {
+  display: none !important;
+}
+
+/* Ensure toolbar container doesn't take space */
+.editorWrapper :global(.w-md-editor > .w-md-editor-toolbar) {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Hide any button-like elements in editor */
+.editorWrapper :global(.w-md-editor button) {
+  display: none !important;
+}
+
 /* Style the textarea area */
 .editorWrapper :global(.w-md-editor-text) {
   background: transparent !important;
@@ -85,20 +109,38 @@
 .editorWrapper :global(.w-md-editor-text-pre) {
   background: transparent !important;
   border: none !important;
-  padding: 12px !important;
+  padding: 0 !important;
   font-size: 14px !important;
   line-height: 1.6 !important;
   color: var(--text) !important;
   font-family: inherit !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
 }
 
 .editorWrapper :global(.w-md-editor-text-pre textarea) {
   font-size: 14px !important;
   line-height: 1.6 !important;
   color: var(--text) !important;
-  caret-color: var(--primary) !important;
+  caret-color: var(--text) !important;
   font-family: inherit !important;
   background: transparent !important;
+  padding: 12px !important;
+  text-align: left !important;
+  vertical-align: top !important;
+}
+
+.editorWrapper :global(.w-md-editor-text-input) {
+  caret-color: var(--text) !important;
+}
+
+.editorWrapper :global(.w-md-editor-text-textarea) {
+  caret-color: var(--text) !important;
+}
+
+.editorWrapper :global(textarea) {
+  caret-color: var(--text) !important;
 }
 
 .editorWrapper :global(.w-md-editor-text-input) {
