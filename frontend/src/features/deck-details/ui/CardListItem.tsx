@@ -78,7 +78,7 @@ export function CardListItem({ card, canEdit, onEdit, onClick }: Props) {
               isMultipleChoice ? `${styles.typeBadge} ${styles.typeBadgeMcq}` : styles.typeBadge
             }
           >
-            {isMultipleChoice ? 'Тест' : 'Флэш'}
+            {isMultipleChoice ? 'Тест' : 'Flash-card'}
           </span>
         </div>
 
