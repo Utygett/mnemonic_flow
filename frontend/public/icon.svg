@@ -1,0 +1,44 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="110" fill="#4A6FA5"/>
+
+  <!-- Card Stack -->
+  <g filter="url(#shadow)">
+    <!-- Back Card -->
+    <rect x="120" y="150" width="280" height="200" rx="16" fill="#FFFFFF" opacity="0.3"/>
+
+    <!-- Middle Card -->
+    <rect x="110" y="165" width="280" height="200" rx="16" fill="#FFFFFF" opacity="0.6"/>
+
+    <!-- Front Card -->
+    <rect x="100" y="180" width="280" height="200" rx="16" fill="#FFFFFF"/>
+
+    <!-- Card Content - Level Indicator -->
+    <circle cx="150" cy="220" r="8" fill="#4A6FA5"/>
+    <circle cx="170" cy="220" r="8" fill="#4A6FA5"/>
+    <circle cx="190" cy="220" r="8" fill="#FF9A76"/>
+    <circle cx="210" cy="220" r="8" fill="#E5E7EB"/>
+
+    <!-- Card Content - Text Lines -->
+    <rect x="120" y="260" width="200" height="12" rx="6" fill="#2D3748"/>
+    <rect x="120" y="285" width="160" height="10" rx="5" fill="#718096"/>
+    <rect x="120" y="305" width="140" height="10" rx="5" fill="#718096"/>
+  </g>
+
+  <!-- Accent Element -->
+  <circle cx="360" cy="340" r="40" fill="#FF9A76" opacity="0.8"/>
+
+  <defs>
+    <filter id="shadow" x="80" y="140" width="320" height="260" filterUnits="userSpaceOnUse">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="10"/>
+      <feOffset dy="4"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.2"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+</svg>

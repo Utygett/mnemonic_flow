@@ -1,0 +1,104 @@
+import { useMemo, useState } from 'react'
+
+import type { StudyMode } from '@/entities/card'
+import { loadSession, type PersistedSession } from '@/shared/lib/utils/session-store'
+
+import type { DeckDetailsProps } from './types'
+import { useDeckCards } from './useDeckCards'
+
+export type DeckDetailsViewModel = {
+  deckId: string
+  deckTitle: string
+  deckDescription: string | null
+  canEdit: boolean
+  limit: number
+  setLimit: (v: number) => void
+
+  saved: PersistedSession | null
+  hasSaved: boolean
+
+  limitClamped: number
+
+  cards: import('@/entities/deck').ApiCard[]
+  cardsLoading: boolean
+  cardsError: string | null
+  refreshCards: () => Promise<void>
+
+  onBack: () => void
+  onResume: () => void
+  onStart: (mode: StudyMode) => void
+  onEditCard: (cardId: string) => void
+  onAddCard: () => void
+}
+
+export function useDeckDetailsModel(props: DeckDetailsProps): DeckDetailsViewModel {
+  const [limit, setLimit] = useState<number>(20)
+  const [sessionVersion, setSessionVersion] = useState(0)
+
+  const {
+    deck,
+    cards,
+    loading: cardsLoading,
+    error: cardsError,
+    refresh: refreshCards,
+  } = useDeckCards(props.deckId)
+
+  const key = `deck:${props.deckId}` as const
+
+  const saved = useMemo(() => loadSession(key), [key, sessionVersion])
+  const hasSaved = !!saved && (saved.deckCards?.length ?? 0) > 0
+
+  const limitClamped = useMemo(() => {
+    const n = Number(limit)
+    if (!Number.isFinite(n)) return 20
+    return Math.max(1, Math.min(200, Math.trunc(n)))
+  }, [limit])
+
+  const onStart = (mode: StudyMode) => {
+    if (hasSaved) {
+      props.clearSavedSession()
+      setSessionVersion(v => v + 1)
+    }
+
+    if (mode === 'new_random' || mode === 'new_ordered') props.onStart(mode, limitClamped)
+    else props.onStart(mode)
+  }
+
+  const onResume = () => {
+    if (!saved) return
+    props.onResume(saved)
+  }
+
+  const onEditCard = (cardId: string) => {
+    if (props.onEditCard) props.onEditCard(cardId)
+  }
+
+  const onAddCard = () => {
+    if (props.onAddCard) props.onAddCard()
+  }
+
+  return {
+    deckId: props.deckId,
+    deckTitle: deck?.title ?? '',
+    deckDescription: deck?.description ?? null,
+    canEdit: deck?.can_edit ?? true,
+    limit,
+    setLimit,
+
+    saved,
+    hasSaved,
+
+    limitClamped,
+
+    cards,
+    cardsLoading,
+    cardsError,
+    refreshCards,
+
+    onBack: props.onBack,
+    onResume,
+    onStart,
+    onEditCard,
+    onAddCard,
+  }
+}

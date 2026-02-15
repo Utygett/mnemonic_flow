@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+env:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  validate-commits:
+    name: Validate Commits & Version
+    uses: ./.github/workflows/validate-commits.yml
+
+  code-style:
+    name: Code Style
+    needs: validate-commits
+    uses: ./.github/workflows/code-style.yml
+
+  build-all:
+    name: Build All
+    needs: code-style
+    uses: ./.github/workflows/build-all.yml
+
+  test-all:
+    name: Test All
+    needs: build-all
+    uses: ./.github/workflows/test-all.yml

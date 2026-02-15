@@ -1,0 +1,74 @@
+.resumeSession {
+  max-width: 390px;
+  margin: 12px auto -16px;
+  padding: 16px 16px;
+}
+
+.card {
+  border-radius: var(--radius-md, 16px);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 16px;
+  text-align: center;
+}
+
+.title {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.subtitle {
+  margin: 0 0 6px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.info {
+  margin: 0 0 16px 0;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.button {
+  flex: 1;
+  max-width: 160px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+  border: none;
+}
+
+.buttonPrimary {
+  background: var(--primary);
+  color: var(--primary-contrast, #fff);
+}
+
+.buttonPrimary:hover {
+  background: color-mix(in srgb, var(--primary) 85%, black);
+}
+
+.buttonSecondary {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.buttonSecondary:hover {
+  background: color-mix(in srgb, var(--surface) 60%, var(--bg) 40%);
+}

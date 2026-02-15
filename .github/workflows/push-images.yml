@@ -1,0 +1,136 @@
+name: Push Images to Registry
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  push-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          if [ "${GITHUB_REF_NAME}" = "develop" ]; then
+            docker buildx build \
+              --cache-from "type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/backend:buildcache" \
+              --cache-to "type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/backend:buildcache,mode=max" \
+              --tag ghcr.io/${REPO_LOWER}/mnemonic_flow/backend:develop \
+              --push \
+              -f backend/Dockerfile \
+              backend
+          else
+            docker buildx build \
+              --no-cache \
+              --tag ghcr.io/${REPO_LOWER}/mnemonic_flow/backend:latest \
+              --push \
+              -f backend/Dockerfile \
+              backend
+          fi
+
+  push-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push frontend
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          if [ "${GITHUB_REF_NAME}" = "develop" ]; then
+            docker buildx build \
+              --cache-from "type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/frontend:buildcache" \
+              --cache-to "type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/frontend:buildcache,mode=max" \
+              --tag ghcr.io/${REPO_LOWER}/mnemonic_flow/frontend:develop \
+              --push \
+              -f frontend/Dockerfile \
+              frontend
+          else
+            docker buildx build \
+              --no-cache \
+              --tag ghcr.io/${REPO_LOWER}/mnemonic_flow/frontend:latest \
+              --push \
+              -f frontend/Dockerfile \
+              frontend
+          fi
+
+  push-pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push pre-commit
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          if [ "${GITHUB_REF_NAME}" = "develop" ]; then
+            docker buildx build \
+              --cache-from "type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/pre-commit:buildcache" \
+              --cache-to "type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/pre-commit:buildcache,mode=max" \
+              --tag ghcr.io/${REPO_LOWER}/mnemonic_flow/pre-commit:develop \
+              --push \
+              -f infra/Dockerfile.pre-commit \
+              .
+          else
+            docker buildx build \
+              --no-cache \
+              --tag ghcr.io/${REPO_LOWER}/mnemonic_flow/pre-commit:latest \
+              --push \
+              -f infra/Dockerfile.pre-commit \
+              .
+          fi
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: [push-backend, push-frontend, push-pre-commit]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          fingerprint: ${{ secrets.DEPLOY_HOST_FINGERPRINT }}
+          command_timeout: 20m
+          script: |
+            set -e
+            /opt/mnemonicflow/deploy.sh

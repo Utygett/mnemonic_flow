@@ -1,0 +1,370 @@
+/* Study session screen styles */
+
+.studyPage {
+  min-height: 100vh;
+  background: #0b1220;
+  color: #e8eaf0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pageHeader {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: color-mix(in srgb, #0b1220 90%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.pageHeaderInner {
+  max-width: 390px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.iconBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(30, 41, 59, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e8eaf0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.iconBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.studyCardArea {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  min-height: 0;
+}
+
+.studyActions {
+  padding: 0 16px 16px 16px;
+  max-width: 390px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.studyActionsInner {
+  width: 100%;
+}
+
+.flipcardContainer {
+  width: 100%;
+  max-width: 520px;
+}
+
+.flipcard {
+  width: 100%;
+  cursor: pointer;
+}
+
+.flipcardInner {
+  position: relative;
+  width: 100%;
+  min-height: 320px;
+  transform-style: preserve-3d;
+}
+
+.flipcardSide {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  border: 2px solid rgba(30, 41, 59, 0.9);
+  background: rgba(79, 114, 172, 0.22);
+  padding: 16px;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.flipcardFront {
+  transform: rotateY(0deg);
+}
+
+.flipcardBack {
+  transform: rotateY(180deg);
+}
+
+.flipcardText {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: left;
+  width: 100%;
+  overflow: auto;
+}
+
+.flipcardHint {
+  font-size: 12px;
+  color: rgba(232, 234, 240, 0.72);
+  text-align: center;
+}
+
+.flipcardLevelControls {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.flipcardLevelBtn {
+  border: 1px solid rgba(30, 41, 59, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e8eaf0;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.flipcardLevelBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ratingRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ratingButton {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  border: 2px solid rgba(30, 41, 59, 0.9);
+  cursor: pointer;
+}
+
+.ratingButton:hover {
+  transform: translateY(-1px);
+}
+
+.mcq {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.mcqQuestionHeader {
+  flex: 0 0 auto;
+  max-height: 45%;
+  overflow: auto;
+  padding-bottom: 10px;
+}
+
+.mcqQuestion {
+  margin-bottom: 0;
+}
+
+.mcqQuestionDivider {
+  height: 1px;
+  width: 100%;
+  border-radius: 999px;
+  background: rgba(232, 234, 240, 0.12);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  margin-top: 10px;
+}
+
+.mcqOptionsScroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.mcqOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 2px;
+}
+
+.mcqOption {
+  width: 100%;
+  text-align: left;
+  border-radius: 12px;
+  border: 1px solid rgba(30, 41, 59, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e8eaf0;
+  padding: 12px;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.mcqOption:hover {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
+.mcqOption:active {
+  transform: translateY(1px);
+}
+
+.mcqOption:focus-visible {
+  outline: 2px solid rgba(255, 154, 118, 0.9);
+  outline-offset: 2px;
+}
+
+.mcqOption:disabled {
+  opacity: 0.95;
+  cursor: default;
+}
+
+.mcqOptionSelected {
+  border-color: rgba(255, 154, 118, 0.65);
+  background: rgba(255, 154, 118, 0.12);
+}
+
+.mcqOptionCorrect {
+  border-color: rgba(56, 161, 105, 0.9);
+  background: rgba(56, 161, 105, 0.22);
+}
+
+.mcqOptionWrong {
+  border-color: rgba(229, 62, 62, 0.9);
+  background: rgba(229, 62, 62, 0.18);
+}
+
+.mcqBack {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mcqBackNotice {
+  border-radius: 12px;
+  border: 1px solid rgba(30, 41, 59, 0.9);
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.mcqBackNoticeCorrect {
+  border-color: rgba(56, 161, 105, 0.85);
+  background: rgba(56, 161, 105, 0.18);
+}
+
+.mcqBackNoticeWrong {
+  border-color: rgba(229, 62, 62, 0.85);
+  background: rgba(229, 62, 62, 0.14);
+}
+
+.mcqBackNoticeMuted {
+  opacity: 0.85;
+}
+
+.mcqBackBlock {
+  border-radius: 12px;
+  border: 1px solid rgba(30, 41, 59, 0.9);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 12px;
+}
+
+.mcqBackBlockTitle {
+  opacity: 0.85;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.mcqBackBlockCorrect {
+  border-color: rgba(56, 161, 105, 0.65);
+  background: rgba(56, 161, 105, 0.12);
+}
+
+.mcqBackBlockWrong {
+  border-color: rgba(229, 62, 62, 0.65);
+  background: rgba(229, 62, 62, 0.1);
+}
+
+.mcqTimer {
+  margin-top: 0;
+}
+
+.mcqTimerText {
+  font-size: 12px;
+  color: rgba(232, 234, 240, 0.72);
+  margin-bottom: 6px;
+}
+
+.mcqTimerBar {
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(30, 41, 59, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.mcqTimerFill {
+  height: 100%;
+  background: rgba(57, 142, 105, 0.55);
+  transition: width 200ms linear;
+}
+
+/* Utility classes for layout */
+.row {
+  display: flex;
+}
+
+.rowCentered {
+  align-items: center;
+}
+
+.rowSpaceBetween {
+  justify-content: space-between;
+}
+
+.marginBottom {
+  margin-bottom: 16px;
+}
+
+.textSmall {
+  font-size: 14px;
+}
+
+.textMuted {
+  color: rgba(232, 234, 240, 0.72);
+}
+
+.headerPadding {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.historyRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  margin: 8px 0 4px;
+}
+
+.historyDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.8);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.7);
+}

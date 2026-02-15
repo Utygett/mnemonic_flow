@@ -1,0 +1,539 @@
+.page {
+  min-height: 100vh;
+  background: var(--bg);
+  padding-bottom: 96px;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 16px 0;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+.headerInner {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.iconButton {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.headerTitle {
+  margin: 0;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.headerSpacer {
+  width: 32px;
+}
+
+.main {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 16px 16px;
+  display: grid;
+  gap: 16px;
+}
+
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.formLabel {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 14px;
+  background: color-mix(in srgb, var(--surface) 70%, var(--bg) 30%);
+  color: var(--text);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.input:disabled {
+  opacity: 0.65;
+}
+
+.levelsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.levelsLabel {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.inlineAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.inlineAction:hover {
+  background: var(--surface-2);
+}
+
+.levelTabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  margin-bottom: 12px;
+}
+
+.levelTabs::-webkit-scrollbar {
+  display: none;
+}
+
+.levelTab {
+  flex: 0 0 auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.levelTabActive {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+}
+
+.levelTabInactive {
+  opacity: 0.85;
+}
+
+.levelTabText {
+  font-size: 13px;
+}
+
+.card {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 12px;
+}
+
+.cardTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.cardTopBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dangerIconButton {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, #ff6b6b 45%, var(--border));
+  background: transparent;
+  color: #ff6b6b;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.dangerIconButton:hover {
+  background: color-mix(in srgb, #ff6b6b 12%, transparent);
+}
+
+.mt4 {
+  margin-top: 16px;
+}
+
+.optionsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.optionsList {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.optionCard {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  padding: 12px;
+}
+
+.optionHeaderRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.radioLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.flex1 {
+  flex: 1;
+}
+
+.deleteOptionButton {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, #ff6b6b 45%, var(--border));
+  background: transparent;
+  color: #ff6b6b;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.deleteOptionButton:hover:not(:disabled) {
+  background: color-mix(in srgb, #ff6b6b 12%, transparent);
+}
+
+.deleteOptionButton:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.previewLabel {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.bottomActions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.buttonIconRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.report {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 8px;
+  white-space: pre-wrap;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  padding: 12px;
+}
+
+.imageSection {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 16px;
+}
+
+.sectionTitle {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.imageUploadRow {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.imageUploadColumn {
+  width: 100%;
+}
+
+.imageLabel {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.uploadButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 16px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.uploadButton:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface-2));
+}
+
+.uploadButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.uploadButton span {
+  font-size: 14px;
+}
+
+.imagePreview {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.previewImg {
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+  object-fit: contain;
+  display: block;
+}
+
+.removeImageButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.removeImageButton:hover:not(:disabled) {
+  background: rgba(255, 107, 107, 0.8);
+}
+
+.removeImageButton:disabled {
+  cursor: not-allowed;
+}
+
+.imageHint {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.uploadProgress {
+  padding: 12px;
+  background: color-mix(in srgb, var(--primary) 15%, var(--surface));
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-md);
+  color: var(--primary);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Inline image upload styles */
+.inlineImageUpload {
+  margin-top: 12px;
+}
+
+.imagesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.audioList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.inlineUploadButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 13px;
+}
+
+.inlineUploadButton:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface-2));
+}
+
+.inlineUploadButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.imagePreviewSmall {
+  position: relative;
+  display: inline-block;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  max-width: 200px;
+}
+
+.previewImgSmall {
+  max-width: 200px;
+  max-height: 150px;
+  object-fit: contain;
+  display: block;
+}
+
+.audioPreviewSmall {
+  position: relative;
+  display: inline-block;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  max-width: 300px;
+}
+
+.audioPlayerSmall {
+  max-width: 300px;
+  height: 40px;
+  display: block;
+}
+
+.optionImageUpload {
+  margin-top: 12px;
+}
+
+/* Audio buttons row */
+.audioButtonsRow {
+  display: flex;
+  gap: 8px;
+}
+
+/* Recording state */
+.recording {
+  border-color: #ff6b6b !important;
+  background: color-mix(in srgb, #ff6b6b 12%, var(--surface-2)) !important;
+  color: #ff6b6b !important;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.recordingIcon {
+  animation: pulseIcon 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes pulseIcon {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Native <select> visibility fix */
+select.input {
+  background: color-mix(in srgb, var(--surface) 70%, var(--bg) 30%);
+  color: var(--text);
+  cursor: pointer;
+}
+
+select.input option {
+  background: var(--surface);
+  color: var(--text);
+}

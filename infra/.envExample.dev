@@ -1,0 +1,21 @@
+SECRET_KEY=CHANGE_ME_TO_LONG_RANDOM
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=360
+
+# DB
+POSTGRES_DB=flashcards
+POSTGRES_USER=flashcards_user
+POSTGRES_PASSWORD=PASSWORD
+DATABASE_URL=postgresql+psycopg2://flashcards_user:PASSWORD@db:5432/flashcards
+
+# MinIO/S3 Configuration
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=minioadmin
+MINIO_ENDPOINT=http://minio:9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
+MINIO_BUCKET_NAME=card-media
+MINIO_USE_SSL=false
+
+# Frontend
+VITE_API_URL=/api

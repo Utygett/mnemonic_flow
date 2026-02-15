@@ -1,0 +1,52 @@
+services:
+  # Контейнер для pre-commit проверок
+  pre-commit:
+    image: ghcr.io/utygett/mnemonic_flow/pre-commit:latest
+    build:
+      context: .
+      dockerfile: .pre-commit/Dockerfile
+    working_dir: /repo
+    volumes:
+      - .:/repo
+
+  # Контейнер для тестов фронтенда
+  test-frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile.ci
+    command: npm run test:ci
+    environment:
+      - CI=true
+      - NODE_OPTIONS=--max-old-space-size=2048
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+
+  # Контейнер для тестов бэкенда
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: flashcards_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d flashcards_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  test-backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.ci
+    command: pytest
+    environment:
+      DATABASE_URL: postgresql+psycopg2://test_user:test_password@db:5432/flashcards_test
+      SECRET_KEY: test_secret_key_for_ci
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ../backend:/app

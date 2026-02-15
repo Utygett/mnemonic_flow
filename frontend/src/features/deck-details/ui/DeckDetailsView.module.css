@@ -1,0 +1,92 @@
+.page {
+  min-height: 100vh;
+  background: var(--bg);
+  padding-bottom: 96px;
+}
+
+.header {
+  padding: 48px 16px 24px 16px;
+}
+
+.headerInner {
+  max-width: 390px;
+  margin: 0 auto;
+  display: grid;
+  gap: 8px;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.description {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.container {
+  max-width: 390px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.stack {
+  display: grid;
+  gap: 20px;
+}
+
+/* Card list section */
+
+.cardListSection {
+  display: grid;
+  gap: 12px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.cardList {
+  display: grid;
+  gap: 10px;
+}
+
+.cardsLoading {
+  padding: 32px 0;
+  text-align: center;
+}
+
+.cardsError {
+  padding: 24px 0;
+  text-align: center;
+  color: var(--muted);
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+
+.emptyCards {
+  padding: 24px 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}

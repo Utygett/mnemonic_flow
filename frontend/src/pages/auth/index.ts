@@ -1,0 +1,5 @@
+export { Login } from './Login'
+export { Register } from './Register'
+export { ForgotPasswordPage } from './ForgotPasswordPage'
+export { ResetPasswordPage } from './ResetPasswordPage'
+export { VerifyEmailPage } from './VerifyEmailPage'

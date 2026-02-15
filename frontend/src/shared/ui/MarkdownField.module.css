@@ -1,0 +1,176 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.previewToggle {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.previewToggle:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--surface-2);
+  border-color: var(--text);
+}
+
+.previewToggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.editorWrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 70%, var(--bg) 30%);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.editorWrapper:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+/* Remove all default MDEditor styling */
+.editorWrapper :global(.w-md-editor) {
+  background: transparent !important;
+  border: none !important;
+}
+
+.editorWrapper :global(.w-md-editor-w-md-editor) {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Hide toolbar completely */
+.editorWrapper :global(.w-md-editor-toolbar) {
+  display: none !important;
+}
+
+.editorWrapper :global(.w-md-editor-toolbar-child) {
+  display: none !important;
+}
+
+.editorWrapper :global(.w-md-editor-toolbar) {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+.editorWrapper :global(.w-md-editor-toolbar *) {
+  display: none !important;
+}
+
+/* Ensure toolbar container doesn't take space */
+.editorWrapper :global(.w-md-editor > .w-md-editor-toolbar) {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Hide any button-like elements in editor */
+.editorWrapper :global(.w-md-editor button) {
+  display: none !important;
+}
+
+/* Style the textarea area */
+.editorWrapper :global(.w-md-editor-text) {
+  background: transparent !important;
+  border: none !important;
+}
+
+.editorWrapper :global(.w-md-editor-text-pre) {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  color: var(--text) !important;
+  font-family: inherit !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+}
+
+.editorWrapper :global(.w-md-editor-text-pre textarea) {
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  color: var(--text) !important;
+  caret-color: var(--text) !important;
+  font-family: inherit !important;
+  background: transparent !important;
+  padding: 12px !important;
+  text-align: left !important;
+  vertical-align: top !important;
+}
+
+.editorWrapper :global(.w-md-editor-text-input) {
+  caret-color: var(--text) !important;
+}
+
+.editorWrapper :global(.w-md-editor-text-textarea) {
+  caret-color: var(--text) !important;
+}
+
+.editorWrapper :global(textarea) {
+  caret-color: var(--text) !important;
+}
+
+.editorWrapper :global(.w-md-editor-text-input) {
+  background: transparent !important;
+  border: none !important;
+}
+
+.editorWrapper :global(.w-md-editor-text-textarea) {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Remove any preview pane in edit mode */
+.editorWrapper :global(.w-md-editor-preview) {
+  display: none !important;
+}
+
+.editorWrapper :global(.w-md-editor-content) {
+  background: transparent !important;
+}
+
+/* Remove resize handle */
+.editorWrapper :global(.w-md-editor-text-pre) {
+  resize: none !important;
+}
+
+.previewWrapper {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 12px 16px;
+  min-height: 60px;
+}

@@ -1,0 +1,148 @@
+/* FlipCard styles */
+
+.flipcardContainer {
+  width: 100%;
+  max-width: 520px;
+  max-height: 100%;
+}
+
+.flipcard {
+  width: 100%;
+  cursor: pointer;
+}
+
+.flipcardInner {
+  position: relative;
+  width: 100%;
+  min-height: 320px;
+  max-height: 100%;
+  transform-style: preserve-3d;
+  display: grid;
+}
+
+.flipcardSide {
+  grid-area: 1 / 1;
+  width: 100%;
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  padding: 16px;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 100%;
+  min-height: 0;
+}
+
+.flipcardFront {
+  transform: rotateY(0deg);
+}
+
+.flipcardBack {
+  transform: rotateY(180deg);
+}
+
+.flipcardText {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: left;
+  width: 100%;
+  overflow: auto;
+  min-height: 0;
+}
+
+.flipcardHint {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.flipcardLevelControls {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.flipcardLevelBtn {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.flipcardLevelBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.flipcardLevelBtnLeft {
+  composes: flipcardLevelBtn;
+}
+
+.flipcardLevelBtnRight {
+  composes: flipcardLevelBtn;
+}
+
+/* Multiple images container */
+.cardImages {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 0.5rem;
+}
+
+.cardImage {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardImageButton {
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: zoom-in;
+
+  display: inline-flex;
+  width: auto;
+  max-width: 100%;
+  line-height: 0;
+}
+
+.cardImageElement {
+  max-width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+/* Multiple audio container */
+.cardAudios {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.cardAudio {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardAudioElement {
+  width: 100%;
+  max-width: 320px;
+  height: 48px;
+  min-height: 40px;
+  border-radius: 8px;
+}
