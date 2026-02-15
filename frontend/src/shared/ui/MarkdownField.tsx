@@ -51,6 +51,7 @@ export function MarkdownField({
             onChange={v => onChange(v ?? '')}
             preview="edit"
             extraCommands={[]}
+            toolbarCommands={[]}
             visibleDragbar={false}
             height={200}
             textareaProps={{
