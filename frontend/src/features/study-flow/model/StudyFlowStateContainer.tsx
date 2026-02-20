@@ -70,6 +70,7 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
 
   const [deckCards, setDeckCards] = React.useState<StudyCard[]>([])
   const [sessionIndex, setSessionIndex] = React.useState(0)
+  const [showCardTitle, setShowCardTitle] = React.useState(false)
 
   // Session statistics state
   const [sessionStartedAtMs, setSessionStartedAtMs] = React.useState<number | null>(null)
@@ -109,6 +110,7 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
       setLoadingDeckCards,
       setDeckCards,
       setActiveDeckId,
+      setShowCardTitle,
       setIsStudying,
       setSessionMode,
       setSessionKey,
@@ -312,6 +314,7 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
           sessionStats={sessionStats}
           ratingHistory={ratingHistoryForCurrentCard}
           onCardSaved={handleCardSaved}
+          showCardTitle={showCardTitle}
         />
       ) : (
         children({

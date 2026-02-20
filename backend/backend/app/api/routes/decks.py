@@ -591,4 +591,4 @@ def get_study_cards(
             }
         )
 
-    return {"cards": out}
+    return {"cards": out, "deck": {"show_card_title": deck.show_card_title}}

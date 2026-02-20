@@ -24,13 +24,13 @@ export type LevelMCQ = {
 export type CreateCardData =
   | {
       deckId: string
-      term: string
+      term?: string // Опционально - авто-генерация на бэкенде
       type: 'flashcard'
       levels: Array<{ question: string; answer: string; timerSec?: number }>
     }
   | {
       deckId: string
-      term: string
+      term?: string // Опционально - авто-генерация на бэкенде
       type: 'multiple_choice'
       levels: Array<{
         question: string
@@ -43,7 +43,7 @@ export type CreateCardData =
 
 export type CreateCardBulkItem = {
   deckId: string
-  term: string
+  term?: string // Опционально - авто-генерация на бэкенде
   type: 'flashcard'
   levels: Array<{ question: string; answer: string; timerSec?: number }>
 }

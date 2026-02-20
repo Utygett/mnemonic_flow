@@ -46,6 +46,7 @@ export function StudySession({
   onRemoveFromProgress,
   ratingHistory = [],
   onCardSaved,
+  showCardTitle = false,
 }: {
   cards: StudyCard[]
   currentIndex: number
@@ -57,6 +58,7 @@ export function StudySession({
   onRemoveFromProgress: () => void
   ratingHistory?: DifficultyRating[]
   onCardSaved?: (payload: CardSavedPayload) => void
+  showCardTitle?: boolean
 }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)
@@ -429,6 +431,7 @@ export function StudySession({
               onLevelDown={onLevelDown}
               frontContent={renderMcqFront()}
               backContent={renderMcqBack()}
+              showCardTitle={showCardTitle}
             />
           ) : (
             <FlipCard
@@ -437,6 +440,7 @@ export function StudySession({
               onFlip={handleFlip}
               onLevelUp={onLevelUp}
               onLevelDown={onLevelDown}
+              showCardTitle={showCardTitle}
             />
           )}
         </div>

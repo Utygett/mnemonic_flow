@@ -90,3 +90,32 @@
   color: var(--muted);
   font-size: 14px;
 }
+
+/* Checkbox row styles */
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.checkbox:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.checkboxRow span {
+  font-size: 14px;
+  color: var(--text);
+}

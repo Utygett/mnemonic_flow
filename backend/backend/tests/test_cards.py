@@ -129,8 +129,8 @@ def test_create_card_title_trim(client: TestClient, test_deck, auth_headers):
     assert response2.status_code == 409
 
 
-def test_create_card_empty_title_fails(client: TestClient, test_deck, auth_headers):
-    """Пустое название карточки должно вызывать ошибку."""
+def test_create_card_empty_title_auto_generates(client: TestClient, test_deck, auth_headers):
+    """Пустое название карточки должно автоматически генерироваться на основе названия колоды."""
     payload = {
         "deck_id": str(test_deck.id),
         "title": "   ",
@@ -144,8 +144,11 @@ def test_create_card_empty_title_fails(client: TestClient, test_deck, auth_heade
     }
 
     response = client.post("/api/cards/", json=payload, headers=auth_headers)
-    assert response.status_code == 422
-    assert "title" in response.json()["detail"].lower()
+    assert response.status_code == 201
+    data = response.json()
+    # Title should be auto-generated, not empty
+    assert data["title"] is not None
+    assert len(data["title"].strip()) > 0
 
 
 def test_create_card_deck_not_found(client: TestClient, auth_headers):

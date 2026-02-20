@@ -58,6 +58,26 @@
   resize: vertical;
 }
 
+.checkboxWrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.checkboxWrapper input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.checkboxLabel {
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+
 .error {
   color: #ef4444;
   font-size: 12px;
