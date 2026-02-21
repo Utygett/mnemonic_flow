@@ -103,12 +103,13 @@ export function EditCardView(props: Props) {
         {!selectedCard ? null : (
           <>
             <div className={styles.formRow}>
-              <label className={styles.formLabel}>Название</label>
+              <label className={styles.formLabel}>Уникальное имя / ID (не обязательно)</label>
               <input
                 className={styles.input}
                 value={titleDraft}
                 onChange={e => setTitleDraft(e.target.value)}
                 disabled={!selectedCardId || saving}
+                placeholder=""
               />
             </div>
 

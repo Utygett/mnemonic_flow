@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 
 import type { StudyMode } from '@/entities/card'
 import { loadSession, type PersistedSession } from '@/shared/lib/utils/session-store'
+import { updateDeck } from '@/entities/deck'
 
 import type { DeckDetailsProps } from './types'
 import { useDeckCards } from './useDeckCards'
@@ -11,6 +12,9 @@ export type DeckDetailsViewModel = {
   deckTitle: string
   deckDescription: string | null
   canEdit: boolean
+  showCardTitle: boolean
+  setShowCardTitle: (v: boolean) => void
+  savingDeckSetting: boolean
   limit: number
   setLimit: (v: number) => void
 
@@ -34,6 +38,7 @@ export type DeckDetailsViewModel = {
 export function useDeckDetailsModel(props: DeckDetailsProps): DeckDetailsViewModel {
   const [limit, setLimit] = useState<number>(20)
   const [sessionVersion, setSessionVersion] = useState(0)
+  const [savingDeckSetting, setSavingDeckSetting] = useState(false)
 
   const {
     deck,
@@ -77,11 +82,27 @@ export function useDeckDetailsModel(props: DeckDetailsProps): DeckDetailsViewMod
     if (props.onAddCard) props.onAddCard()
   }
 
+  const setShowCardTitle = async (value: boolean) => {
+    setSavingDeckSetting(true)
+    try {
+      await updateDeck(props.deckId, { show_card_title: value })
+      // Refresh deck data to get updated value
+      await refreshCards()
+    } catch (err) {
+      console.error('Failed to update deck setting:', err)
+    } finally {
+      setSavingDeckSetting(false)
+    }
+  }
+
   return {
     deckId: props.deckId,
     deckTitle: deck?.title ?? '',
     deckDescription: deck?.description ?? null,
     canEdit: deck?.can_edit ?? true,
+    showCardTitle: deck?.show_card_title ?? false,
+    setShowCardTitle,
+    savingDeckSetting,
     limit,
     setLimit,
 

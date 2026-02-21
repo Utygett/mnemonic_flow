@@ -36,7 +36,11 @@ export function useCreateDeckModel(props: CreateDeckProps): CreateDeckViewModel 
     try {
       setSaving(true)
       setError(null)
-      const created: any = await createDeck({ title: t, description: d ? d : null })
+      const created: any = await createDeck({
+        title: t,
+        description: d ? d : null,
+        show_card_title: false, // По умолчанию disabled при создании
+      })
       onSave(String(created?.id ?? created?.deck_id ?? ''))
     } catch (e) {
       console.error(e)

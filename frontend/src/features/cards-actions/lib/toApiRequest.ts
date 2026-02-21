@@ -3,7 +3,7 @@
 
 export type CardData = {
   deckId: string
-  term: string
+  term?: string // Опционально - авто-генерация на бэкенде
   type: string
   levels: Array<{ level_index?: number; content?: any } | any>
 }
@@ -24,7 +24,7 @@ function transformLevel(level: any) {
 export function toApiRequest(cardData: CardData) {
   return {
     deck_id: cardData.deckId,
-    title: cardData.term,
+    title: cardData.term?.trim() || undefined, // undefined если пустое - авто-генерация на бэкенде
     type: cardData.type,
     levels: cardData.levels.map(transformLevel),
   }

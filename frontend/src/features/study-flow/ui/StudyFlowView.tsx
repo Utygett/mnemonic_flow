@@ -27,6 +27,7 @@ type Props = {
   sessionStats?: SessionStats
   ratingHistory?: DifficultyRating[]
   onCardSaved?: (payload: CardSavedPayload) => void
+  showCardTitle: boolean
 }
 
 function formatDuration(ms: number): string {
@@ -157,6 +158,7 @@ export function StudyFlowView(props: Props) {
       onRemoveFromProgress={props.onRemoveFromProgress}
       ratingHistory={props.ratingHistory ?? []}
       onCardSaved={props.onCardSaved}
+      showCardTitle={props.showCardTitle}
     />
   )
 }

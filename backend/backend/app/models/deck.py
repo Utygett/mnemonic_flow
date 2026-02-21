@@ -19,3 +19,4 @@ class Deck(Base):
     color: Mapped[str] = mapped_column(String, default="#4A6FA5")
 
     is_public: Mapped[bool] = mapped_column(Boolean, default=False)
+    show_card_title: Mapped[bool] = mapped_column(Boolean, default=False)

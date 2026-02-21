@@ -101,21 +101,29 @@ def create_card(
         raise HTTPException(status_code=403, detail="Deck not accessible")  # owner-only
 
     # 3) validate minimal invariants
-    title = payload.title.strip()
-    if not title:
-        raise HTTPException(status_code=422, detail="Title is required")
     if not payload.levels:
         raise HTTPException(status_code=422, detail="At least 1 level is required")
 
-    # 4) check for duplicate card title in the same deck
-    existing_card = (
-        db.query(Card).filter(Card.deck_id == payload.deck_id, Card.title == title).first()
-    )
-    if existing_card:
-        raise HTTPException(
-            status_code=409,
-            detail=f"Card with title '{title}' already exists in this deck",
+    # 3.1) Auto-generate title if not provided: DeckName-Number
+    if payload.title and payload.title.strip():
+        title = payload.title.strip()
+    else:
+        # Generate unique title: DeckName-CardNumber (без склеивания слов)
+        deck_title = deck.title.replace(" ", "_")  # Заменяем пробелы на подчеркивания
+        # Count existing cards in this deck
+        card_count = db.query(Card).filter(Card.deck_id == payload.deck_id).count()
+        title = f"{deck_title}-{card_count + 1}"
+
+    # 4) check for duplicate card title in the same deck (only if custom title provided)
+    if payload.title and payload.title.strip():
+        existing_card = (
+            db.query(Card).filter(Card.deck_id == payload.deck_id, Card.title == title).first()
         )
+        if existing_card:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Card with title '{title}' already exists in this deck",
+            )
 
     # 4) create card (ORM uses deckid/maxlevel) [file:151]
     card = Card(

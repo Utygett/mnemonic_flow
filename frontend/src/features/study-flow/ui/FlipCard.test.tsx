@@ -241,13 +241,13 @@ describe('FlipCard', () => {
   })
 
   describe('edge cases', () => {
-    it('должен отображать title если content.question отсутствует', () => {
+    it('должен отображать title если content.question отсутствует и showCardTitle=true', () => {
       const card = createMockFlashcard({
         title: 'Card Title',
         levels: [{ levelindex: 0, content: { question: '', answer: 'A' } }],
       })
 
-      render(<FlipCard card={card} isFlipped={false} onFlip={vi.fn()} />)
+      render(<FlipCard card={card} isFlipped={false} onFlip={vi.fn()} showCardTitle={true} />)
 
       expect(screen.getByText('Card Title')).toBeInTheDocument()
     })
