@@ -157,6 +157,7 @@ class DeckCreate(BaseModel):
 class CreateCardResponse(BaseModel):
     card_id: UUID
     deck_id: UUID
+    title: str
 
 
 class DeckUpdate(BaseModel):

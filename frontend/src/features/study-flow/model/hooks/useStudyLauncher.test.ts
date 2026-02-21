@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useStudyLauncher } from './useStudyLauncher'
 import { createMockCards, createMockPersistedSession } from '../test/fixtures'
@@ -190,7 +190,10 @@ describe('useStudyLauncher', () => {
 
     it('должен устанавливать loading состояние', async () => {
       const mockCards = createMockCards(2)
-      let resolvePromise: any
+      let resolvePromise: (value: {
+        cards: typeof mockCards
+        deck: { show_card_title: boolean }
+      }) => void
       vi.mocked(getStudyCards).mockReturnValue(
         new Promise(resolve => {
           resolvePromise = resolve
@@ -199,15 +202,18 @@ describe('useStudyLauncher', () => {
 
       const { result } = renderHook(() => useStudyLauncher(mockInput))
 
-      act(() => {
-        result.current.startDeckStudy('deck-1', 'ordered')
+      const promise = act(async () => {
+        await result.current.startDeckStudy('deck-1', 'ordered')
       })
 
+      // Loading state should be set before the promise resolves
       expect(mockInput.setLoadingDeckCards).toHaveBeenCalledWith(true)
 
-      await act(async () => {
-        resolvePromise!({ cards: mockCards })
-      })
+      // Resolve the mock promise
+      resolvePromise!({ cards: mockCards, deck: { show_card_title: false } })
+
+      // Wait for the act to complete
+      await promise
 
       expect(mockInput.setLoadingDeckCards).toHaveBeenCalledWith(false)
     })
