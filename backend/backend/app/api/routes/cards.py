@@ -210,7 +210,7 @@ def create_card(
 
     db.commit()
 
-    return CreateCardResponse(card_id=card.id, deck_id=payload.deck_id)
+    return CreateCardResponse(card_id=card.id, deck_id=payload.deck_id, title=card.title)
 
 
 @router.get("/review", response_model=list[CardForReview])
