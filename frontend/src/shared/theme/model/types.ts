@@ -14,7 +14,7 @@ export const THEME_TOKEN_KEYS = [
 
 export type ThemeTokenKey = (typeof THEME_TOKEN_KEYS)[number]
 
-export type ThemeName = 'dark' | 'light' | 'custom'
+export type ThemeName = 'dark' | 'light' | 'blue' | 'custom'
 
 export type ThemeTokens = Partial<Record<ThemeTokenKey, string>>
 
