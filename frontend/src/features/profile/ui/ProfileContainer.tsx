@@ -4,6 +4,7 @@ import { ProfileView } from './ProfileView'
 import type { Theme } from '../model/types'
 import { APP_VERSION } from '@/shared/lib/version'
 import { getMe, updateUsername } from '@/shared/api'
+import { useTheme } from '@/shared/theme'
 
 type UserData = {
   id: string
@@ -12,7 +13,7 @@ type UserData = {
 }
 
 export function ProfileContainer() {
-  const [theme, setTheme] = useState<Theme>('dark')
+  const { theme, setTheme } = useTheme()
   const [userData, setUserData] = useState<UserData | null>(null)
 
   useEffect(() => {
@@ -68,7 +69,7 @@ export function ProfileContainer() {
       name={userData.username}
       email={userData.email}
       version={APP_VERSION}
-      theme={theme}
+      theme={theme as Theme}
       onThemeChange={setTheme}
       onLogout={handleLogout}
       onChangePassword={handleChangePassword}
