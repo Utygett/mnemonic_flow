@@ -16,10 +16,26 @@
   margin: 0 auto;
 }
 
-.actionSection {
-  padding: 16px 16px;
+.statsSection {
+  position: sticky;
+  top: 86px;
+  z-index: 9;
+  background: var(--bg);
   max-width: 390px;
   margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.chartWrapper {
+  flex-shrink: 0;
+}
+
+.actionSection {
+  flex-shrink: 0;
 }
 
 .groupDescriptionSection {

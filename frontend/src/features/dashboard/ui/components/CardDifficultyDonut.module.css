@@ -1,0 +1,72 @@
+.container {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 180px;
+}
+
+.chartSection {
+  width: 100%;
+}
+
+.chartWrapper {
+  position: relative;
+  height: 360px;
+  width: 100%;
+}
+
+.centerLabel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.centerLabel:hover {
+  opacity: 0.8;
+}
+
+.centerValue {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.centerLabelText {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.legendSection {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 24px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.legendText {
+  font-size: 13px;
+  color: var(--text);
+}

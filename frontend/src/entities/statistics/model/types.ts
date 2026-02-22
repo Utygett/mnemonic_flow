@@ -1,5 +1,12 @@
 // Statistics domain types
 
+export interface DifficultyDistribution {
+  easyCount: number
+  mediumCount: number
+  hardCount: number
+  totalCount: number
+}
+
 export interface Statistics {
   cardsStudiedToday: number
   timeSpentToday: number // minutes
