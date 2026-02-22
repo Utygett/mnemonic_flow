@@ -127,11 +127,13 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
       {props.activeTab === 'home' && (
         <HomeDashboardView
           statistics={props.data.dashboardStats}
+          difficultyDistribution={props.data.difficultyDistribution}
           decks={props.data.decks}
           resumeCandidate={props.study.resumeCandidate}
           onResume={props.study.onResume}
           onDiscardResume={props.study.onDiscardResume}
           onStartStudy={props.study.onStartReviewStudy}
+          onNavigateToStats={props.onNavigateToStats}
         />
       )}
 

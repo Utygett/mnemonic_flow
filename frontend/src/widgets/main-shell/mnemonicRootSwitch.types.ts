@@ -6,6 +6,8 @@ import type { CardsActionsApi } from '../../features/cards-actions'
 import type { DecksFlowApi } from '../../features/decks-flow'
 import type { DecksActionsApi } from '../../features/decks-actions'
 
+import type { DifficultyDistribution } from '@/entities/statistics'
+
 export type MnemonicRootSwitchProps = {
   study: any
   activeTab: MainTab
@@ -28,6 +30,7 @@ export type MnemonicRootSwitchProps = {
     currentGroupDeckIds: string[]
     statistics: any
     dashboardStats: any
+    difficultyDistribution: DifficultyDistribution
   }
 
   status: {
@@ -48,5 +51,6 @@ export type MnemonicRootSwitchProps = {
     deleteActiveGroup: () => Promise<void>
   }
 
+  onNavigateToStats?: () => void
   onStudySubScreenChange?: (isSubScreen: boolean) => void
 }
