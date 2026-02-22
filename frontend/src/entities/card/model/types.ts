@@ -35,6 +35,9 @@ export interface StudyCard {
 
 export type StudyCardsResponse = {
   cards: StudyCard[]
+  deck: {
+    show_card_title: boolean
+  }
 }
 
 // Analytics / review logging payload (no cardId here; cardId is in the URL)
@@ -76,7 +79,7 @@ export type ApiCreateCardLevelRequest = {
 
 export type ApiCreateCardRequest = {
   deck_id: string
-  title: string
+  title?: string // Опционально - авто-генерация на бэкенде
   type: string // changed from card_type to match backend
   levels: ApiCreateCardLevelRequest[] // flat structure, not nested
 }

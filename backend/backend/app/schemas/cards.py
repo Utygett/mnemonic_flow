@@ -64,7 +64,7 @@ class CreateCardLevelRequest(BaseModel):
 
 class CreateCardRequest(BaseModel):
     deck_id: str
-    title: str
+    title: Optional[str] = None  # Опционально, авто-генерируется если не указан
     type: str  # или Literal["flashcard","multiple_choice"], если уже готов
     levels: List[CreateCardLevelRequest]
 
@@ -151,11 +151,13 @@ class DeckCreate(BaseModel):
     title: str
     description: str | None = None
     color: str | None = None
+    show_card_title: bool = False
 
 
 class CreateCardResponse(BaseModel):
     card_id: UUID
     deck_id: UUID
+    title: str
 
 
 class DeckUpdate(BaseModel):
@@ -163,6 +165,7 @@ class DeckUpdate(BaseModel):
     description: Optional[str] = None
     color: Optional[str] = Field(default=None, min_length=1)  # опционально: regex под HEX
     is_public: Optional[bool] = None
+    show_card_title: Optional[bool] = None
 
 
 class DeckDetail(BaseModel):
@@ -172,6 +175,7 @@ class DeckDetail(BaseModel):
     color: str
     owner_id: UUID
     is_public: bool
+    show_card_title: bool = False
 
     count_repeat: int = 0
     count_for_repeat: int = 0

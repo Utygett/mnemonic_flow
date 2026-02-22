@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useStudyLauncher } from './useStudyLauncher'
 import { createMockCards, createMockPersistedSession } from '../test/fixtures'
@@ -34,6 +34,7 @@ describe('useStudyLauncher', () => {
     setSessionMode: vi.fn(),
     setSessionKey: vi.fn(),
     setSessionIndex: vi.fn(),
+    setShowCardTitle: vi.fn(),
   }
 
   beforeEach(() => {
@@ -48,7 +49,10 @@ describe('useStudyLauncher', () => {
   describe('startDeckStudy', () => {
     it('должен запустить сессию в режиме ordered', async () => {
       const mockCards = createMockCards(3)
-      vi.mocked(getStudyCards).mockResolvedValue({ cards: mockCards })
+      vi.mocked(getStudyCards).mockResolvedValue({
+        cards: mockCards,
+        deck: { show_card_title: false },
+      })
 
       const { result } = renderHook(() => useStudyLauncher(mockInput))
 
@@ -63,6 +67,7 @@ describe('useStudyLauncher', () => {
       })
       expect(mockInput.setDeckCards).toHaveBeenCalledWith(mockCards)
       expect(mockInput.setActiveDeckId).toHaveBeenCalledWith('deck-1')
+      expect(mockInput.setShowCardTitle).toHaveBeenCalledWith(false)
       expect(mockInput.setSessionMode).toHaveBeenCalledWith('deck')
       expect(mockInput.setSessionKey).toHaveBeenCalledWith('deck:deck-1')
       expect(mockInput.setSessionIndex).toHaveBeenCalledWith(0)
@@ -72,7 +77,10 @@ describe('useStudyLauncher', () => {
 
     it('должен запускать сессию в режиме random с seed', async () => {
       const mockCards = createMockCards(2)
-      vi.mocked(getStudyCards).mockResolvedValue({ cards: mockCards })
+      vi.mocked(getStudyCards).mockResolvedValue({
+        cards: mockCards,
+        deck: { show_card_title: true },
+      })
       vi.setSystemTime(1000000)
 
       const { result } = renderHook(() => useStudyLauncher(mockInput))
@@ -90,7 +98,10 @@ describe('useStudyLauncher', () => {
 
     it('должен нормализовать limit для режима new_random (min 1, max 200)', async () => {
       const mockCards = createMockCards(5)
-      vi.mocked(getStudyCards).mockResolvedValue({ cards: mockCards })
+      vi.mocked(getStudyCards).mockResolvedValue({
+        cards: mockCards,
+        deck: { show_card_title: false },
+      })
 
       const { result } = renderHook(() => useStudyLauncher(mockInput))
 
@@ -107,7 +118,10 @@ describe('useStudyLauncher', () => {
 
     it('должен использовать limit=20 по умолчанию для новых карточек', async () => {
       const mockCards = createMockCards(3)
-      vi.mocked(getStudyCards).mockResolvedValue({ cards: mockCards })
+      vi.mocked(getStudyCards).mockResolvedValue({
+        cards: mockCards,
+        deck: { show_card_title: false },
+      })
 
       const { result } = renderHook(() => useStudyLauncher(mockInput))
 
@@ -124,7 +138,10 @@ describe('useStudyLauncher', () => {
 
     it('должен ограничивать limit снизу до 1', async () => {
       const mockCards = createMockCards(1)
-      vi.mocked(getStudyCards).mockResolvedValue({ cards: mockCards })
+      vi.mocked(getStudyCards).mockResolvedValue({
+        cards: mockCards,
+        deck: { show_card_title: false },
+      })
 
       const { result } = renderHook(() => useStudyLauncher(mockInput))
 
@@ -138,7 +155,10 @@ describe('useStudyLauncher', () => {
 
     it('должен ограничивать limit сверху до 200', async () => {
       const mockCards = createMockCards(10)
-      vi.mocked(getStudyCards).mockResolvedValue({ cards: mockCards })
+      vi.mocked(getStudyCards).mockResolvedValue({
+        cards: mockCards,
+        deck: { show_card_title: false },
+      })
 
       const { result } = renderHook(() => useStudyLauncher(mockInput))
 
@@ -151,7 +171,10 @@ describe('useStudyLauncher', () => {
     })
 
     it('должен показать alert если новых карточек нет', async () => {
-      vi.mocked(getStudyCards).mockResolvedValue({ cards: [] })
+      vi.mocked(getStudyCards).mockResolvedValue({
+        cards: [],
+        deck: { show_card_title: false },
+      })
 
       const { result } = renderHook(() => useStudyLauncher(mockInput))
 
@@ -167,7 +190,10 @@ describe('useStudyLauncher', () => {
 
     it('должен устанавливать loading состояние', async () => {
       const mockCards = createMockCards(2)
-      let resolvePromise: any
+      let resolvePromise: (value: {
+        cards: typeof mockCards
+        deck: { show_card_title: boolean }
+      }) => void
       vi.mocked(getStudyCards).mockReturnValue(
         new Promise(resolve => {
           resolvePromise = resolve
@@ -176,21 +202,27 @@ describe('useStudyLauncher', () => {
 
       const { result } = renderHook(() => useStudyLauncher(mockInput))
 
-      act(() => {
-        result.current.startDeckStudy('deck-1', 'ordered')
+      const promise = act(async () => {
+        await result.current.startDeckStudy('deck-1', 'ordered')
       })
 
+      // Loading state should be set before the promise resolves
       expect(mockInput.setLoadingDeckCards).toHaveBeenCalledWith(true)
 
-      await act(async () => {
-        resolvePromise!({ cards: mockCards })
-      })
+      // Resolve the mock promise
+      resolvePromise!({ cards: mockCards, deck: { show_card_title: false } })
+
+      // Wait for the act to complete
+      await promise
 
       expect(mockInput.setLoadingDeckCards).toHaveBeenCalledWith(false)
     })
 
     it('не должен устанавливать isStudying если карточек нет', async () => {
-      vi.mocked(getStudyCards).mockResolvedValue({ cards: [] })
+      vi.mocked(getStudyCards).mockResolvedValue({
+        cards: [],
+        deck: { show_card_title: false },
+      })
 
       const { result } = renderHook(() => useStudyLauncher(mockInput))
 

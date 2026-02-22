@@ -16,6 +16,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Read VERSION
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -29,11 +32,13 @@ jobs:
       - name: Build and push backend
         run: |
           REPO_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          VERSION=$(cat VERSION)
           if [ "${GITHUB_REF_NAME}" = "develop" ]; then
             docker buildx build \
               --cache-from "type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/backend:buildcache" \
               --cache-to "type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/backend:buildcache,mode=max" \
               --tag ghcr.io/${REPO_LOWER}/mnemonic_flow/backend:develop \
+              --build-arg VERSION="${VERSION}" \
               --push \
               -f backend/Dockerfile \
               backend
@@ -41,6 +46,7 @@ jobs:
             docker buildx build \
               --no-cache \
               --tag ghcr.io/${REPO_LOWER}/mnemonic_flow/backend:latest \
+              --build-arg VERSION="${VERSION}" \
               --push \
               -f backend/Dockerfile \
               backend
@@ -51,6 +57,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Read VERSION
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -65,11 +74,13 @@ jobs:
       - name: Build and push frontend
         run: |
           REPO_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          VERSION=$(cat VERSION)
           if [ "${GITHUB_REF_NAME}" = "develop" ]; then
             docker buildx build \
               --cache-from "type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/frontend:buildcache" \
               --cache-to "type=registry,ref=ghcr.io/${REPO_LOWER}/mnemonic_flow/frontend:buildcache,mode=max" \
               --tag ghcr.io/${REPO_LOWER}/mnemonic_flow/frontend:develop \
+              --build-arg VERSION="${VERSION}" \
               --push \
               -f frontend/Dockerfile \
               frontend
@@ -77,6 +88,7 @@ jobs:
             docker buildx build \
               --no-cache \
               --tag ghcr.io/${REPO_LOWER}/mnemonic_flow/frontend:latest \
+              --build-arg VERSION="${VERSION}" \
               --push \
               -f frontend/Dockerfile \
               frontend

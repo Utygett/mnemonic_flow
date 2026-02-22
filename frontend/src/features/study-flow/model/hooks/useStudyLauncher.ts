@@ -10,6 +10,7 @@ type Input = {
   setLoadingDeckCards: (v: boolean) => void
   setDeckCards: (v: StudyCard[]) => void
   setActiveDeckId: (v: string | null) => void
+  setShowCardTitle: (v: boolean) => void
 
   setIsStudying: (v: boolean) => void
 
@@ -51,6 +52,7 @@ export function useStudyLauncher(input: Input) {
 
         input.setDeckCards(res.cards)
         input.setActiveDeckId(deckId)
+        input.setShowCardTitle(res.deck.show_card_title)
         input.setSessionMode('deck')
         input.setSessionKey(key)
         input.setSessionIndex(0)
@@ -70,6 +72,7 @@ export function useStudyLauncher(input: Input) {
       const items = await getReviewSession(20)
       input.setDeckCards(toStudyCards(items as any[]))
       input.setActiveDeckId(null)
+      input.setShowCardTitle(false)
 
       input.setIsStudying(true)
       input.setSessionMode('review')

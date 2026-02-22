@@ -14,6 +14,7 @@ export async function createDeck(payload: {
   title: string
   description?: string | null
   color?: string | null
+  show_card_title?: boolean
 }): Promise<PublicDeckSummary> {
   return apiRequest<PublicDeckSummary>(`/decks/`, {
     method: 'POST',
@@ -28,6 +29,7 @@ export async function updateDeck(
     description?: string | null
     color?: string | null
     is_public?: boolean
+    show_card_title?: boolean
   }
 ): Promise<PublicDeckSummary> {
   return apiRequest<PublicDeckSummary>(`/decks/${deckId}`, {
