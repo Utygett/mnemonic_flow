@@ -542,9 +542,10 @@ def get_study_cards(
 
     # activeLevel: читаем ТОЛЬКО активный прогресс (ничего не создаём)
     active_level_index_by_card: dict[UUID, int] = {}
+    active_level_id_by_card: dict[UUID, UUID] = {}
     if mode in ("random", "ordered"):
         active_rows = (
-            db.query(CardProgress.card_id, CardLevel.level_index)
+            db.query(CardProgress.card_id, CardLevel.level_index, CardLevel.id)
             .join(CardLevel, CardLevel.id == CardProgress.card_level_id)
             .filter(
                 CardProgress.user_id == user_id,
@@ -553,7 +554,8 @@ def get_study_cards(
             )
             .all()
         )
-        active_level_index_by_card = {card_id: lvl_index for card_id, lvl_index in active_rows}
+        active_level_index_by_card = {card_id: lvl_index for card_id, lvl_index, _ in active_rows}
+        active_level_id_by_card = {card_id: lvl_id for card_id, _, lvl_id in active_rows}
 
     # Ответ в формате фронта (camelCase + нужные поля)
     out = []
@@ -580,6 +582,7 @@ def get_study_cards(
                     for card_level in lvls
                 ],
                 "activeLevel": active_level_index_by_card.get(c.id, 0),
+                "activeCardLevelId": str(active_level_id_by_card.get(c.id, lvls[0].id)),
                 # История оценок для карточки (ограничим последние 20 записей)
                 "reviewHistory": [
                     {

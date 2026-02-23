@@ -60,3 +60,9 @@ class Card(Base):
         back_populates="card",
         cascade="all, delete-orphan",
     )
+
+    comments = relationship(
+        "Comment",
+        back_populates="card",
+        cascade="all, delete-orphan",
+    )

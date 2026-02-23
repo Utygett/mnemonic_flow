@@ -17,6 +17,7 @@ import { MarkdownView } from '@/shared/ui/MarkdownView'
 import { X, SkipForward, Trash2, Pencil } from 'lucide-react'
 
 import { EditCardModal } from '@/features/cards-edit/ui/EditCardModal'
+import { CardComments } from '@/features/card-comments'
 
 import styles from './StudySession.module.css'
 
@@ -478,6 +479,8 @@ export function StudySession({
                   onClick={() => submitReview('easy')}
                 />
               </div>
+
+              <CardComments cardId={currentCard.id} levelId={currentCard.activeCardLevelId} />
             </div>
           )}
         </div>
