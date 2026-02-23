@@ -53,3 +53,9 @@ class CardLevel(Base):
         back_populates="card_level",
         cascade="all, delete-orphan",
     )
+
+    comments: Mapped[list["Comment"]] = relationship(  # noqa: F821
+        "Comment",
+        back_populates="card_level",
+        cascade="all, delete-orphan",
+    )

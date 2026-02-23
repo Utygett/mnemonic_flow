@@ -25,6 +25,7 @@ export interface StudyCard {
   type: string
   levels: CardLevel[]
   activeLevel: number
+  activeCardLevelId: string
   questionImageUrl?: string
   questionImageName?: string
   answerImageUrl?: string

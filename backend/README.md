@@ -299,6 +299,8 @@ alembic downgrade -1
 | `/api/groups` | GET/POST | Список/создание групп | ✅ |
 | `/api/groups/{id}` | GET/PATCH/DELETE | Операции с группой | ✅ |
 | `/api/stats/dashboard` | GET | Статистика для дашборда | ✅ |
+| `/api/cards/{card_id}/levels/{level_id}/comments` | GET | Получить комментарии к уровню карточки | ❌ |
+| `/api/cards/{card_id}/levels/{level_id}/comments` | POST | Создать комментарий к уровню карточки | ✅ |
 | `/api/stats/difficulty-distribution` | GET | Распределение карточек по сложности | ✅ |
 
 ### Статистика
