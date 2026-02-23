@@ -1,4 +1,4 @@
-# Изменения в MenmonicFlow
+# Изменения в MnemonicFlow
 
 ## ✅ Реализовано
 
