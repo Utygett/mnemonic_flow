@@ -1,4 +1,4 @@
-# 📱 MenmonicFlow - PWA Ready!
+# 📱 MnemonicFlow - PWA Ready!
 
 ## ✅ Что было добавлено:
 

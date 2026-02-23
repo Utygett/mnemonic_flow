@@ -31,8 +31,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'MenmonicFlow',
-        short_name: 'MenmonicFlow',
+        name: 'MnemonicFlow',
+        short_name: 'MnemonicFlow',
         description: 'Adaptive Recall App',
         theme_color: '#ffffff',
         background_color: '#ffffff',
