@@ -64,7 +64,7 @@ src/
 │   ├── deck-edit/         # Редактирование колоды
 │   ├── decks-actions/     # Действия с колодами
 │   ├── decks-flow/        # Flow для работы с колодами
-│   ├── dashboard/         # Дашборд
+│   ├── dashboard/         # Дашборд с диаграммой сложности
 │   ├── group-create/      # Создание группы
 │   ├── profile/           # Профиль пользователя
 │   ├── statistics/        # Статистика
@@ -194,7 +194,7 @@ npm run format:check
 | **UI**      | Radix UI primitives + CSS Modules         |
 | **State**   | React hooks, react-hook-form              |
 | **Math**    | KaTeX (для формул в карточках)            |
-| **Charts**  | Recharts (графики статистики)             |
+| **Charts**  | Recharts (диаграммы и графики статистики) |
 | **PWA**     | vite-plugin-pwa (service worker, offline) |
 | **Testing** | Vitest + React Testing Library            |
 | **Linting** | ESLint 9 + Prettier                       |
