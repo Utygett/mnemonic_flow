@@ -4,6 +4,7 @@ import type { Group } from '@/entities/group'
 import type { StudyMode } from '../../../../types'
 import type { PersistedSession } from '@/shared/lib/utils/session-store'
 import type { PublicDeckSummary } from '@/entities/deck'
+import type { ImportAnkiResult } from '@/features/deck-import'
 
 import { CreateGroup } from '../../../../features/group-create'
 import { DeckDetailsScreen } from '../../../../features/deck-details'
@@ -210,6 +211,10 @@ export function HomeTabContainer(props: Props) {
         setView({ kind: 'addDeck', groupId: props.activeGroupId })
       }}
       onCreateDeck={props.onCreateDeck}
+      onImportAnkiSuccess={async (result: ImportAnkiResult) => {
+        await props.refreshDecks()
+        setView({ kind: 'deckDetails', deckId: result.deck_id })
+      }}
     />
   )
 }
