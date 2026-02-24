@@ -183,6 +183,23 @@ export function EditCardView(props: Props) {
               </div>
 
               <div className={styles.card}>
+                <div className={styles.cardTopBar}>
+                  <div className={styles.cardTopBarLeft}>
+                    {levels.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeLevel(activeLevel)}
+                        className={styles.dangerIconButton}
+                        disabled={saving}
+                        title="Удалить уровень"
+                        aria-label="Удалить уровень"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 {/* QA */}
                 {active.kind === 'qa' ? (
                   <>

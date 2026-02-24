@@ -6,6 +6,8 @@
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--surface);
+  width: 100%;
+  max-width: 100%;
 }
 
 .itemClickable {
@@ -35,9 +37,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .title {
+  flex: 1;
+  max-width: 100%;
   font-size: 15px;
   font-weight: 700;
   color: var(--text);
@@ -73,6 +78,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.questionHidden {
+  visibility: hidden;
 }
 
 .label {
@@ -87,6 +98,7 @@
   display: grid;
   gap: 4px;
   margin-top: 2px;
+  min-width: 0;
 }
 
 .option {
@@ -99,6 +111,15 @@
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--bg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.option span {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
