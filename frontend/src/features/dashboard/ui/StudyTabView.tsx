@@ -29,6 +29,7 @@ type Props = {
   onDeleteActiveGroup: () => void
   onDeckClick: (deckId: string) => void
   onEditDeck: (deckId: string) => void
+  onDeleteDeck: (deckId: string) => void
   onAddDeck: () => void
   onCreateDeck: () => void
 }
@@ -57,7 +58,12 @@ export function StudyTabView(props: Props) {
         </div>
       )}
 
-      <DeckList decks={props.decks} onDeckClick={props.onDeckClick} onEditDeck={props.onEditDeck} />
+      <DeckList
+        decks={props.decks}
+        onDeckClick={props.onDeckClick}
+        onEditDeck={props.onEditDeck}
+        onDeleteDeck={props.onDeleteDeck}
+      />
 
       <div className={styles.footerSection}>
         <Button onClick={() => setShowAddModal(true)} variant="primary" size="medium" fullWidth>

@@ -9,9 +9,10 @@ type Props = {
   decks: PublicDeckSummary[]
   onDeckClick: (deckId: string) => void
   onEditDeck?: (deckId: string) => void
+  onDeleteDeck?: (deckId: string) => void
 }
 
-export function DeckList({ decks, onDeckClick, onEditDeck }: Props) {
+export function DeckList({ decks, onDeckClick, onEditDeck, onDeleteDeck }: Props) {
   return (
     <div className={styles.container}>
       <div className={styles.list}>
@@ -21,6 +22,7 @@ export function DeckList({ decks, onDeckClick, onEditDeck }: Props) {
             deck={deck}
             onClick={() => onDeckClick(deck.deck_id)}
             onEdit={onEditDeck ? () => onEditDeck(deck.deck_id) : undefined}
+            onDelete={onDeleteDeck ? () => onDeleteDeck(deck.deck_id) : undefined}
           />
         ))}
       </div>

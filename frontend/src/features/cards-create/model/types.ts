@@ -56,6 +56,7 @@ export type CreateCardBulkResult = {
 
 export interface CreateCardProps {
   decks: PublicDeckSummary[]
+  initialDeckId?: string
   onSave: (cardData: CreateCardData) => void | Promise<void> | any
   onSaveMany: (cards: CreateCardBulkItem[]) => Promise<CreateCardBulkResult>
   onCancel: () => void

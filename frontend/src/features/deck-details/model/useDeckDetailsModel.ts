@@ -79,7 +79,11 @@ export function useDeckDetailsModel(props: DeckDetailsProps): DeckDetailsViewMod
   }
 
   const onAddCard = () => {
-    if (props.onAddCard) props.onAddCard()
+    if (props.onAddCardWithDeckId) {
+      props.onAddCardWithDeckId(props.deckId)
+    } else if (props.onAddCard) {
+      props.onAddCard()
+    }
   }
 
   const setShowCardTitle = async (value: boolean) => {
@@ -97,10 +101,10 @@ export function useDeckDetailsModel(props: DeckDetailsProps): DeckDetailsViewMod
 
   return {
     deckId: props.deckId,
-    deckTitle: deck?.title ?? '',
-    deckDescription: deck?.description ?? null,
-    canEdit: deck?.can_edit ?? true,
-    showCardTitle: deck?.show_card_title ?? false,
+    deckTitle: deck?.deck?.title ?? '',
+    deckDescription: deck?.deck?.description ?? null,
+    canEdit: deck?.deck?.can_edit ?? true,
+    showCardTitle: deck?.deck?.show_card_title ?? false,
     setShowCardTitle,
     savingDeckSetting,
     limit,
