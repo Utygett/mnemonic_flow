@@ -21,8 +21,17 @@ import styles from './CreateCard.module.css'
 
 const RETURN_TO_DECK_KEY = 'mf_return_to_deck'
 
-export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardProps) {
-  const { term, setTerm, cardType, setCardType, deckId, setDeckId } = useCreateCardModel(decks)
+export function CreateCard({
+  decks,
+  initialDeckId,
+  onSave,
+  onSaveMany,
+  onCancel,
+}: CreateCardProps) {
+  const { term, setTerm, cardType, setCardType, deckId, setDeckId } = useCreateCardModel(
+    decks,
+    initialDeckId
+  )
 
   const {
     activeLevel,
@@ -487,6 +496,22 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
       </div>
 
       <main className={styles.main}>
+        <div className={styles.formRow}>
+          <label className={styles.formLabel}>Колода</label>
+          <Select value={deckId} onValueChange={setDeckId}>
+            <SelectTrigger className={styles.input}>
+              <SelectValue placeholder="Выбери колоду" />
+            </SelectTrigger>
+            <SelectContent>
+              {decks?.map(deck => (
+                <SelectItem key={deck.deck_id} value={deck.deck_id}>
+                  {deck.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className={styles.formRow}>
           <label className={styles.formLabel}>Тип карточки</label>
           <Select value={String(cardType)} onValueChange={v => setCardType(v as CardType)}>

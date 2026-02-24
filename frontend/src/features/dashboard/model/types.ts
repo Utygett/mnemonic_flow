@@ -23,6 +23,7 @@ export type DashboardActions = {
   onStartStudy: () => void
   onDeckClick: (deckId: string) => void
   onEditDeck?: (deckId: string) => void
+  onDeleteDeck?: (deckId: string) => void
 
   onCreateGroup: () => void
   onDeleteActiveGroup: () => void

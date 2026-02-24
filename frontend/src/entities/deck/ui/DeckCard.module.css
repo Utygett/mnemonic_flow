@@ -22,12 +22,43 @@
   gap: 12px;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .title {
   margin: 0;
   font-size: 18px;
   font-weight: 700;
   color: var(--text);
   line-height: 1.2;
+  flex: 1;
+}
+
+.deleteButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--destructive, #ef4444);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+  flex-shrink: 0;
+}
+
+.deleteButton:hover {
+  background: color-mix(in srgb, var(--destructive, #ef4444) 15%, transparent);
+}
+
+.deleteButton:active {
+  background: color-mix(in srgb, var(--destructive, #ef4444) 25%, transparent);
 }
 
 .descriptionBox {

@@ -90,7 +90,10 @@ def list_user_decks(user_id: UUID = Depends(get_current_user_id), db: Session = 
         for link in links:
             deck = db.query(Deck).filter(Deck.id == link.deck_id).first()
             if deck:
-                deck_list.append(DeckSummary(deck_id=deck.id, title=deck.title))
+                summary = DeckSummary(
+                    deck_id=deck.id, title=deck.title, description=deck.description
+                )
+                deck_list.append(summary)
     return deck_list
 
 
