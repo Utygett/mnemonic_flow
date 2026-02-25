@@ -2,8 +2,10 @@ import React from 'react'
 
 import { Button } from '../../../shared/ui/Button/Button'
 import { ResumeSessionCard } from '@/features/study-flow'
+import { ImportAnkiModal } from '@/features/deck-import'
 
 import type { PublicDeckSummary } from '@/entities/deck'
+import type { ImportAnkiResult } from '@/features/deck-import'
 
 import { GroupsBar } from './components/GroupsBar'
 import { DeckList } from './components/DeckList'
@@ -29,12 +31,15 @@ type Props = {
   onDeleteActiveGroup: () => void
   onDeckClick: (deckId: string) => void
   onEditDeck: (deckId: string) => void
+  onDeleteDeck: (deckId: string) => void
   onAddDeck: () => void
   onCreateDeck: () => void
+  onImportAnkiSuccess: (result: ImportAnkiResult) => void
 }
 
 export function StudyTabView(props: Props) {
   const [showAddModal, setShowAddModal] = React.useState(false)
+  const [showImportAnki, setShowImportAnki] = React.useState(false)
 
   const activeGroup = props.groups.find((g: any) => g.id === props.activeGroupId)
   const groupDescription = (activeGroup as any)?.description?.trim()
@@ -57,7 +62,12 @@ export function StudyTabView(props: Props) {
         </div>
       )}
 
-      <DeckList decks={props.decks} onDeckClick={props.onDeckClick} onEditDeck={props.onEditDeck} />
+      <DeckList
+        decks={props.decks}
+        onDeckClick={props.onDeckClick}
+        onEditDeck={props.onEditDeck}
+        onDeleteDeck={props.onDeleteDeck}
+      />
 
       <div className={styles.footerSection}>
         <Button onClick={() => setShowAddModal(true)} variant="primary" size="medium" fullWidth>
@@ -69,9 +79,22 @@ export function StudyTabView(props: Props) {
         <AddDeckModal
           onSearchPublic={props.onAddDeck}
           onCreateOwn={props.onCreateDeck}
+          onImportAnki={() => {
+            setShowAddModal(false)
+            setShowImportAnki(true)
+          }}
           onClose={() => setShowAddModal(false)}
         />
       )}
+
+      <ImportAnkiModal
+        open={showImportAnki}
+        onClose={() => setShowImportAnki(false)}
+        onImportSuccess={result => {
+          setShowImportAnki(false)
+          props.onImportAnkiSuccess(result)
+        }}
+      />
     </div>
   )
 }

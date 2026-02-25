@@ -10,6 +10,7 @@ import { ProfileContainer } from '../../features/profile'
 import { HomeTabContainer, HomeDashboardView } from '../../features/dashboard'
 
 import { addDeckToGroup } from '../../entities/group'
+import { deleteDeck } from '../../entities/deck'
 
 import type { MnemonicRootSwitchProps } from './mnemonicRootSwitch.types'
 
@@ -60,6 +61,7 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
     return (
       <CreateCard
         decks={props.data.decks}
+        initialDeckId={props.cards.flow.initialDeckId ?? undefined}
         onSave={props.cards.actions.onCreateCardSave}
         onSaveMany={props.cards.actions.onCreateCardSaveMany}
         onCancel={props.cards.flow.closeCreateCard}
@@ -127,11 +129,13 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
       {props.activeTab === 'home' && (
         <HomeDashboardView
           statistics={props.data.dashboardStats}
+          difficultyDistribution={props.data.difficultyDistribution}
           decks={props.data.decks}
           resumeCandidate={props.study.resumeCandidate}
           onResume={props.study.onResume}
           onDiscardResume={props.study.onDiscardResume}
           onStartStudy={props.study.onStartReviewStudy}
+          onNavigateToStats={props.onNavigateToStats}
         />
       )}
 
@@ -152,10 +156,26 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
           onResumeDeckSession={props.study.onResumeDeckSession}
           onRestartDeckSession={props.study.onRestartDeckSession}
           onOpenEditDeck={props.decks.flow.openEditDeck}
+          onDeleteDeck={async (deckId: string) => {
+            const deck = props.data.decks.find(d => d.deck_id === deckId)
+            const deckTitle = deck?.title ?? 'Эта колода'
+
+            const confirmed = window.confirm(
+              `Удалить колоду "${deckTitle}"?\n\nВсе карточки в этой колоде будут безвозвратно удалены.`
+            )
+            if (!confirmed) return
+
+            try {
+              await deleteDeck(deckId)
+              await props.refresh.refreshDecks()
+            } catch (e: any) {
+              alert(`Ошибка при удалении колоды: ${e?.message ?? 'неизвестная ошибка'}`)
+            }
+          }}
           onEditCard={(cardId: string, deckId: string) =>
             props.cards.flow.openEditCard(cardId, deckId)
           }
-          onAddCard={() => props.cards.flow.openCreateCard()}
+          onAddCard={(deckId: string) => props.cards.flow.openCreateCard(deckId)}
           onCreateDeck={props.decks.flow.openCreateDeck}
           onSubScreenChange={props.onStudySubScreenChange}
         />

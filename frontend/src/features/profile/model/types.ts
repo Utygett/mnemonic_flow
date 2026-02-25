@@ -1,4 +1,6 @@
-export type Theme = 'light' | 'blue' | 'dark'
+import type { ThemeName } from '@/shared/theme'
+
+export type Theme = ThemeName
 
 export type ProfileViewProps = {
   initials: string

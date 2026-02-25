@@ -33,11 +33,19 @@ export type CreateCardModel = {
   setMcqExplanationPreview: (v: boolean) => void
 }
 
-export function useCreateCardModel(decks: PublicDeckSummary[] | undefined): CreateCardModel {
+export function useCreateCardModel(
+  decks: PublicDeckSummary[] | undefined,
+  initialDeckId?: string
+): CreateCardModel {
   const [term, setTerm] = useState('')
   const [cardType, setCardType] = useState<CardType>('flashcard')
 
   const [deckId, setDeckId] = useState<string>(() => {
+    // Если передан initialDeckId - используем его
+    if (initialDeckId) {
+      return initialDeckId
+    }
+    // Иначе пробуем из localStorage
     const saved = localStorage.getItem(LAST_DECK_KEY)
     return saved ?? ''
   })

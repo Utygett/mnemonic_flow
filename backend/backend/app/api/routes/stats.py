@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import func
+from sqlalchemy import Integer, func
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user_id
@@ -11,7 +11,7 @@ from app.db.session import SessionLocal
 from app.models.card import Card
 from app.models.card_progress import CardProgress
 from app.models.card_review_history import CardReviewHistory
-from app.schemas.stats import DashboardStatsResponse
+from app.schemas.stats import DashboardStatsResponse, DifficultyDistributionResponse
 
 router = APIRouter()
 
@@ -135,4 +135,50 @@ def get_dashboard_stats(
         time_spent_today=time_spent_today,
         current_streak=current_streak,
         total_cards=total_cards or 0,
+    )
+
+
+@router.get("/difficulty-distribution", response_model=DifficultyDistributionResponse)
+def get_difficulty_distribution(
+    db: Session = Depends(get_db),
+    user_id: UUID = Depends(get_current_user_id),
+) -> DifficultyDistributionResponse:
+    """
+    Get distribution of cards by difficulty categories.
+
+    Difficulty ranges:
+        - easy: 1-3 (green)
+        - medium: 4-6 (amber/yellow)
+        - hard: 7-10 (red)
+
+    Returns:
+        - easy_count: Number of cards with difficulty 1-3
+        - medium_count: Number of cards with difficulty 4-6
+        - hard_count: Number of cards with difficulty 7-10
+        - total_count: Total number of cards
+    """
+    # Count cards by difficulty ranges using CASE aggregation
+    result = (
+        db.query(
+            func.sum(func.cast(CardProgress.difficulty < 4, Integer)).label("easy_count"),
+            func.sum(
+                func.cast((CardProgress.difficulty >= 4) & (CardProgress.difficulty < 7), Integer)
+            ).label("medium_count"),
+            func.sum(func.cast(CardProgress.difficulty >= 7, Integer)).label("hard_count"),
+            func.count(CardProgress.id).label("total_count"),
+        )
+        .filter(CardProgress.user_id == user_id)
+        .one()
+    )
+
+    easy_count = int(result.easy_count) if result.easy_count is not None else 0
+    medium_count = int(result.medium_count) if result.medium_count is not None else 0
+    hard_count = int(result.hard_count) if result.hard_count is not None else 0
+    total_count = int(result.total_count) if result.total_count is not None else 0
+
+    return DifficultyDistributionResponse(
+        easy_count=easy_count,
+        medium_count=medium_count,
+        hard_count=hard_count,
+        total_count=total_count,
     )

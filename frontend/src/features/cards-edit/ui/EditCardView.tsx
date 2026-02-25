@@ -103,12 +103,13 @@ export function EditCardView(props: Props) {
         {!selectedCard ? null : (
           <>
             <div className={styles.formRow}>
-              <label className={styles.formLabel}>Название</label>
+              <label className={styles.formLabel}>Уникальное имя / ID (не обязательно)</label>
               <input
                 className={styles.input}
                 value={titleDraft}
                 onChange={e => setTitleDraft(e.target.value)}
                 disabled={!selectedCardId || saving}
+                placeholder=""
               />
             </div>
 
@@ -182,6 +183,23 @@ export function EditCardView(props: Props) {
               </div>
 
               <div className={styles.card}>
+                <div className={styles.cardTopBar}>
+                  <div className={styles.cardTopBarLeft}>
+                    {levels.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeLevel(activeLevel)}
+                        className={styles.dangerIconButton}
+                        disabled={saving}
+                        title="Удалить уровень"
+                        aria-label="Удалить уровень"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 {/* QA */}
                 {active.kind === 'qa' ? (
                   <>

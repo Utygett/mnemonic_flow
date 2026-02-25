@@ -53,6 +53,7 @@ src/
 │
 ├── features/         # Фичи (use-cases)
 │   ├── card-audio/        # Загрузка аудио для карточек
+│   ├── card-comments/     # Комментарии к карточкам в режиме изучения
 │   ├── card-image-upload/ # Загрузка изображений для карточек
 │   ├── cards-actions/     # Действия с карточками
 │   ├── cards-create/      # Создание карточек
@@ -62,9 +63,10 @@ src/
 │   ├── deck-create/       # Создание колоды
 │   ├── deck-details/      # Детали колоды
 │   ├── deck-edit/         # Редактирование колоды
+│   ├── deck-import/       # Импорт колод из Anki (.apkg)
 │   ├── decks-actions/     # Действия с колодами
 │   ├── decks-flow/        # Flow для работы с колодами
-│   ├── dashboard/         # Дашборд
+│   ├── dashboard/         # Дашборд с диаграммой сложности
 │   ├── group-create/      # Создание группы
 │   ├── profile/           # Профиль пользователя
 │   ├── statistics/        # Статистика
@@ -194,7 +196,7 @@ npm run format:check
 | **UI**      | Radix UI primitives + CSS Modules         |
 | **State**   | React hooks, react-hook-form              |
 | **Math**    | KaTeX (для формул в карточках)            |
-| **Charts**  | Recharts (графики статистики)             |
+| **Charts**  | Recharts (диаграммы и графики статистики) |
 | **PWA**     | vite-plugin-pwa (service worker, offline) |
 | **Testing** | Vitest + React Testing Library            |
 | **Linting** | ESLint 9 + Prettier                       |
@@ -249,6 +251,58 @@ const { data } = await api.post('/cards', { question: '...' })
 - Автоматическое добавление JWT токена
 - Обработка ошибок
 - Типизация запросов/ответов
+
+## 📥 Импорт из Anki
+
+Фича `deck-import` обеспечивает импорт колод из Anki (.apkg файлы).
+
+### Структура
+
+```
+features/deck-import/
+├── api/
+│   └── importAnkiApi.ts       # API клиент для /decks/import-anki
+├── model/
+│   └── useImportAnki.ts        # React хук для импорта
+├── ui/
+│   ├── ImportAnkiModal.tsx     # Модальное окно загрузки
+│   └── ImportAnkiModal.module.css
+└── index.ts                    # Публичный API фичи
+```
+
+### Использование
+
+```typescript
+import { ImportAnkiModal, useImportAnki } from '@/features/deck-import'
+
+function MyComponent() {
+  const [open, setOpen] = useState(false)
+
+  const handleImportSuccess = (result: ImportAnkiResult) => {
+    console.log(`Created deck ${result.deck_id} with ${result.cards_created} cards`)
+    // Обновить список колод
+  }
+
+  return (
+    <ImportAnkiModal
+      open={open}
+      onClose={() => setOpen(false)}
+      onImportSuccess={handleImportSuccess}
+    />
+  )
+}
+```
+
+### API
+
+```typescript
+// Хук для импорта
+const { importFile, importing, error } = useImportAnki()
+
+// Загрузить файл
+const result = await importFile(file)
+// result: { deck_id: string, title: string, cards_created: number, warnings: string[] }
+```
 
 ## 🔧 Конфигурация
 

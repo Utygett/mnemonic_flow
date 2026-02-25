@@ -389,16 +389,19 @@ export function useEditCardModel(props: Props): EditCardViewModel {
   }
 
   const deleteSelectedCard = async () => {
-    if (isSessionMode) return
-    if (!selectedCard) return
+    if (!selectedCardId) {
+      setErrorText('Нет выбранной карточки')
+      return
+    }
+
     if (!window.confirm('Удалить карточку?')) return
 
     setSaving(true)
     setErrorText(null)
     try {
-      await deleteCard(selectedCard.card_id)
+      await deleteCard(selectedCardId)
 
-      setCards(prev => prev.filter(c => c.card_id !== selectedCard.card_id))
+      setCards(prev => prev.filter(c => c.card_id !== selectedCardId))
       setSelectedCardIdRaw('')
       setLevels([defaultQaLevel()])
       setActiveLevel(0)

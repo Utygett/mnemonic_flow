@@ -21,6 +21,7 @@ interface FlipCardProps {
   frontContent?: React.ReactNode
   backContent?: React.ReactNode
   disableFlipOnClick?: boolean
+  showCardTitle?: boolean
 }
 
 function getLevelIndex(l: any): number {
@@ -38,13 +39,16 @@ export function FlipCard({
   frontContent,
   backContent,
   disableFlipOnClick = false,
+  showCardTitle = false,
 }: FlipCardProps) {
   const [viewer, setViewer] = useState<ViewerState>(null)
 
   const level =
     card.levels.find((l: any) => getLevelIndex(l) === card.activeLevel) ?? card.levels[0]
 
-  const frontText = (level as any)?.content?.question || (card as any).title || '…'
+  const frontText = showCardTitle
+    ? (card as any).title || (level as any)?.content?.question || '…'
+    : (level as any)?.content?.question || '…'
   const backText = (level as any)?.content?.answer || '…'
 
   // Media URLs are returned at the top level of the level object (camelCase from API)

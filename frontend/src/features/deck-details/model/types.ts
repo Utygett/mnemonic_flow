@@ -9,4 +9,5 @@ export type DeckDetailsProps = {
   clearSavedSession: () => void
   onEditCard?: (cardId: string) => void
   onAddCard?: () => void
+  onAddCardWithDeckId?: (deckId: string) => void
 }

@@ -2,6 +2,26 @@
 from pydantic import BaseModel, ConfigDict
 
 
+class DifficultyDistributionResponse(BaseModel):
+    """Распределение карточек по категориям сложности"""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "easy_count": 45,
+                "medium_count": 30,
+                "hard_count": 15,
+                "total_count": 90,
+            }
+        }
+    )
+
+    easy_count: int  # Карточки с difficulty 1-3
+    medium_count: int  # Карточки с difficulty 4-6
+    hard_count: int  # Карточки с difficulty 7-10
+    total_count: int  # Общее количество карточек
+
+
 class DashboardStatsResponse(BaseModel):
     """Статистика для дашборда"""
 

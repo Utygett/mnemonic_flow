@@ -8,6 +8,7 @@ import styles from './CardListItem.module.css'
 type Props = {
   card: ApiCard
   canEdit: boolean
+  showCardTitle: boolean
   onEdit: (cardId: string) => void
   onClick?: () => void
 }
@@ -48,10 +49,11 @@ function extractContent(card: ApiCard) {
   return { question, isMultipleChoice, options, hasImages, hasAudio }
 }
 
-export function CardListItem({ card, canEdit, onEdit, onClick }: Props) {
+export function CardListItem({ card, canEdit, showCardTitle, onEdit, onClick }: Props) {
   const { question, isMultipleChoice, options, hasImages, hasAudio } = extractContent(card)
 
-  const title = card.title || question || 'Карточка'
+  // If showCardTitle is false, don't use card.title - fall back to question
+  const title = showCardTitle && card.title ? card.title : question || 'Карточка'
 
   return (
     <div
@@ -78,7 +80,7 @@ export function CardListItem({ card, canEdit, onEdit, onClick }: Props) {
               isMultipleChoice ? `${styles.typeBadge} ${styles.typeBadgeMcq}` : styles.typeBadge
             }
           >
-            {isMultipleChoice ? 'Тест' : 'Flash-card'}
+            {isMultipleChoice ? 'Тест' : 'Flashcard'}
           </span>
         </div>
 

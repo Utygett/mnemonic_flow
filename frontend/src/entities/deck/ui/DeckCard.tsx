@@ -1,4 +1,5 @@
 import React from 'react'
+import { Trash2 } from 'lucide-react'
 
 import type { PublicDeckSummary } from '../model/types'
 
@@ -7,9 +8,10 @@ import styles from './DeckCard.module.css'
 type Props = {
   deck: PublicDeckSummary
   onClick: () => void
+  onDelete?: (deckId: string) => void
 }
 
-export function DeckCard({ deck, onClick }: Props) {
+export function DeckCard({ deck, onClick, onDelete }: Props) {
   const description = deck.description?.trim()
 
   const totalCards = Number(deck.cards_count ?? 0)
@@ -24,6 +26,22 @@ export function DeckCard({ deck, onClick }: Props) {
       <button type="button" onClick={onClick} className={styles.clickArea}>
         <div className={styles.headerRow}>
           <div className={styles.title}>{deck.title}</div>
+          {onDelete && (
+            <div className={styles.headerActions}>
+              <button
+                type="button"
+                className={styles.deleteButton}
+                onClick={e => {
+                  e.stopPropagation()
+                  onDelete(deck.deck_id)
+                }}
+                aria-label="Удалить колоду"
+                title="Удалить колоду"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className={styles.descriptionBox}>
