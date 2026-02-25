@@ -1,9 +1,10 @@
+import logging
 import random
 from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
 from sqlalchemy import asc
 from sqlalchemy.orm import Session
 
@@ -28,8 +29,11 @@ from app.schemas.cards import (
     DeckWithCards,
 )
 from app.schemas.decks_public import PublicDeckSummary
+from app.services.anki_mapper import AnkiMapper
+from app.services.anki_parser import ApkgParseError, ApkgParser
 
 router = APIRouter(tags=["decks"])
+logger = logging.getLogger(__name__)
 
 
 def get_db():
@@ -598,3 +602,50 @@ def get_study_cards(
         )
 
     return {"cards": out, "deck": {"show_card_title": deck.show_card_title}}
+
+
+@router.post("/import-anki", status_code=status.HTTP_201_CREATED)
+async def import_anki_deck(
+    file: UploadFile,
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """
+    Import an Anki deck from .apkg file.
+
+    Creates a new deck with all cards from the Anki package.
+    """
+    # Validate file extension
+    if not file.filename or not file.filename.lower().endswith(".apkg"):
+        raise HTTPException(status_code=422, detail="Only .apkg files are supported")
+
+    try:
+        # Read file content
+        content = await file.read()
+
+        # Parse the .apkg file
+        parser = ApkgParser(content)
+        anki_deck = parser.parse()
+
+        # Create deck and cards in database
+        mapper = AnkiMapper(db, user_id)
+        deck, cards = mapper.create_deck(anki_deck)
+
+        logger.info(
+            f"Imported Anki deck '{deck.title}' (id={deck.id}) "
+            f"with {len(cards)} cards for user {user_id}"
+        )
+
+        return {
+            "deck_id": str(deck.id),
+            "title": deck.title,
+            "cards_created": len(cards),
+            "warnings": [],
+        }
+
+    except ApkgParseError as e:
+        logger.error(f"Failed to parse .apkg file: {e}")
+        raise HTTPException(status_code=422, detail=f"Invalid .apkg file: {str(e)}")
+    except Exception as e:
+        logger.error(f"Failed to import Anki deck: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Import failed: {str(e)}")

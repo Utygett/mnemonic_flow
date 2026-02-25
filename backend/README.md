@@ -11,7 +11,7 @@ backend/
 │   │   ├── api/           # API эндпоинты (routes/)
 │   │   │   ├── auth.py    # Аутентификация
 │   │   │   ├── cards.py   # Карточки
-│   │   │   ├── decks.py   # Колоды
+│   │   │   ├── decks.py   # Колоды (включая импорт из Anki)
 │   │   │   ├── groups.py  # Группы
 │   │   │   └── stats.py   # Статистика
 │   │   ├── auth/          # Логика аутентификации
@@ -26,6 +26,9 @@ backend/
 │   │   │   └── ...
 │   │   ├── schemas/       # Pydantic схемы
 │   │   └── services/      # Бизнес-логика
+│   │       ├── anki_parser.py   # Парсер .apkg файлов
+│   │       ├── anki_mapper.py   # Маппер Anki → MnemonicFlow
+│   │       └── storage_service.py  # MinIO/S3 хранилище
 │   └── tests/             # Тесты
 ├── migrations/            # Alembic миграции
 ├── Dockerfile             # Docker образ для разработки/продакшна
@@ -294,6 +297,7 @@ alembic downgrade -1
 | `/api/cards/{card_id}/levels/{level_index}/answer-audio` | POST/DELETE | Загрузка/удаление аудио ответа | ✅ |
 | `/api/cards/{card_id}/option-image` | POST | Загрузка изображения для MCQ опции | ✅ |
 | `/api/decks` | GET/POST | Список/создание колод | ✅ |
+| `/api/decks/import-anki` | POST | Импорт колоды из Anki (.apkg) | ✅ |
 | `/api/decks/{id}` | GET/PATCH/DELETE | Операции с колодой | ✅ |
 | `/api/decks/{deck_id}/study-cards` | GET | Карточки для изучения с изображениями | ✅ |
 | `/api/groups` | GET/POST | Список/создание групп | ✅ |
@@ -413,6 +417,8 @@ app/api/
 ```
 app/services/
 ├── storage_service.py  # MinIO/S3 хранилище изображений
+├── anki_parser.py      # Парсер Anki .apkg файлов
+├── anki_mapper.py      # Конвертер Anki → MnemonicFlow модели
 └── ...
 ```
 
@@ -422,6 +428,18 @@ app/services/
 - Загрузка файлов с генерацией уникальных ключей
 - Удаление файлов по индексу
 - Проксирование через Nginx по путям `/images/` и `/audio/`
+
+**AnkiParser** — парсер Anki .apkg файлов:
+- Извлечение SQLite базы данных из ZIP-архива
+- Парсинг таблиц notes, cards, models
+- Извлечение медиа-файлов из .apkg
+- Поддержка .anki2 и .anki21 форматов
+
+**AnkiMapper** — конвертер Anki данных в MnemonicFlow модели:
+- Создание Deck из Anki колоды
+- Создание Card из Anki notes
+- Конвертация HTML в текст (очистка тегов)
+- Извлечение полей Front/Back из моделей Anki
 
 ### Безопасность
 
