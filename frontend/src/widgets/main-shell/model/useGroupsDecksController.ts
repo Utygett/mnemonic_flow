@@ -116,6 +116,7 @@ export function useGroupsDecksController() {
   const deleteActiveGroup = useCallback(async () => {
     const groupId = state.activeGroupId
     if (!groupId) return
+    if (!window.confirm('Удалить группу?')) return
 
     await deleteGroupApi(groupId)
     setActiveGroupId(null)
