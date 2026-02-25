@@ -14,6 +14,7 @@ export interface StudyCard {
   type: string
   levels: CardLevel[]
   activeLevel: number
+  activeCardLevelId: string
   questionImageUrl?: string
   answerImageUrl?: string
   reviewHistory?: CardReviewHistoryEntry[]

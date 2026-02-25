@@ -1,8 +1,10 @@
 import React from 'react'
 
-import type { Deck, Group, StudyMode } from '../../../../types'
+import type { Group } from '@/entities/group'
+import type { StudyMode } from '../../../../types'
 import type { PersistedSession } from '@/shared/lib/utils/session-store'
 import type { PublicDeckSummary } from '@/entities/deck'
+import type { ImportAnkiResult } from '@/features/deck-import'
 
 import { CreateGroup } from '../../../../features/group-create'
 import { DeckDetailsScreen } from '../../../../features/deck-details'
@@ -11,7 +13,7 @@ import { AddDeck } from '../../../../features/deck-add'
 import { StudyTabView } from '../StudyTabView'
 
 type Props = {
-  decks: Deck[]
+  decks: PublicDeckSummary[]
   groups: Group[]
   activeGroupId: string | null
   setActiveGroupId: (id: string | null) => void
@@ -30,8 +32,9 @@ type Props = {
   onRestartDeckSession: (deckId: string) => void
 
   onOpenEditDeck: (deckId: string) => void
+  onDeleteDeck?: (deckId: string) => void
   onEditCard?: (cardId: string, deckId: string) => void
-  onAddCard?: () => void
+  onAddCard?: (deckId: string) => void
   onCreateDeck: () => void
 
   onSubScreenChange?: (isSubScreen: boolean) => void
@@ -42,22 +45,6 @@ type HomeView =
   | { kind: 'createGroup' }
   | { kind: 'addDeck'; groupId: string }
   | { kind: 'deckDetails'; deckId: string }
-
-function mapDeckToPublicSummary(deck: Deck): PublicDeckSummary {
-  return {
-    deck_id: deck.id,
-    title: deck.name,
-    description: deck.description ?? null,
-    color: deck.color ?? null,
-    owner_id: '',
-    is_public: false,
-    can_edit: false,
-    cards_count: deck.cardsCount ?? 0,
-    completed_cards_count: Math.round(((deck.progress ?? 0) / 100) * (deck.cardsCount ?? 0)),
-    count_repeat: 0,
-    count_for_repeat: 0,
-  }
-}
 
 function buildResumeSession(
   resume: PersistedSession,
@@ -186,9 +173,9 @@ export function HomeTabContainer(props: Props) {
             if (props.onEditCard) props.onEditCard(cardId, deckId)
           })
         }}
-        onAddCard={() => {
+        onAddCardWithDeckId={(deckId: string) => {
           savePositionAndNavigate(() => {
-            if (props.onAddCard) props.onAddCard()
+            if (props.onAddCard) props.onAddCard(deckId)
           })
         }}
       />
@@ -196,10 +183,7 @@ export function HomeTabContainer(props: Props) {
   }
 
   // dashboard view
-  const decksForStudy = (props.decks as unknown as PublicDeckSummary[]).map((d: any) => {
-    if (typeof d?.deck_id === 'string') return d as PublicDeckSummary
-    return mapDeckToPublicSummary(d as Deck)
-  })
+  const decksForStudy = props.decks
 
   const resumeSession = props.resumeCandidate
     ? buildResumeSession(
@@ -221,11 +205,16 @@ export function HomeTabContainer(props: Props) {
       onDeleteActiveGroup={props.onDeleteActiveGroup}
       onDeckClick={deckId => setView({ kind: 'deckDetails', deckId })}
       onEditDeck={props.onOpenEditDeck}
+      onDeleteDeck={props.onDeleteDeck}
       onAddDeck={() => {
         if (!props.activeGroupId) return
         setView({ kind: 'addDeck', groupId: props.activeGroupId })
       }}
       onCreateDeck={props.onCreateDeck}
+      onImportAnkiSuccess={async (result: ImportAnkiResult) => {
+        await props.refreshDecks()
+        setView({ kind: 'deckDetails', deckId: result.deck_id })
+      }}
     />
   )
 }

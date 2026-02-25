@@ -11,6 +11,17 @@ import styles from './DeckDetailsView.module.css'
 
 export function DeckDetailsView(props: DeckDetailsViewModel) {
   const [previewCardId, setPreviewCardId] = React.useState<string | null>(null)
+  const [localShowCardTitle, setLocalShowCardTitle] = React.useState(props.showCardTitle)
+
+  // Update local state when prop changes
+  React.useEffect(() => {
+    setLocalShowCardTitle(props.showCardTitle)
+  }, [props.showCardTitle])
+
+  const handleShowCardTitleChange = async (checked: boolean) => {
+    setLocalShowCardTitle(checked)
+    await props.setShowCardTitle(checked)
+  }
 
   const previewCard = previewCardId
     ? (props.cards.find(c => c.card_id === previewCardId) ?? null)
@@ -33,6 +44,17 @@ export function DeckDetailsView(props: DeckDetailsViewModel) {
                 ? 'карточки'
                 : 'карточек'}
           </div>
+
+          <label className={styles.checkboxRow}>
+            <input
+              className={styles.checkbox}
+              type="checkbox"
+              checked={localShowCardTitle}
+              onChange={e => handleShowCardTitleChange(e.target.checked)}
+              disabled={props.savingDeckSetting}
+            />
+            <span>Показывать имя карточки</span>
+          </label>
         </div>
       </div>
 
@@ -90,6 +112,7 @@ export function DeckDetailsView(props: DeckDetailsViewModel) {
                     key={card.card_id}
                     card={card}
                     canEdit={props.canEdit}
+                    showCardTitle={localShowCardTitle}
                     onEdit={props.onEditCard}
                     onClick={() => setPreviewCardId(card.card_id)}
                   />

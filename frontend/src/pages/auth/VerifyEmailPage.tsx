@@ -31,7 +31,7 @@ export function VerifyEmailPage({ token }: { token: string }) {
     }, 1000)
 
     const timeoutId = window.setTimeout(() => {
-      window.location.hash = '/'
+      window.location.href = '/'
     }, 5000)
 
     return () => {

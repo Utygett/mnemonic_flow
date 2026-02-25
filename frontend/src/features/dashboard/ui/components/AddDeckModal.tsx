@@ -1,15 +1,16 @@
 import React from 'react'
-import { Search, PlusCircle, X } from 'lucide-react'
+import { Search, PlusCircle, X, Upload } from 'lucide-react'
 
 import styles from './AddDeckModal.module.css'
 
 type Props = {
   onSearchPublic: () => void
   onCreateOwn: () => void
+  onImportAnki: () => void
   onClose: () => void
 }
 
-export function AddDeckModal({ onSearchPublic, onCreateOwn, onClose }: Props) {
+export function AddDeckModal({ onSearchPublic, onCreateOwn, onImportAnki, onClose }: Props) {
   const handleBackdrop = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onClose()
   }
@@ -71,6 +72,23 @@ export function AddDeckModal({ onSearchPublic, onCreateOwn, onClose }: Props) {
             <div className={styles.optionText}>
               <div className={styles.optionTitle}>Создать свою</div>
               <div className={styles.optionDesc}>Новая колода с нуля</div>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            className={styles.optionBtn}
+            onClick={() => {
+              onClose()
+              onImportAnki()
+            }}
+          >
+            <div className={`${styles.optionIcon} ${styles.optionIconImport}`}>
+              <Upload size={22} strokeWidth={2} />
+            </div>
+            <div className={styles.optionText}>
+              <div className={styles.optionTitle}>Импортировать Anki</div>
+              <div className={styles.optionDesc}>Загрузить .apkg файл</div>
             </div>
           </button>
         </div>

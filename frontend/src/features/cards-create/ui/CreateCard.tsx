@@ -21,8 +21,17 @@ import styles from './CreateCard.module.css'
 
 const RETURN_TO_DECK_KEY = 'mf_return_to_deck'
 
-export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardProps) {
-  const { term, setTerm, cardType, setCardType, deckId, setDeckId } = useCreateCardModel(decks)
+export function CreateCard({
+  decks,
+  initialDeckId,
+  onSave,
+  onSaveMany,
+  onCancel,
+}: CreateCardProps) {
+  const { term, setTerm, cardType, setCardType, deckId, setDeckId } = useCreateCardModel(
+    decks,
+    initialDeckId
+  )
 
   const {
     activeLevel,
@@ -100,9 +109,7 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
   const safeTerm = typeof term === 'string' ? term : ''
 
   const canSave =
-    safeTerm.trim() &&
-    deckId &&
-    (cardType === 'flashcard' ? cleanedLevelsQA.length > 0 : cleanedLevelsMCQ.length > 0)
+    deckId && (cardType === 'flashcard' ? cleanedLevelsQA.length > 0 : cleanedLevelsMCQ.length > 0)
 
   const handleSave = async () => {
     if (!canSave || saveBusy) return
@@ -117,7 +124,7 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
       if (cardType === 'flashcard') {
         const result = (await onSave({
           deckId,
-          term: safeTerm.trim(),
+          term: safeTerm.trim() || undefined, // undefined если пустое - авто-генерация на бэкенде
           type: 'flashcard',
           levels: cleanedLevelsQA,
         })) as any
@@ -125,7 +132,7 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
       } else {
         const result = (await onSave({
           deckId,
-          term: safeTerm.trim(),
+          term: safeTerm.trim() || undefined, // undefined если пустое - авто-генерация на бэкенде
           type: 'multiple_choice',
           levels: cleanedLevelsMCQ,
         })) as any
@@ -490,6 +497,22 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
 
       <main className={styles.main}>
         <div className={styles.formRow}>
+          <label className={styles.formLabel}>Колода</label>
+          <Select value={deckId} onValueChange={setDeckId}>
+            <SelectTrigger className={styles.input}>
+              <SelectValue placeholder="Выбери колоду" />
+            </SelectTrigger>
+            <SelectContent>
+              {decks?.map(deck => (
+                <SelectItem key={deck.deck_id} value={deck.deck_id}>
+                  {deck.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className={styles.formRow}>
           <label className={styles.formLabel}>Тип карточки</label>
           <Select value={String(cardType)} onValueChange={v => setCardType(v as CardType)}>
             <SelectTrigger className={styles.input}>
@@ -505,8 +528,8 @@ export function CreateCard({ decks, onSave, onSaveMany, onCancel }: CreateCardPr
         <Input
           value={safeTerm}
           onChange={setTerm}
-          label="Название / Тема карточки"
-          placeholder="Например: Фотосинтез"
+          label="Уникальное имя / ID (не обязательно)"
+          placeholder=""
         />
 
         <div>

@@ -8,6 +8,7 @@
   top: 0;
   z-index: 10;
   background: var(--bg);
+  padding-bottom: 16px;
 }
 
 .headerInner {
@@ -16,10 +17,22 @@
   margin: 0 auto;
 }
 
-.actionSection {
-  padding: 16px 16px;
+.statsSection {
   max-width: 390px;
   margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 16px 16px 16px;
+}
+
+.chartWrapper {
+  flex-shrink: 0;
+}
+
+.actionSection {
+  flex-shrink: 0;
 }
 
 .groupDescriptionSection {

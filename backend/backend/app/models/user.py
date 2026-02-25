@@ -46,3 +46,7 @@ class User(Base):
     review_history: Mapped[list[CardReviewHistory]] = relationship(
         "CardReviewHistory", back_populates="user", cascade="all, delete-orphan"
     )  # noqa: F821
+
+    comments: Mapped[list["Comment"]] = relationship(  # noqa: F821
+        "Comment", back_populates="user", cascade="all, delete-orphan"
+    )

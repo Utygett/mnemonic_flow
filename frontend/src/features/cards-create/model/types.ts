@@ -24,13 +24,13 @@ export type LevelMCQ = {
 export type CreateCardData =
   | {
       deckId: string
-      term: string
+      term?: string // Опционально - авто-генерация на бэкенде
       type: 'flashcard'
       levels: Array<{ question: string; answer: string; timerSec?: number }>
     }
   | {
       deckId: string
-      term: string
+      term?: string // Опционально - авто-генерация на бэкенде
       type: 'multiple_choice'
       levels: Array<{
         question: string
@@ -43,7 +43,7 @@ export type CreateCardData =
 
 export type CreateCardBulkItem = {
   deckId: string
-  term: string
+  term?: string // Опционально - авто-генерация на бэкенде
   type: 'flashcard'
   levels: Array<{ question: string; answer: string; timerSec?: number }>
 }
@@ -56,6 +56,7 @@ export type CreateCardBulkResult = {
 
 export interface CreateCardProps {
   decks: PublicDeckSummary[]
+  initialDeckId?: string
   onSave: (cardData: CreateCardData) => void | Promise<void> | any
   onSaveMany: (cards: CreateCardBulkItem[]) => Promise<CreateCardBulkResult>
   onCancel: () => void

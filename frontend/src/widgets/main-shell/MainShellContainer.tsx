@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 
 import { useStatistics } from './model/useStatistics'
 import { useGroupsDecksController } from './model/useGroupsDecksController'
+import { useDifficultyDistribution } from './model/useDifficultyDistribution'
 
 import { StudyFlowStateContainer } from '@/features/study-flow'
 
@@ -43,6 +44,13 @@ export function MainShellContainer() {
     refresh: refreshStats,
   } = useStatistics()
 
+  const {
+    distribution: difficultyDistribution,
+    loading: difficultyLoading,
+    error: difficultyError,
+    refresh: refreshDifficultyDistribution,
+  } = useDifficultyDistribution()
+
   const dashboardStats = statistics ?? {
     cardsStudiedToday: 0,
     timeSpentToday: 0,
@@ -52,8 +60,19 @@ export function MainShellContainer() {
     achievements: [],
   }
 
+  const defaultDifficultyDistribution = {
+    easyCount: 0,
+    mediumCount: 0,
+    hardCount: 0,
+    totalCount: 0,
+  }
+
   const [activeTab, setActiveTab] = useState<MainTab>('home')
   const [isStudySubScreen, setIsStudySubScreen] = useState(false)
+
+  const handleNavigateToStats = () => {
+    setActiveTab('stats')
+  }
 
   useRegisterServiceWorker()
   const isPWA = useIsPWA()
@@ -64,7 +83,10 @@ export function MainShellContainer() {
         setActiveTab('home')
         setIsStudySubScreen(false)
       }}
-      onRated={refreshStats}
+      onRated={() => {
+        refreshStats()
+        refreshDifficultyDistribution()
+      }}
     >
       {study => (
         <DecksFlowContainer>
@@ -114,6 +136,8 @@ export function MainShellContainer() {
                                   currentGroupDeckIds,
                                   statistics,
                                   dashboardStats,
+                                  difficultyDistribution:
+                                    difficultyDistribution ?? defaultDifficultyDistribution,
                                 }}
                                 status={{
                                   decksLoading,
@@ -130,6 +154,7 @@ export function MainShellContainer() {
                                   setActiveGroupId,
                                   deleteActiveGroup,
                                 }}
+                                onNavigateToStats={handleNavigateToStats}
                                 onStudySubScreenChange={setIsStudySubScreen}
                               />
                             }
