@@ -117,8 +117,8 @@
   min-width: 220px;
   padding: 8px;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: #1a1f2e;
+  border: 1px solid var(--border);
+  background: var(--surface);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
   z-index: 20;
 }
@@ -139,12 +139,12 @@
 }
 
 .dropdownItem:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg-hover);
 }
 
 .dropdownSep {
   height: 1px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--border);
   margin: 6px 2px;
 }
 
