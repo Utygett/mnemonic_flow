@@ -5,6 +5,13 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, conint, model_validator
 
 
+class ReviewHistoryEntry(BaseModel):
+    """Single review history entry for a card."""
+
+    rating: str  # 'again', 'hard', 'good', 'easy'
+    reviewed_at: datetime
+
+
 class CardLevelContent(BaseModel):
     level_index: int
     content: Dict
@@ -29,6 +36,7 @@ class CardForReviewWithLevels(BaseModel):
     next_review: datetime
 
     levels: List[CardLevelContent]
+    review_history: List[ReviewHistoryEntry] = []  # Added review history
 
 
 class CardSummary(BaseModel):
