@@ -10,5 +10,6 @@ export function toStudyCards(items: any[]): StudyCard[] {
     levels: c.levels ?? [],
     activeLevel: c.active_level ?? 0,
     activeCardLevelId: c.card_level_id ?? c.active_card_level_id ?? '',
+    reviewHistory: c.review_history ?? [],
   }))
 }
