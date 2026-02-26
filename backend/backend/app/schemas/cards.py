@@ -29,6 +29,7 @@ class CardForReviewWithLevels(BaseModel):
     next_review: datetime
 
     levels: List[CardLevelContent]
+    review_history: List[dict] = []  # Added review history
 
 
 class CardSummary(BaseModel):
