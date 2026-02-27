@@ -88,6 +88,9 @@
 }
 
 .audioSelect {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
   padding: 6px 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -96,7 +99,6 @@
   font-size: 13px;
   cursor: pointer;
   transition: border-color 0.15s;
-  min-width: 120px;
 }
 
 .audioSelect:hover {
@@ -113,7 +115,7 @@
 .dropdown {
   position: absolute;
   top: 44px;
-  right: 0;
+  right: -8px;
   min-width: 220px;
   padding: 8px;
   border-radius: 14px;
