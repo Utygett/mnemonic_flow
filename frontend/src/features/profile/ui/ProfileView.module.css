@@ -30,7 +30,7 @@
   border: none;
   border-radius: 4px;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--muted);
   cursor: pointer;
   transition:
     background 0.15s,
@@ -38,7 +38,7 @@
 }
 
 .editBtn:hover {
-  background: var(--bg-hover);
+  background: var(--surface-2);
   color: var(--text);
 }
 
@@ -46,7 +46,7 @@
 .themeSelector {
   display: flex;
   gap: 4px;
-  background: var(--bg-secondary);
+  background: var(--surface);
   border-radius: 8px;
   padding: 4px;
 }
@@ -59,7 +59,7 @@
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--muted);
   font-size: 13px;
   cursor: pointer;
   transition:
@@ -74,7 +74,7 @@
 .themeBtnActive {
   background: var(--bg);
   color: var(--text);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow);
 }
 
 /* Audio autoplay selector */
@@ -83,7 +83,7 @@
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: var(--text-muted);
+  color: var(--muted);
   flex-shrink: 0;
 }
 
@@ -91,7 +91,7 @@
   padding: 6px 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--bg-secondary);
+  background: var(--surface);
   color: var(--text);
   font-size: 13px;
   cursor: pointer;
@@ -100,13 +100,13 @@
 }
 
 .audioSelect:hover {
-  border-color: var(--text-muted);
+  border-color: var(--muted);
 }
 
 .audioSelect:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
 /* Local dropdown - fully opaque solid color */
@@ -118,8 +118,8 @@
   padding: 8px;
   border-radius: 14px;
   border: 1px solid var(--border);
-  background: var(--surface);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  background: var(--bg);
+  box-shadow: var(--shadow);
   z-index: 20;
 }
 
@@ -139,7 +139,7 @@
 }
 
 .dropdownItem:hover {
-  background: var(--bg-hover);
+  background: var(--surface-2);
 }
 
 .dropdownSep {
@@ -149,9 +149,9 @@
 }
 
 .dropdownItemDanger {
-  color: #ff6b6b;
+  color: color-mix(in srgb, #ff6b6b 85%, var(--text));
 }
 
 .dropdownItemDanger:hover {
-  background: rgba(255, 107, 107, 0.12);
+  background: color-mix(in srgb, #ff6b6b 12%, transparent);
 }
