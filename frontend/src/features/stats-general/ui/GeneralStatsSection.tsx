@@ -29,21 +29,23 @@ export function GeneralStatsSection() {
     },
     {
       icon: '⚡',
-      label: 'Скорость',
-      value: `${data.learningSpeedCardsPerDay}/день`,
-      hint: 'Новых карточек в день',
+      label: 'Изучено в день',
+      value: Math.round(data.learningSpeedCardsPerDay).toString(),
+      hint: 'Количество изученных карточек в день',
     },
     {
       icon: '🎯',
       label: 'Средняя оценка',
-      value: data.averageRating.toFixed(1),
-      hint: 'По шкале от 1.0 до 4.0',
+      value: `${Math.round((data.averageRating / 4) * 100)}%`,
+      hint: 'Успешность повторений',
+      showScale: true,
+      scaleValue: (data.averageRating / 4) * 100,
     },
     {
       icon: '📝',
-      label: 'Всего ревью',
+      label: 'Просмотрено карточек',
       value: data.totalReviews.toString(),
-      hint: 'Суммарно количество оценок',
+      hint: 'Общее количество просмотров',
     },
   ]
 
@@ -57,6 +59,16 @@ export function GeneralStatsSection() {
             <div className="statsCard__icon">{card.icon}</div>
             <div className="statsCard__label">{card.label}</div>
             <div className="statsCard__value">{card.value}</div>
+            {(card as any).showScale && (
+              <div className="statsCard__scale">
+                <div className="statsCard__scaleBar">
+                  <div
+                    className="statsCard__scaleFill"
+                    style={{ width: `${(card as any).scaleValue}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
