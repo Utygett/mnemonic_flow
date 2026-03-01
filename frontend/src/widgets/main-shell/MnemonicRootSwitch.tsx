@@ -181,9 +181,7 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
         />
       )}
 
-      {props.activeTab === 'stats' && props.data.statistics && (
-        <Statistics statistics={props.data.statistics} decks={props.data.decks} />
-      )}
+      {props.activeTab === 'stats' && <Statistics />}
 
       {props.activeTab === 'profile' && <ProfileContainer />}
     </>

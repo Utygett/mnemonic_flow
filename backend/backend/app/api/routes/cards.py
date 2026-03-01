@@ -507,6 +507,32 @@ def get_cards_for_review_with_levels(
     for lvl in levels_all:
         levels_by_card.setdefault(lvl.card_id, []).append(lvl)
 
+    # Load review history for all cards (last 10 reviews per card)
+    reviews_all = (
+        db.query(CardReviewHistory)
+        .filter(CardReviewHistory.user_id == user_uuid)
+        .filter(CardReviewHistory.card_id.in_(card_ids))
+        .order_by(CardReviewHistory.card_id.asc(), CardReviewHistory.reviewed_at.desc())
+        .all()
+    )
+
+    # Group reviews by card_id and take last 10
+    reviews_by_card: dict[UUID, list[dict]] = {}
+    for review in reviews_all:
+        if review.card_id not in reviews_by_card:
+            reviews_by_card[review.card_id] = []
+        if len(reviews_by_card[review.card_id]) < 10:
+            reviews_by_card[review.card_id].append(
+                {
+                    "rating": (
+                        review.rating.value
+                        if hasattr(review.rating, "value")
+                        else str(review.rating)
+                    ),
+                    "reviewed_at": review.reviewed_at.isoformat(),
+                }
+            )
+
     result: list[CardForReviewWithLevels] = []
     for progress in progress_list:
         card = db.get(Card, progress.card_id)
@@ -535,6 +561,7 @@ def get_cards_for_review_with_levels(
                     )
                     for card_level in levels_by_card.get(card.id, [])
                 ],
+                review_history=reviews_by_card.get(card.id, []),
             )
         )
     return result

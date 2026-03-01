@@ -28,6 +28,12 @@ export type DeckDetailsViewModel = {
   cardsError: string | null
   refreshCards: () => Promise<void>
 
+  // Infinite scroll fields
+  totalCards: number
+  hasMore: boolean
+  loadingMore: boolean
+  loadMore: () => Promise<void>
+
   onBack: () => void
   onResume: () => void
   onStart: (mode: StudyMode) => void
@@ -44,8 +50,12 @@ export function useDeckDetailsModel(props: DeckDetailsProps): DeckDetailsViewMod
     deck,
     cards,
     loading: cardsLoading,
+    loadingMore,
     error: cardsError,
     refresh: refreshCards,
+    totalCards,
+    hasMore,
+    loadMore,
   } = useDeckCards(props.deckId)
 
   const key = `deck:${props.deckId}` as const
@@ -90,7 +100,6 @@ export function useDeckDetailsModel(props: DeckDetailsProps): DeckDetailsViewMod
     setSavingDeckSetting(true)
     try {
       await updateDeck(props.deckId, { show_card_title: value })
-      // Refresh deck data to get updated value
       await refreshCards()
     } catch (err) {
       console.error('Failed to update deck setting:', err)
@@ -101,10 +110,10 @@ export function useDeckDetailsModel(props: DeckDetailsProps): DeckDetailsViewMod
 
   return {
     deckId: props.deckId,
-    deckTitle: deck?.deck?.title ?? '',
-    deckDescription: deck?.deck?.description ?? null,
-    canEdit: deck?.deck?.can_edit ?? true,
-    showCardTitle: deck?.deck?.show_card_title ?? false,
+    deckTitle: deck?.title ?? '',
+    deckDescription: deck?.description ?? null,
+    canEdit: true,
+    showCardTitle: deck?.show_card_title ?? false,
     setShowCardTitle,
     savingDeckSetting,
     limit,
@@ -119,6 +128,12 @@ export function useDeckDetailsModel(props: DeckDetailsProps): DeckDetailsViewMod
     cardsLoading,
     cardsError,
     refreshCards,
+
+    // Infinite scroll
+    totalCards,
+    hasMore,
+    loadingMore,
+    loadMore,
 
     onBack: props.onBack,
     onResume,
