@@ -110,7 +110,7 @@
 .profileCard__email {
   margin-top: 2px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -126,7 +126,7 @@
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-muted);
   margin-bottom: 10px;
 }
 
@@ -139,12 +139,12 @@
 }
 
 .profileRow + .profileRow {
-  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  border-top: 1px dashed var(--border);
 }
 
 .profileRow__label {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--text-muted);
 }
 
 .profileRow__value {
@@ -346,6 +346,59 @@
   margin-bottom: 14px;
 }
 
+.statsCards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.statsCard {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 14px;
+  text-align: center;
+}
+
+.statsCard__icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.statsCard__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.statsCard__value {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.statsCard__scale {
+  margin-top: 8px;
+}
+
+.statsCard__scaleBar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.statsCard__scaleFill {
+  height: 100%;
+  background: linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #22c55e 100%);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
 .statCard {
   padding: 14px;
 }
@@ -505,7 +558,17 @@
 }
 
 .statsDeck__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
+}
+
+.statsDeck__colorIndicator {
+  width: 4px;
+  height: 32px;
+  border-radius: 2px;
+  flex-shrink: 0;
 }
 
 .statsDeck__title {
