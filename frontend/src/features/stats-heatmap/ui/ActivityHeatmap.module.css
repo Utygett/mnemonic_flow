@@ -8,8 +8,8 @@
 .dayLabels {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding-top: 20px;
+  gap: 12px;
+  padding-top: 0;
 }
 
 .dayLabel {
@@ -17,6 +17,8 @@
   color: var(--text-muted);
   height: 10px;
   line-height: 10px;
+  display: flex;
+  align-items: center;
 }
 
 .grid {
