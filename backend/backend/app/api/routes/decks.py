@@ -1,4 +1,5 @@
 import logging
+import math
 import random
 from datetime import datetime, timezone
 from typing import List, Optional
@@ -27,6 +28,7 @@ from app.schemas.cards import (
     DeckSummary,
     DeckUpdate,
     DeckWithCards,
+    PaginatedCardsResponse,
 )
 from app.schemas.decks_public import PublicDeckSummary
 from app.services.anki_mapper import AnkiMapper
@@ -101,9 +103,48 @@ def list_user_decks(user_id: UUID = Depends(get_current_user_id), db: Session = 
     return deck_list
 
 
-@router.get("/{deck_id}/cards", response_model=List[CardSummary])
+@router.get("/{deck_id}/info", response_model=DeckDetail)
+def get_deck_info(
+    deck_id: UUID,
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Get deck metadata without cards (optimized for pagination views)"""
+    link = (
+        db.query(UserStudyGroupDeck)
+        .join(UserStudyGroup)
+        .filter(UserStudyGroup.user_id == user_id, UserStudyGroupDeck.deck_id == deck_id)
+        .first()
+    )
+    if not link:
+        raise HTTPException(status_code=404, detail="Deck not found or access denied")
+
+    deck = db.query(Deck).filter(Deck.id == deck_id).first()
+    if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found")
+
+    # Count total cards
+    total_cards = db.query(Card).filter(Card.deck_id == deck_id).count()
+
+    return DeckDetail(
+        id=deck.id,
+        title=deck.title,
+        description=deck.description,
+        color=deck.color or "#4A6FA5",
+        owner_id=deck.owner_id,
+        is_public=deck.is_public,
+        show_card_title=deck.show_card_title,
+        cards_count=total_cards,
+    )
+
+
+@router.get("/{deck_id}/cards", response_model=PaginatedCardsResponse)
 def list_deck_cards(
-    deck_id: UUID, user_id: UUID = Depends(get_current_user_id), db: Session = Depends(get_db)
+    deck_id: UUID,
+    page: int = Query(default=1, ge=1, description="Page number"),
+    per_page: int = Query(default=15, ge=1, le=50, description="Cards per page"),
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
 ):
     user_uuid = user_id
 
@@ -116,10 +157,34 @@ def list_deck_cards(
     if not link:
         raise HTTPException(404, "Deck not found or access denied")
 
-    cards = db.query(Card).filter(Card.deck_id == deck_id).all()
+    # Get deck info
+    deck = db.query(Deck).filter(Deck.id == deck_id).first()
+    if not deck:
+        raise HTTPException(404, "Deck not found")
+
+    # Count total cards
+    total_count = db.query(Card).filter(Card.deck_id == deck_id).count()
+    total_pages = math.ceil(total_count / per_page) if total_count > 0 else 0
+
+    # Get paginated cards with consistent ordering
+    offset = (page - 1) * per_page
+    cards = (
+        db.query(Card)
+        .filter(Card.deck_id == deck_id)
+        .order_by(Card.created_at.asc(), Card.id.asc())
+        .offset(offset)
+        .limit(per_page)
+        .all()
+    )
+
     result = []
     for card in cards:
-        levels = db.query(CardLevel).filter(CardLevel.card_id == card.id).all()
+        levels = (
+            db.query(CardLevel)
+            .filter(CardLevel.card_id == card.id)
+            .order_by(CardLevel.level_index.asc())
+            .all()
+        )
         levels_data = [
             CardLevelContent(
                 level_index=card_level.level_index,
@@ -134,7 +199,27 @@ def list_deck_cards(
         result.append(
             CardSummary(card_id=card.id, title=card.title, type=card.type, levels=levels_data)
         )
-    return result
+
+    # Create deck detail - use 'id' not 'deck_id' because of validation_alias
+    deck_detail = DeckDetail(
+        id=deck.id,
+        title=deck.title,
+        description=deck.description,
+        color=deck.color or "#4A6FA5",
+        owner_id=deck.owner_id,
+        is_public=deck.is_public,
+        show_card_title=deck.show_card_title,
+        cards_count=total_count,
+    )
+
+    return PaginatedCardsResponse(
+        deck=deck_detail,
+        cards=result,
+        total=total_count,
+        page=page,
+        per_page=per_page,
+        total_pages=total_pages,
+    )
 
 
 @router.get("/{deck_id}/session", response_model=list[DeckSessionCard])
@@ -177,7 +262,6 @@ def get_deck_session(
     )
     progress_by_card = {p.card_id: p for p in progress_list}
 
-    # Создаём отсутствующие активные прогрессы на level0
     now = datetime.now(timezone.utc)
     to_create: list[CardProgress] = []
 

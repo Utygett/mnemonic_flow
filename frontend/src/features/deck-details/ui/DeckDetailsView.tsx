@@ -12,8 +12,8 @@ import styles from './DeckDetailsView.module.css'
 export function DeckDetailsView(props: DeckDetailsViewModel) {
   const [previewCardId, setPreviewCardId] = React.useState<string | null>(null)
   const [localShowCardTitle, setLocalShowCardTitle] = React.useState(props.showCardTitle)
+  const loadMoreRef = React.useRef<HTMLDivElement>(null)
 
-  // Update local state when prop changes
   React.useEffect(() => {
     setLocalShowCardTitle(props.showCardTitle)
   }, [props.showCardTitle])
@@ -27,6 +27,24 @@ export function DeckDetailsView(props: DeckDetailsViewModel) {
     ? (props.cards.find(c => c.card_id === previewCardId) ?? null)
     : null
 
+  // Infinite scroll observer
+  React.useEffect(() => {
+    if (!loadMoreRef.current || !props.hasMore || props.loadingMore) return
+
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && props.hasMore && !props.loadingMore) {
+          props.loadMore()
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    observer.observe(loadMoreRef.current)
+
+    return () => observer.disconnect()
+  }, [props.hasMore, props.loadingMore, props.loadMore])
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -37,10 +55,10 @@ export function DeckDetailsView(props: DeckDetailsViewModel) {
           <h1 className={styles.title}>{props.deckTitle || 'Колода'}</h1>
           {props.deckDescription && <p className={styles.description}>{props.deckDescription}</p>}
           <div className={styles.meta}>
-            {props.cards.length}{' '}
-            {props.cards.length === 1
+            {props.totalCards}{' '}
+            {props.totalCards === 1
               ? 'карточка'
-              : props.cards.length >= 2 && props.cards.length <= 4
+              : props.totalCards >= 2 && props.totalCards <= 4
                 ? 'карточки'
                 : 'карточек'}
           </div>
@@ -84,7 +102,7 @@ export function DeckDetailsView(props: DeckDetailsViewModel) {
               </Button>
             </div>
 
-            {props.cardsLoading && (
+            {props.cardsLoading && props.cards.length === 0 && (
               <div className={styles.cardsLoading}>
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto"></div>
               </div>
@@ -105,19 +123,38 @@ export function DeckDetailsView(props: DeckDetailsViewModel) {
               </div>
             )}
 
-            {!props.cardsLoading && !props.cardsError && props.cards.length > 0 && (
-              <div className={styles.cardList}>
-                {props.cards.map(card => (
-                  <CardListItem
-                    key={card.card_id}
-                    card={card}
-                    canEdit={props.canEdit}
-                    showCardTitle={localShowCardTitle}
-                    onEdit={props.onEditCard}
-                    onClick={() => setPreviewCardId(card.card_id)}
-                  />
-                ))}
-              </div>
+            {props.cards.length > 0 && (
+              <>
+                <div className={styles.cardList}>
+                  {props.cards.map(card => (
+                    <CardListItem
+                      key={card.card_id}
+                      card={card}
+                      canEdit={props.canEdit}
+                      showCardTitle={localShowCardTitle}
+                      onEdit={props.onEditCard}
+                      onClick={() => setPreviewCardId(card.card_id)}
+                    />
+                  ))}
+                </div>
+
+                {/* Infinite scroll trigger */}
+                {props.hasMore && (
+                  <div ref={loadMoreRef} className={styles.loadMore}>
+                    {props.loadingMore && (
+                      <div className={styles.loadingMore}>
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-accent mx-auto"></div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!props.hasMore && props.cards.length > 0 && (
+                  <div className={styles.endMessage}>
+                    Загружено {props.cards.length} из {props.totalCards}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
