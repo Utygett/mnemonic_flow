@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import Integer, func
 from sqlalchemy.orm import Session
 
@@ -11,7 +11,25 @@ from app.db.session import SessionLocal
 from app.models.card import Card
 from app.models.card_progress import CardProgress
 from app.models.card_review_history import CardReviewHistory
-from app.schemas.stats import DashboardStatsResponse, DifficultyDistributionResponse
+from app.schemas.stats import (
+    ActivityChartResponse,
+    ActivityHeatmapResponse,
+    DashboardStatsResponse,
+    DeckProgressResponse,
+    DifficultyDistributionResponse,
+    GeneralStatsResponse,
+)
+from app.services.stats_service import (
+    calculate_average_rating,
+    calculate_average_session_duration,
+    calculate_learning_speed,
+    calculate_rating_distribution,
+    calculate_total_study_time,
+    format_duration,
+    get_activity_chart,
+    get_activity_heatmap,
+    get_deck_progress,
+)
 
 router = APIRouter()
 
@@ -181,4 +199,126 @@ def get_difficulty_distribution(
         medium_count=medium_count,
         hard_count=hard_count,
         total_count=total_count,
+    )
+
+
+@router.get("/general", response_model=GeneralStatsResponse)
+def get_general_stats(
+    db: Session = Depends(get_db),
+    user_id: UUID = Depends(get_current_user_id),
+) -> GeneralStatsResponse:
+    """
+    Get general lifetime statistics.
+
+    Returns:
+        - total_study_time_minutes: Total study time in minutes
+        - total_study_time_formatted: Human-readable time string
+        - average_session_duration_minutes: Average session duration
+        - total_reviews: Total number of reviews
+        - learning_speed_cards_per_day: Average new cards per day
+        - rating_distribution: Distribution of ratings
+        - average_rating: Average rating (1-4 scale)
+    """
+    # Get all the stats
+    total_time = calculate_total_study_time(db, user_id)
+    avg_session = calculate_average_session_duration(db, user_id)
+    learning_speed = calculate_learning_speed(db, user_id)
+    rating_dist = calculate_rating_distribution(db, user_id)
+    avg_rating = calculate_average_rating(db, user_id)
+
+    total_reviews = sum(rating_dist.values())
+    total_reviews = max(total_reviews, 1)  # Avoid division by zero
+
+    from app.schemas.stats import RatingDistributionResponse
+
+    rating_distribution = RatingDistributionResponse(
+        again_count=rating_dist["again"],
+        hard_count=rating_dist["hard"],
+        good_count=rating_dist["good"],
+        easy_count=rating_dist["easy"],
+        total_count=total_reviews,
+        again_percentage=round((rating_dist["again"] / total_reviews) * 100, 1),
+        hard_percentage=round((rating_dist["hard"] / total_reviews) * 100, 1),
+        good_percentage=round((rating_dist["good"] / total_reviews) * 100, 1),
+        easy_percentage=round((rating_dist["easy"] / total_reviews) * 100, 1),
+    )
+
+    return GeneralStatsResponse(
+        total_study_time_minutes=total_time,
+        total_study_time_formatted=format_duration(total_time),
+        average_session_duration_minutes=avg_session,
+        total_reviews=total_reviews,
+        learning_speed_cards_per_day=learning_speed,
+        rating_distribution=rating_distribution,
+        average_rating=round(avg_rating, 2),
+    )
+
+
+@router.get("/activity-heatmap", response_model=ActivityHeatmapResponse)
+def get_activity_heatmap_endpoint(
+    days: int = Query(default=365, ge=30, le=730),
+    db: Session = Depends(get_db),
+    user_id: UUID = Depends(get_current_user_id),
+) -> ActivityHeatmapResponse:
+    """
+    Get activity heatmap data (GitHub-style contribution calendar).
+
+    Query params:
+        - days: Number of days to include (30-730, default 365)
+
+    Returns:
+        - entries: List of date-based activity entries
+    """
+    from app.schemas.stats import ActivityHeatmapEntry
+
+    data = get_activity_heatmap(db, user_id, days)
+
+    return ActivityHeatmapResponse(entries=[ActivityHeatmapEntry(**entry) for entry in data])
+
+
+@router.get("/deck-progress", response_model=DeckProgressResponse)
+def get_deck_progress_endpoint(
+    db: Session = Depends(get_db),
+    user_id: UUID = Depends(get_current_user_id),
+) -> DeckProgressResponse:
+    """
+    Get progress statistics for each deck.
+
+    Mastery threshold: stability >= 30 days
+
+    Returns:
+        - decks: List of deck progress statistics
+    """
+    from app.schemas.stats import DeckProgressStats
+
+    data = get_deck_progress(db, user_id)
+
+    return DeckProgressResponse(decks=[DeckProgressStats(**deck) for deck in data])
+
+
+@router.get("/activity-chart", response_model=ActivityChartResponse)
+def get_activity_chart_endpoint(
+    period: str = Query(default="day", pattern="^(day|week|month)$"),
+    days: int = Query(default=30, ge=7, le=365),
+    db: Session = Depends(get_db),
+    user_id: UUID = Depends(get_current_user_id),
+) -> ActivityChartResponse:
+    """
+    Get activity chart data for line/bar charts.
+
+    Query params:
+        - period: Time bucket - 'day', 'week', or 'month'
+        - days: Number of days to include (7-365, default 30)
+
+    Returns:
+        - period: The period used
+        - data: List of time-bucketed activity entries
+    """
+    from app.schemas.stats import ActivityChartEntry
+
+    data = get_activity_chart(db, user_id, period, days)
+
+    return ActivityChartResponse(
+        period=period,
+        data=[ActivityChartEntry(**entry) for entry in data],
     )
