@@ -50,13 +50,13 @@ export function useGroupsDecksController() {
     })
   }, [])
 
-  const refreshDecks = useCallback(async () => {
+  const refreshDecks = useCallback(async (activeGroupId: string | null) => {
     setState(s => ({ ...s, decksLoading: true, decksError: null }))
 
     try {
-      if (state.activeGroupId) {
+      if (activeGroupId) {
         try {
-          const decks = await getGroupDecksSummary(state.activeGroupId)
+          const decks = await getGroupDecksSummary(activeGroupId)
           setState(s => ({
             ...s,
             decks,
@@ -102,16 +102,12 @@ export function useGroupsDecksController() {
         decksError: e,
       }))
     }
-  }, [state.activeGroupId])
+  }, [])
 
   useEffect(() => {
     void refreshGroups()
-    void refreshDecks()
-  }, [refreshDecks, refreshGroups])
-
-  useEffect(() => {
-    void refreshDecks()
-  }, [state.activeGroupId, refreshDecks])
+    void refreshDecks(state.activeGroupId)
+  }, [state.activeGroupId, refreshDecks, refreshGroups])
 
   const deleteActiveGroup = useCallback(async () => {
     const groupId = state.activeGroupId
@@ -132,7 +128,7 @@ export function useGroupsDecksController() {
       decks: state.decks,
       decksLoading: state.decksLoading,
       decksError: state.decksError,
-      refreshDecks,
+      refreshDecks: () => refreshDecks(state.activeGroupId),
 
       refreshGroups,
       deleteActiveGroup,

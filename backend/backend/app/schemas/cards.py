@@ -29,6 +29,7 @@ class CardForReviewWithLevels(BaseModel):
     next_review: datetime
 
     levels: List[CardLevelContent]
+    review_history: List[dict] = []  # Added review history
 
 
 class CardSummary(BaseModel):
@@ -36,6 +37,40 @@ class CardSummary(BaseModel):
     title: str
     type: str
     levels: Optional[List[CardLevelContent]] = []
+
+
+class DeckSummary(BaseModel):
+    deck_id: UUID
+    title: str
+    description: str | None = None
+
+
+class DeckDetail(BaseModel):
+    deck_id: UUID = Field(validation_alias="id", serialization_alias="deck_id")
+    title: str
+    description: Optional[str] = None
+    color: str
+    owner_id: UUID
+    is_public: bool
+    show_card_title: bool = False
+
+    count_repeat: int = 0
+    count_for_repeat: int = 0
+    cards_count: int = 0
+    completed_cards_count: int = 0
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PaginatedCardsResponse(BaseModel):
+    """Response model for paginated deck cards."""
+
+    deck: Optional[DeckDetail] = None
+    cards: List[CardSummary]
+    total: int
+    page: int
+    per_page: int
+    total_pages: int
 
 
 class CardLevelPayload(BaseModel):
@@ -64,8 +99,8 @@ class CreateCardLevelRequest(BaseModel):
 
 class CreateCardRequest(BaseModel):
     deck_id: str
-    title: Optional[str] = None  # Опционально, авто-генерируется если не указан
-    type: str  # или Literal["flashcard","multiple_choice"], если уже готов
+    title: Optional[str] = None
+    type: str
     levels: List[CreateCardLevelRequest]
 
 
@@ -102,16 +137,6 @@ class LevelIn(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def parse_content_union(cls, data: Any) -> Any:
-        """
-        Payload приходит как:
-        {
-          "level_index": 0,
-          "content": { ... }
-        }
-
-        Так как в content нет discriminator-поля (kind/type),
-        определяем тип по наличию ключей options/correctOptionId. [web:2]
-        """
         if isinstance(data, dict):
             c = data.get("content") or {}
 
@@ -125,12 +150,6 @@ class LevelIn(BaseModel):
 
 class ReplaceLevelsRequest(BaseModel):
     levels: List[LevelIn]
-
-
-class DeckSummary(BaseModel):
-    deck_id: UUID
-    title: str
-    description: str | None = None
 
 
 class DeckSessionCard(BaseModel):
@@ -163,26 +182,9 @@ class CreateCardResponse(BaseModel):
 class DeckUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
-    color: Optional[str] = Field(default=None, min_length=1)  # опционально: regex под HEX
+    color: Optional[str] = Field(default=None, min_length=1)
     is_public: Optional[bool] = None
     show_card_title: Optional[bool] = None
-
-
-class DeckDetail(BaseModel):
-    deck_id: UUID = Field(validation_alias="id", serialization_alias="deck_id")
-    title: str
-    description: Optional[str] = None
-    color: str
-    owner_id: UUID
-    is_public: bool
-    show_card_title: bool = False
-
-    count_repeat: int = 0
-    count_for_repeat: int = 0
-    cards_count: int = 0
-    completed_cards_count: int = 0
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class DeckWithCards(BaseModel):
