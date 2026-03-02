@@ -19,7 +19,7 @@ export function Statistics() {
           <GeneralStatsSection />
 
           {/* Activity Heatmap */}
-          <ActivityHeatmap days={365} />
+          <ActivityHeatmap days={180} />
 
           {/* Deck Progress */}
           <DeckProgressSection />

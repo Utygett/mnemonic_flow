@@ -252,7 +252,7 @@ def get_activity_heatmap(db: Session, user_id: UUID, days: int = 365) -> list[di
 
     query = text(f"""
         SELECT
-            d.date::text as date,
+            TO_CHAR(d.date, 'YYYY-MM-DD') as date,
             COALESCE(COUNT(crh.id), 0) as reviews_count,
             COALESCE(
                 SUM(EXTRACT(EPOCH FROM (crh.reviewed_at - crh.show_at)) / 60),

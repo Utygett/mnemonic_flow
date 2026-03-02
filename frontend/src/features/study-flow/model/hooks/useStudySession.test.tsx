@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, act, waitFor } from '@testing-library/react'
+import { renderHook, act } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import React from 'react'
 import { useStudySession } from './useStudySession'
 import { createMockCards, createMockReviewInput } from '../test/fixtures'
 
@@ -10,7 +12,26 @@ vi.mock('@/entities/card', () => ({
 
 const { reviewCardWithMeta } = await import('@/entities/card')
 
+// QueryClient wrapper for tests
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  })
+
+const createWrapper = () => {
+  const queryClient = createTestQueryClient()
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  )
+}
+
 describe('useStudySession', () => {
+  const renderHookWithWrapper = (callback: () => any) =>
+    renderHook(callback, { wrapper: createWrapper() })
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -18,27 +39,27 @@ describe('useStudySession', () => {
   describe('начальное состояние', () => {
     it('должен установить currentIndex из initialIndex', () => {
       const mockCards = createMockCards(5)
-      const { result } = renderHook(() => useStudySession(mockCards, 2))
+      const { result } = renderHookWithWrapper(() => useStudySession(mockCards, 2))
 
       expect(result.current.currentIndex).toBe(2)
     })
 
     it('должен использовать 0 как начальный индекс если initialIndex не передан', () => {
       const mockCards = createMockCards(5)
-      const { result } = renderHook(() => useStudySession(mockCards, undefined))
+      const { result } = renderHookWithWrapper(() => useStudySession(mockCards, undefined))
 
       expect(result.current.currentIndex).toBe(0)
     })
 
     it('должен возвращать переданные cards', () => {
       const mockCards = createMockCards(3)
-      const { result } = renderHook(() => useStudySession(mockCards, 0))
+      const { result } = renderHookWithWrapper(() => useStudySession(mockCards, 0))
 
       expect(result.current.cards).toEqual(mockCards)
     })
 
     it('должен возвращать пустой массив если cards undefined', () => {
-      const { result } = renderHook(() => useStudySession(undefined as any, 0))
+      const { result } = renderHookWithWrapper(() => useStudySession(undefined as any, 0))
 
       expect(result.current.cards).toEqual([])
     })
@@ -46,20 +67,20 @@ describe('useStudySession', () => {
     describe('isCompleted', () => {
       it('должен быть false когда currentIndex меньше cards.length', () => {
         const mockCards = createMockCards(5)
-        const { result } = renderHook(() => useStudySession(mockCards, 0))
+        const { result } = renderHookWithWrapper(() => useStudySession(mockCards, 0))
 
         expect(result.current.isCompleted).toBe(false)
       })
 
       it('должен быть true когда currentIndex >= cards.length', () => {
         const mockCards = createMockCards(3)
-        const { result } = renderHook(() => useStudySession(mockCards, 3))
+        const { result } = renderHookWithWrapper(() => useStudySession(mockCards, 3))
 
         expect(result.current.isCompleted).toBe(true)
       })
 
       it('должен быть false для пустого массива карточек', () => {
-        const { result } = renderHook(() => useStudySession([], 0))
+        const { result } = renderHookWithWrapper(() => useStudySession([], 0))
 
         expect(result.current.isCompleted).toBe(false)
       })
@@ -75,7 +96,7 @@ describe('useStudySession', () => {
 
       vi.mocked(reviewCardWithMeta).mockResolvedValue(undefined as any)
 
-      const { result } = renderHook(() => useStudySession(mockCards, 0))
+      const { result } = renderHookWithWrapper(() => useStudySession(mockCards, 0))
 
       await act(async () => {
         await result.current.rateCard(mockReview)
@@ -97,7 +118,7 @@ describe('useStudySession', () => {
 
       vi.mocked(reviewCardWithMeta).mockResolvedValue(undefined as any)
 
-      const { result } = renderHook(() => useStudySession(mockCards, 0))
+      const { result } = renderHookWithWrapper(() => useStudySession(mockCards, 0))
 
       await act(async () => {
         await result.current.rateCard(mockReview)
@@ -115,7 +136,7 @@ describe('useStudySession', () => {
       const mockCards = createMockCards(3)
       vi.mocked(reviewCardWithMeta).mockResolvedValue(undefined as any)
 
-      const { result } = renderHook(() => useStudySession(mockCards, 0))
+      const { result } = renderHookWithWrapper(() => useStudySession(mockCards, 0))
 
       expect(result.current.currentIndex).toBe(0)
 
@@ -130,7 +151,7 @@ describe('useStudySession', () => {
       const mockCards = createMockCards(3)
       vi.mocked(reviewCardWithMeta).mockRejectedValue(new Error('API Error'))
 
-      const { result } = renderHook(() => useStudySession(mockCards, 0))
+      const { result } = renderHookWithWrapper(() => useStudySession(mockCards, 0))
 
       await act(async () => {
         await result.current.rateCard(createMockReviewInput('again'))
@@ -143,7 +164,7 @@ describe('useStudySession', () => {
     it('не должен вызывать API если текущая карточка отсутствует', async () => {
       vi.mocked(reviewCardWithMeta).mockResolvedValue(undefined as any)
 
-      const { result } = renderHook(() => useStudySession([], 0))
+      const { result } = renderHookWithWrapper(() => useStudySession([], 0))
 
       await act(async () => {
         await result.current.rateCard(createMockReviewInput('good'))
@@ -156,7 +177,7 @@ describe('useStudySession', () => {
   describe('skipCard', () => {
     it('должен продвигать currentIndex без вызова API', () => {
       const mockCards = createMockCards(3)
-      const { result } = renderHook(() => useStudySession(mockCards, 0))
+      const { result } = renderHookWithWrapper(() => useStudySession(mockCards, 0))
 
       expect(result.current.currentIndex).toBe(0)
 
@@ -172,7 +193,7 @@ describe('useStudySession', () => {
   describe('resetSession', () => {
     it('должен сбросить currentIndex в 0', () => {
       const mockCards = createMockCards(5)
-      const { result } = renderHook(() => useStudySession(mockCards, 3))
+      const { result } = renderHookWithWrapper(() => useStudySession(mockCards, 3))
 
       expect(result.current.currentIndex).toBe(3)
 
@@ -188,13 +209,13 @@ describe('useStudySession', () => {
     it('должен начинать с указанным initialIndex', () => {
       const mockCards = createMockCards(5)
 
-      const { result: result0 } = renderHook(() => useStudySession(mockCards, 0))
+      const { result: result0 } = renderHookWithWrapper(() => useStudySession(mockCards, 0))
       expect(result0.current.currentIndex).toBe(0)
 
-      const { result: result2 } = renderHook(() => useStudySession(mockCards, 2))
+      const { result: result2 } = renderHookWithWrapper(() => useStudySession(mockCards, 2))
       expect(result2.current.currentIndex).toBe(2)
 
-      const { result: result4 } = renderHook(() => useStudySession(mockCards, 4))
+      const { result: result4 } = renderHookWithWrapper(() => useStudySession(mockCards, 4))
       expect(result4.current.currentIndex).toBe(4)
     })
   })
