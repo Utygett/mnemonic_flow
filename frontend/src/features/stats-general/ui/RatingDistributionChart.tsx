@@ -55,6 +55,11 @@ export function RatingDistributionChart({ ratingDistribution }: RatingDistributi
         Распределение оценок
       </h3>
       <div style={{ height: '200px', position: 'relative' }}>
+        <style>{`
+          .recharts-pie {
+            pointer-events: none !important;
+          }
+        `}</style>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -80,7 +85,10 @@ export function RatingDistributionChart({ ratingDistribution }: RatingDistributi
               iconType="circle"
               formatter={(value: any, entry: any) => (
                 <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
-                  {entry.name}: {value}
+                  {value}{' '}
+                  <span style={{ color: 'var(--text)', marginLeft: '4px' }}>
+                    [{entry?.payload?.value || 0}]
+                  </span>
                 </span>
               )}
             />
