@@ -11,13 +11,22 @@ interface ActivityHeatmapProps {
 export function ActivityHeatmap({ days = 365 }: ActivityHeatmapProps) {
   const [hoveredCell, setHoveredCell] = useState<string | null>(null)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['stats', 'heatmap', days],
     queryFn: () => getActivityHeatmap(days),
   })
 
   if (isLoading) {
     return <div className="loading">Загрузка тепловой карты...</div>
+  }
+
+  if (error) {
+    return (
+      <section className="statsSection">
+        <h2 className="statsSection__title">Активность</h2>
+        <div className="text-muted">Ошибка загрузки данных: {(error as Error).message}</div>
+      </section>
+    )
   }
 
   if (!data || data.length === 0) {
