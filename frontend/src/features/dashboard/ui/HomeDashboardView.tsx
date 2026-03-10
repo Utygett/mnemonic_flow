@@ -20,6 +20,7 @@ type Props = {
   onResume: () => void
   onDiscardResume: () => void
   onStartStudy: () => void
+  onStartDeckStudy?: () => void
   onNavigateToStats?: () => void
 }
 
@@ -67,6 +68,11 @@ export function HomeDashboardView(props: Props) {
           <Button onClick={props.onStartStudy} variant="primary" size="large" fullWidth>
             Начать обучение
           </Button>
+          {props.onStartDeckStudy && (
+            <Button onClick={props.onStartDeckStudy} variant="primary" size="large" fullWidth>
+              Изучение колоды целиком
+            </Button>
+          )}
         </div>
       </div>
 

@@ -21,6 +21,7 @@ export type DashboardModel = {
 export type DashboardActions = {
   onGroupChange: (groupId: string) => void
   onStartStudy: () => void
+  onStartDeckStudy?: () => void
   onDeckClick: (deckId: string) => void
   onEditDeck?: (deckId: string) => void
   onDeleteDeck?: (deckId: string) => void
