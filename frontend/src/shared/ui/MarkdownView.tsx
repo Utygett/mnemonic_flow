@@ -7,13 +7,16 @@ import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
 
 import { convertBracketLatexToDollar } from '@/shared/lib/utils'
+import styles from './MarkdownView.module.css'
 
 export function MarkdownView({ value }: { value: string }) {
   const processed = convertBracketLatexToDollar(value ?? '')
 
   return (
-    <ReactMarkdown remarkPlugins={[remarkMath, remarkGfm]} rehypePlugins={[rehypeKatex]}>
-      {processed}
-    </ReactMarkdown>
+    <div className={styles.markdownContent}>
+      <ReactMarkdown remarkPlugins={[remarkMath, remarkGfm]} rehypePlugins={[rehypeKatex]}>
+        {processed}
+      </ReactMarkdown>
+    </div>
   )
 }
