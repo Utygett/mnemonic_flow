@@ -9,12 +9,24 @@ import 'katex/dist/katex.min.css'
 import { convertBracketLatexToDollar } from '@/shared/lib/utils'
 import styles from './MarkdownView.module.css'
 
+const components = {
+  table: ({ children, ...props }: React.HTMLAttributes<HTMLTableElement>) => (
+    <div className={styles.tableWrapper}>
+      <table {...props}>{children}</table>
+    </div>
+  ),
+}
+
 export function MarkdownView({ value }: { value: string }) {
   const processed = convertBracketLatexToDollar(value ?? '')
 
   return (
     <div className={styles.markdownContent}>
-      <ReactMarkdown remarkPlugins={[remarkMath, remarkGfm]} rehypePlugins={[rehypeKatex]}>
+      <ReactMarkdown
+        remarkPlugins={[remarkMath, remarkGfm]}
+        rehypePlugins={[rehypeKatex]}
+        components={components}
+      >
         {processed}
       </ReactMarkdown>
     </div>

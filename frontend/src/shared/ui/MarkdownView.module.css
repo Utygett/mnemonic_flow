@@ -26,11 +26,37 @@
   word-break: break-word;
 }
 
-/* Tables: allow horizontal scroll */
-.markdownContent :global(table) {
-  display: block;
+/* Table wrapper for horizontal scroll without breaking border-collapse */
+.tableWrapper {
   overflow-x: auto;
   max-width: 100%;
+  margin: 8px 0;
+}
+
+.tableWrapper table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+
+.tableWrapper :global(th),
+.tableWrapper :global(td) {
+  border: 1px solid var(--border, rgba(30, 41, 59, 0.9));
+  padding: 6px 12px;
+  text-align: left;
+}
+
+.tableWrapper :global(th) {
+  background: var(--surface-2, rgba(255, 255, 255, 0.06));
+  font-weight: 600;
+}
+
+.tableWrapper :global(tr:nth-child(even) td) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tableWrapper :global(tr:hover td) {
+  background: rgba(255, 255, 255, 0.07);
 }
 
 /* Images: never overflow */
