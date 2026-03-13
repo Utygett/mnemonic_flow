@@ -45,13 +45,11 @@
 
 .flipcardText {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: left;
   width: 100%;
-  overflow: auto;
   min-height: 0;
+  overflow: auto;
+  overflow-x: hidden;
+  text-align: left;
 }
 
 .flipcardHint {

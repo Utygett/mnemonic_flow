@@ -1,0 +1,40 @@
+/* MarkdownView styles */
+
+.markdownContent {
+  width: 100%;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  text-align: left;
+}
+
+/* KaTeX display-mode formulas: allow horizontal scroll instead of overflow */
+.markdownContent :global(.katex-display) {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+}
+
+/* Code blocks: wrap long lines */
+.markdownContent :global(pre) {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.markdownContent :global(code) {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Tables: allow horizontal scroll */
+.markdownContent :global(table) {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* Images: never overflow */
+.markdownContent :global(img) {
+  max-width: 100%;
+  height: auto;
+}
