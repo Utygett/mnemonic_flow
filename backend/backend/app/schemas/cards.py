@@ -43,6 +43,7 @@ class DeckSummary(BaseModel):
     deck_id: UUID
     title: str
     description: str | None = None
+    owner_id: UUID | None = None
 
 
 class DeckDetail(BaseModel):
@@ -102,6 +103,13 @@ class CreateCardRequest(BaseModel):
     title: Optional[str] = None
     type: str
     levels: List[CreateCardLevelRequest]
+
+
+class CardPatchRequest(BaseModel):
+    """Body for PATCH /cards/{card_id}."""
+
+    title: Optional[str] = None
+    deck_id: Optional[UUID] = None
 
 
 class QaContentIn(BaseModel):

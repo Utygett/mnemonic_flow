@@ -5,6 +5,9 @@ export type {
   ApiDeckWithCards,
   PaginatedCardsResponse,
   DeckDetail,
+  ApiCard,
+  ApiLevel,
+  ApiUserProgress,
 } from './model/types'
 export {
   getUserDecks,

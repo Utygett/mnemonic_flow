@@ -6,6 +6,7 @@ import type { PersistedSession } from '@/shared/lib/utils/session-store'
 import type { PublicDeckSummary } from '@/entities/deck'
 import type { ImportAnkiResult } from '@/features/deck-import'
 
+import { moveDeckToGroup } from '@/entities/group'
 import { CreateGroup } from '../../../../features/group-create'
 import { DeckDetailsScreen } from '../../../../features/deck-details'
 import { AddDeck } from '../../../../features/deck-add'
@@ -194,6 +195,12 @@ export function HomeTabContainer(props: Props) {
       )
     : undefined
 
+  const handleMoveDeck = async (deckId: string, targetGroupId: string) => {
+    if (!props.activeGroupId) return
+    await moveDeckToGroup(props.activeGroupId, targetGroupId, deckId)
+    await props.refreshDecks()
+  }
+
   return (
     <StudyTabView
       decks={decksForStudy}
@@ -206,6 +213,7 @@ export function HomeTabContainer(props: Props) {
       onDeckClick={deckId => setView({ kind: 'deckDetails', deckId })}
       onEditDeck={props.onOpenEditDeck}
       onDeleteDeck={props.onDeleteDeck}
+      onMoveDeck={props.activeGroupId ? handleMoveDeck : undefined}
       onAddDeck={() => {
         if (!props.activeGroupId) return
         setView({ kind: 'addDeck', groupId: props.activeGroupId })
