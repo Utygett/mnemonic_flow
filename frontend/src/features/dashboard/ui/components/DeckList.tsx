@@ -10,9 +10,11 @@ type Props = {
   onDeckClick: (deckId: string) => void
   onEditDeck?: (deckId: string) => void
   onDeleteDeck?: (deckId: string) => void
+  onMoveDeck?: (deckId: string) => void
 }
 
-export function DeckList({ decks, onDeckClick, onEditDeck, onDeleteDeck }: Props) {
+export function DeckList({ decks, onDeckClick, onEditDeck, onDeleteDeck, onMoveDeck }: Props) {
+  void onEditDeck
   return (
     <div className={styles.container}>
       <div className={styles.list}>
@@ -21,8 +23,8 @@ export function DeckList({ decks, onDeckClick, onEditDeck, onDeleteDeck }: Props
             key={deck.deck_id}
             deck={deck}
             onClick={() => onDeckClick(deck.deck_id)}
-            onEdit={onEditDeck ? () => onEditDeck(deck.deck_id) : undefined}
             onDelete={onDeleteDeck ? () => onDeleteDeck(deck.deck_id) : undefined}
+            onMove={onMoveDeck ? () => onMoveDeck(deck.deck_id) : undefined}
           />
         ))}
       </div>

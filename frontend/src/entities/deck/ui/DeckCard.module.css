@@ -22,12 +22,6 @@
   gap: 12px;
 }
 
-.headerActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .title {
   margin: 0;
   font-size: 18px;
@@ -37,7 +31,14 @@
   flex: 1;
 }
 
-.deleteButton {
+/* ---- three-dot menu ---- */
+
+.menuWrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.menuButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -45,21 +46,60 @@
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--destructive, #ef4444);
+  color: var(--muted);
   cursor: pointer;
   transition:
     background-color 150ms ease,
     color 150ms ease;
-  flex-shrink: 0;
 }
 
-.deleteButton:hover {
-  background: color-mix(in srgb, var(--destructive, #ef4444) 15%, transparent);
+.menuButton:hover {
+  background: color-mix(in srgb, var(--muted) 12%, transparent);
+  color: var(--text);
 }
 
-.deleteButton:active {
-  background: color-mix(in srgb, var(--destructive, #ef4444) 25%, transparent);
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 160px;
+  background: color-mix(in srgb, var(--bg) 96%, var(--primary) 4%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  z-index: 100;
+  overflow: hidden;
+  isolation: isolate;
 }
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.dropdownItem:hover {
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+.dropdownItemDanger {
+  color: var(--danger, #e53e3e);
+}
+
+.dropdownItemDanger:hover {
+  background: color-mix(in srgb, var(--danger, #e53e3e) 12%, transparent);
+}
+
+/* ---- rest of card ---- */
 
 .descriptionBox {
   margin-top: 8px;
@@ -111,7 +151,7 @@
 .progressFill {
   height: 100%;
   border-radius: inherit;
-  /* "прозрачная" зелень как раньше: больше веса фону, меньше зелёному */
+  /* «прозрачная» зелень как раньше: больше веса фону, меньше зелёному */
   background: color-mix(in srgb, var(--success, #22c55e) 45%, transparent);
   transition: width 220ms ease;
 }
