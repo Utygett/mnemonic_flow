@@ -89,13 +89,11 @@ export function useDeckDetailsModel(props: DeckDetailsProps): DeckDetailsViewMod
   const currentUserId = getCurrentUserId()
 
   useEffect(() => {
-    // Now GET /decks/ returns owner_id — filter to only own decks for move targets
+    // Filter to decks where current user can edit (owner or granted editor permission)
     getUserDecks()
       .then(decks => {
-        const own = decks.filter(
-          d => d.owner_id != null && String(d.owner_id) === String(currentUserId)
-        )
-        setEditableDecks(own as unknown as PublicDeckSummary[])
+        const editable = decks.filter(d => d.can_edit === true)
+        setEditableDecks(editable as unknown as PublicDeckSummary[])
       })
       .catch(() => {})
   }, [currentUserId])
@@ -160,7 +158,9 @@ export function useDeckDetailsModel(props: DeckDetailsProps): DeckDetailsViewMod
     }
   }
 
-  const canEdit = deck != null ? String(deck.owner_id) === String(currentUserId) : true
+  // Prefer can_edit from backend; fall back to owner_id comparison for compatibility
+  const canEdit =
+    deck != null ? (deck.can_edit ?? String(deck.owner_id) === String(currentUserId)) : true
 
   return {
     deckId: props.deckId,

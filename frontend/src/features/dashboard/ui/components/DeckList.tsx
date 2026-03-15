@@ -10,10 +10,22 @@ type Props = {
   onDeckClick: (deckId: string) => void
   onEditDeck?: (deckId: string) => void
   onDeleteDeck?: (deckId: string) => void
+  onRemoveFromGroup?: (deckId: string) => void
   onMoveDeck?: (deckId: string) => void
+  onInviteDeck?: (deckId: string) => void
+  onShareDeck?: (deckId: string) => void
 }
 
-export function DeckList({ decks, onDeckClick, onEditDeck, onDeleteDeck, onMoveDeck }: Props) {
+export function DeckList({
+  decks,
+  onDeckClick,
+  onEditDeck,
+  onDeleteDeck,
+  onRemoveFromGroup,
+  onMoveDeck,
+  onInviteDeck,
+  onShareDeck,
+}: Props) {
   void onEditDeck
   return (
     <div className={styles.container}>
@@ -24,7 +36,12 @@ export function DeckList({ decks, onDeckClick, onEditDeck, onDeleteDeck, onMoveD
             deck={deck}
             onClick={() => onDeckClick(deck.deck_id)}
             onDelete={onDeleteDeck ? () => onDeleteDeck(deck.deck_id) : undefined}
+            onRemoveFromGroup={
+              onRemoveFromGroup ? () => onRemoveFromGroup(deck.deck_id) : undefined
+            }
             onMove={onMoveDeck ? () => onMoveDeck(deck.deck_id) : undefined}
+            onInvite={onInviteDeck ? () => onInviteDeck(deck.deck_id) : undefined}
+            onShare={onShareDeck ? () => onShareDeck(deck.deck_id) : undefined}
           />
         ))}
       </div>

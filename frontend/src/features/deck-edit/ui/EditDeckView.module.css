@@ -110,6 +110,8 @@
   margin-top: 16px;
 }
 
+/* --- buttons --- */
+
 .btnBase {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -146,4 +148,18 @@
 
 .btnPrimary:hover:not(:disabled) {
   background-color: color-mix(in srgb, var(--primary) 92%, #ffffff 8%);
+}
+
+.btnInvite {
+  composes: btnBase;
+  width: 100%;
+  margin-top: 14px;
+  background: transparent;
+  color: var(--primary);
+  border-color: var(--primary);
+  text-align: center;
+}
+
+.btnInvite:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
 }

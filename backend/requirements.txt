@@ -14,6 +14,7 @@ httpx
 aiosmtplib
 alembic
 boto3
+qrcode[pil]~=7.4.2
 
 pytest-asyncio       # Для async тестов
 pytest-cov           # Coverage отчёты
