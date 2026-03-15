@@ -1,5 +1,5 @@
 import React from 'react'
-import { MoreVertical, Pencil, Trash2, FolderInput } from 'lucide-react'
+import { MoreVertical, Trash2, FolderInput, UserPlus } from 'lucide-react'
 
 import type { PublicDeckSummary } from '../model/types'
 
@@ -10,9 +10,10 @@ type Props = {
   onClick: () => void
   onDelete?: (deckId: string) => void
   onMove?: (deckId: string) => void
+  onInvite?: (deckId: string) => void
 }
 
-export function DeckCard({ deck, onClick, onDelete, onMove }: Props) {
+export function DeckCard({ deck, onClick, onDelete, onMove, onInvite }: Props) {
   const [menuOpen, setMenuOpen] = React.useState(false)
   const menuRef = React.useRef<HTMLDivElement>(null)
 
@@ -36,7 +37,7 @@ export function DeckCard({ deck, onClick, onDelete, onMove }: Props) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [menuOpen])
 
-  const hasMenu = Boolean(onDelete || onMove)
+  const hasMenu = Boolean(onDelete || onMove || onInvite)
 
   return (
     <div className={styles.root}>
@@ -56,6 +57,19 @@ export function DeckCard({ deck, onClick, onDelete, onMove }: Props) {
 
               {menuOpen && (
                 <div className={styles.dropdown}>
+                  {onInvite && (
+                    <button
+                      type="button"
+                      className={styles.dropdownItem}
+                      onClick={() => {
+                        setMenuOpen(false)
+                        onInvite(deck.deck_id)
+                      }}
+                    >
+                      <UserPlus size={14} />
+                      Пригласить редактора
+                    </button>
+                  )}
                   {onMove && (
                     <button
                       type="button"

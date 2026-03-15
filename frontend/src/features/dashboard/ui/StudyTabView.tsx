@@ -3,6 +3,7 @@ import React from 'react'
 import { Button } from '../../../shared/ui/Button/Button'
 import { ResumeSessionCard } from '@/features/study-flow'
 import { ImportAnkiModal } from '@/features/deck-import'
+import { DeckInviteModal } from '@/features/deck-invite'
 
 import type { PublicDeckSummary } from '@/entities/deck'
 import type { Group } from '@/entities/group'
@@ -44,6 +45,7 @@ export function StudyTabView(props: Props) {
   const [showAddModal, setShowAddModal] = React.useState(false)
   const [showImportAnki, setShowImportAnki] = React.useState(false)
   const [movingDeckId, setMovingDeckId] = React.useState<string | null>(null)
+  const [invitingDeckId, setInvitingDeckId] = React.useState<string | null>(null)
 
   const activeGroup = props.groups.find(g => g.id === props.activeGroupId)
   const groupDescription = activeGroup?.description?.trim()
@@ -78,6 +80,7 @@ export function StudyTabView(props: Props) {
         onEditDeck={props.onEditDeck}
         onDeleteDeck={props.onDeleteDeck}
         onMoveDeck={props.onMoveDeck ? deckId => setMovingDeckId(deckId) : undefined}
+        onInviteDeck={deckId => setInvitingDeckId(deckId)}
       />
 
       <div className={styles.footerSection}>
@@ -113,6 +116,13 @@ export function StudyTabView(props: Props) {
           currentGroupId={props.activeGroupId}
           onMove={handleMoveDeck}
           onClose={() => setMovingDeckId(null)}
+        />
+      )}
+
+      {invitingDeckId && (
+        <DeckInviteModal
+          deckId={invitingDeckId}
+          onClose={() => setInvitingDeckId(null)}
         />
       )}
     </div>
