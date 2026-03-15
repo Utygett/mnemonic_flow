@@ -6,7 +6,7 @@ import styles from './EditDeckView.module.css'
 
 type Props = EditDeckViewModel & {
   onCancel: () => void
-  onInvite: () => void
+  // onInvite removed: invite is now available via deck card context menu
 }
 
 export function EditDeckView(props: Props) {
@@ -23,7 +23,6 @@ export function EditDeckView(props: Props) {
     canSubmit,
     submit,
     onCancel,
-    onInvite,
   } = props
 
   if (loading) {
@@ -75,15 +74,6 @@ export function EditDeckView(props: Props) {
           </label>
 
           {error && <div className={styles.error}>{error}</div>}
-
-          <button
-            className={styles.btnInvite}
-            onClick={onInvite}
-            disabled={saving}
-            type="button"
-          >
-            👥 Пригласить редактора
-          </button>
 
           <div className={styles.actions}>
             <button className={styles.btnGhost} onClick={onCancel} disabled={saving} type="button">

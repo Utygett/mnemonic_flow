@@ -20,6 +20,14 @@ const BTN_LABELS: Record<DeckInviteMode, string> = {
   share: 'Создать ссылку для добавления',
 }
 
+/** Show username if available, fall back to email, then to shortened user_id */
+function formatEditor(username: string | null, email: string | null, userId: string): string {
+  if (username && email) return `${username} (${email})`
+  if (username) return username
+  if (email) return email
+  return userId.slice(0, 8) + '…'
+}
+
 export function DeckInviteModal({ deckId, mode, onClose }: Props) {
   const {
     invite,
@@ -90,7 +98,18 @@ export function DeckInviteModal({ deckId, mode, onClose }: Props) {
             ) : (
               editors.map(e => (
                 <div key={e.user_id} className={styles.editorRow}>
-                  <span className={styles.editorEmail}>{e.username ?? e.email ?? e.user_id}</span>
+                  <div className={styles.editorInfo}>
+                    {/* Show username + email together when both present */}
+                    {e.username && (
+                      <span className={styles.editorUsername}>{e.username}</span>
+                    )}
+                    {e.email && (
+                      <span className={styles.editorEmail}>{e.email}</span>
+                    )}
+                    {!e.username && !e.email && (
+                      <span className={styles.editorEmail}>{e.user_id.slice(0, 8)}…</span>
+                    )}
+                  </div>
                   <button
                     className={styles.removeBtn}
                     onClick={() => removeEditor(e.user_id)}
