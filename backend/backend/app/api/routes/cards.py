@@ -30,6 +30,7 @@ from app.schemas.cards import (
     QaContentIn,
     ReplaceLevelsRequest,
 )
+from app.services.deck_access import is_deck_editor
 from app.services.review_service import ReviewService
 from app.services.storage_service import FileType, storage_service
 
@@ -102,9 +103,9 @@ def create_card(
     if not deck:
         raise HTTPException(status_code=404, detail="Deck not found")
 
-    # 2) owner-only
-    if deck.owner_id != userid:
-        raise HTTPException(status_code=403, detail="Deck not accessible")  # owner-only
+    # 2) owner or editor
+    if not is_deck_editor(db, payload.deck_id, userid):
+        raise HTTPException(status_code=403, detail="Deck not accessible")
 
     # 3) validate minimal invariants
     if not payload.levels:
@@ -371,19 +372,18 @@ def move_card(
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
 
-    # verify ownership of source deck
-    src_deck = db.get(Deck, card.deck_id)
-    if not src_deck or src_deck.owner_id != user_id:
+    # verify editor access on source deck
+    if not is_deck_editor(db, card.deck_id, user_id):
         raise HTTPException(status_code=403, detail="Card not accessible")
 
     if payload.target_deck_id == card.deck_id:
         return {"card_id": str(card.id), "deck_id": str(card.deck_id)}
 
-    # verify ownership of target deck
+    # verify editor access on target deck
     tgt_deck = db.get(Deck, payload.target_deck_id)
     if not tgt_deck:
         raise HTTPException(status_code=404, detail="Target deck not found")
-    if tgt_deck.owner_id != user_id:
+    if not is_deck_editor(db, payload.target_deck_id, user_id):
         raise HTTPException(status_code=403, detail="Target deck not accessible")
 
     card.deck_id = payload.target_deck_id
@@ -618,8 +618,7 @@ def update_card_levels(
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
 
-    deck = db.get(Deck, card.deck_id)
-    if not deck or deck.owner_id != userid:
+    if not is_deck_editor(db, card.deck_id, userid):
         raise HTTPException(status_code=403, detail="Deck not accessible")
 
     if not payload.levels:
@@ -750,8 +749,9 @@ def delete_card(
     if not deck:
         raise HTTPException(status_code=404, detail="Deck not found")
 
-    if deck.owner_id != user_id:
-        raise HTTPException(status_code=403, detail="You are not the owner of this card")
+    # Only owner or editor can delete cards
+    if not is_deck_editor(db, deck.id, user_id):
+        raise HTTPException(status_code=403, detail="You are not allowed to delete this card")
 
     db.delete(card)
     db.commit()
@@ -772,7 +772,7 @@ def update_card(
     if not deck:
         raise HTTPException(status_code=404, detail="Deck not found")
 
-    if deck.owner_id != user_id:
+    if not is_deck_editor(db, deck.id, user_id):
         raise HTTPException(status_code=403, detail="Card not accessible")
 
     if payload.title is not None:
@@ -825,8 +825,7 @@ def upload_level_question_image(
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
 
-    deck = db.get(Deck, card.deck_id)
-    if not deck or deck.owner_id != user_id:
+    if not is_deck_editor(db, card.deck_id, user_id):
         raise HTTPException(status_code=403, detail="Card not accessible")
 
     # Find the card level
@@ -892,8 +891,7 @@ def upload_level_answer_image(
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
 
-    deck = db.get(Deck, card.deck_id)
-    if not deck or deck.owner_id != user_id:
+    if not is_deck_editor(db, card.deck_id, user_id):
         raise HTTPException(status_code=403, detail="Card not accessible")
 
     # Find the card level
@@ -956,8 +954,7 @@ def delete_level_question_image(
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
 
-    deck = db.get(Deck, card.deck_id)
-    if not deck or deck.owner_id != user_id:
+    if not is_deck_editor(db, card.deck_id, user_id):
         raise HTTPException(status_code=403, detail="Card not accessible")
 
     card_level = db.query(CardLevel).filter_by(card_id=card_id, level_index=level_index).first()
@@ -1001,8 +998,7 @@ def delete_level_answer_image(
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
 
-    deck = db.get(Deck, card.deck_id)
-    if not deck or deck.owner_id != user_id:
+    if not is_deck_editor(db, card.deck_id, user_id):
         raise HTTPException(status_code=403, detail="Card not accessible")
 
     card_level = db.query(CardLevel).filter_by(card_id=card_id, level_index=level_index).first()
@@ -1043,8 +1039,7 @@ def upload_option_image(
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
 
-    deck = db.get(Deck, card.deck_id)
-    if not deck or deck.owner_id != user_id:
+    if not is_deck_editor(db, card.deck_id, user_id):
         raise HTTPException(status_code=403, detail="Card not accessible")
 
     if card.type != "multiple_choice":
@@ -1127,8 +1122,7 @@ def upload_level_question_audio(
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
 
-    deck = db.get(Deck, card.deck_id)
-    if not deck or deck.owner_id != user_id:
+    if not is_deck_editor(db, card.deck_id, user_id):
         raise HTTPException(status_code=403, detail="Card not accessible")
 
     # Find the card level
@@ -1207,8 +1201,7 @@ def upload_level_answer_audio(
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
 
-    deck = db.get(Deck, card.deck_id)
-    if not deck or deck.owner_id != user_id:
+    if not is_deck_editor(db, card.deck_id, user_id):
         raise HTTPException(status_code=403, detail="Card not accessible")
 
     # Find the card level
@@ -1287,8 +1280,7 @@ def delete_level_question_audio(
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
 
-    deck = db.get(Deck, card.deck_id)
-    if not deck or deck.owner_id != user_id:
+    if not is_deck_editor(db, card.deck_id, user_id):
         raise HTTPException(status_code=403, detail="Card not accessible")
 
     # Find the card level
@@ -1333,8 +1325,7 @@ def delete_level_answer_audio(
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
 
-    deck = db.get(Deck, card.deck_id)
-    if not deck or deck.owner_id != user_id:
+    if not is_deck_editor(db, card.deck_id, user_id):
         raise HTTPException(status_code=403, detail="Card not accessible")
 
     # Find the card level
