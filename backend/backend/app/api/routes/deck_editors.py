@@ -14,10 +14,11 @@ from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user_id
 from app.db.session import SessionLocal
+from app.models.deck import Deck
 from app.models.deck_editor import DeckEditor
 from app.models.deck_invite_token import DeckInviteToken
 from app.models.user import User
-from app.services.deck_access import is_deck_owner, require_deck_editor
+from app.services.deck_access import is_deck_owner
 
 router = APIRouter(tags=["deck-editors"])
 
@@ -51,7 +52,7 @@ class EditorInfo(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Helper
+# Helpers
 # ---------------------------------------------------------------------------
 
 FRONTEND_BASE_URL = "https://mnemonicflow.app"  # TODO: move to settings
@@ -86,6 +87,9 @@ def create_invite(
     """Generate an invite link + QR code that grants editor access to this deck.
     Only the deck owner can create invites.
     """
+    deck = db.query(Deck).filter(Deck.id == deck_id).first()
+    if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found")
     if not is_deck_owner(db, deck_id, user_id):
         raise HTTPException(status_code=403, detail="Only the deck owner can create invites")
 
@@ -125,20 +129,18 @@ def join_by_token(
         .first()
     )
     if not invite:
-        raise HTTPException(status_code=404, detail="Invite not found or already used")
+        raise HTTPException(status_code=404, detail="Invite not found or already deactivated")
 
     # Проверяем срок действия
     if invite.expires_at and invite.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=410, detail="Invite has expired")
 
     deck_id = invite.deck_id
-
-    # Нельзя стать редактором своей же колоды
-    from app.models.deck import Deck  # local import to avoid circular
-
     deck = db.query(Deck).filter(Deck.id == deck_id).first()
     if not deck:
         raise HTTPException(status_code=404, detail="Deck not found")
+
+    # Нельзя стать редактором своей колоды
     if deck.owner_id == user_id:
         raise HTTPException(status_code=400, detail="You are already the owner of this deck")
 
@@ -160,3 +162,86 @@ def join_by_token(
     db.commit()
 
     return {"detail": "Editor access granted", "deck_id": str(deck_id)}
+
+
+@router.get("/{deck_id}/editors", response_model=List[EditorInfo])
+def list_editors(
+    deck_id: UUID,
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """List all editors of a deck. Only accessible by the deck owner."""
+    deck = db.query(Deck).filter(Deck.id == deck_id).first()
+    if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    if not is_deck_owner(db, deck_id, user_id):
+        raise HTTPException(status_code=403, detail="Only the deck owner can view editors")
+
+    editors = db.query(DeckEditor).filter(DeckEditor.deck_id == deck_id).all()
+    result = []
+    for e in editors:
+        u = db.query(User).filter(User.id == e.user_id).first()
+        result.append(
+            EditorInfo(
+                user_id=e.user_id,
+                email=u.email if u else None,
+                username=getattr(u, "username", None) if u else None,
+                invited_by=e.invited_by,
+                created_at=e.created_at,
+            )
+        )
+    return result
+
+
+@router.delete("/{deck_id}/editors/{editor_user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_editor(
+    deck_id: UUID,
+    editor_user_id: UUID,
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Remove an editor from a deck. Only the owner can do this."""
+    deck = db.query(Deck).filter(Deck.id == deck_id).first()
+    if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    if not is_deck_owner(db, deck_id, user_id):
+        raise HTTPException(status_code=403, detail="Only the deck owner can remove editors")
+
+    editor = (
+        db.query(DeckEditor)
+        .filter(DeckEditor.deck_id == deck_id, DeckEditor.user_id == editor_user_id)
+        .first()
+    )
+    if not editor:
+        raise HTTPException(status_code=404, detail="Editor not found")
+
+    db.delete(editor)
+    db.commit()
+    return
+
+
+@router.delete("/{deck_id}/invite/{token}", status_code=status.HTTP_204_NO_CONTENT)
+def revoke_invite(
+    deck_id: UUID,
+    token: str,
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Deactivate an invite token so it can no longer be used."""
+    deck = db.query(Deck).filter(Deck.id == deck_id).first()
+    if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    if not is_deck_owner(db, deck_id, user_id):
+        raise HTTPException(status_code=403, detail="Only the deck owner can revoke invites")
+
+    invite = (
+        db.query(DeckInviteToken)
+        .filter(DeckInviteToken.deck_id == deck_id, DeckInviteToken.token == token)
+        .first()
+    )
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invite not found")
+
+    invite.is_active = False
+    db.commit()
+    return
