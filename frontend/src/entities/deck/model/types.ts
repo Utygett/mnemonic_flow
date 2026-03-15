@@ -60,6 +60,14 @@ export type PaginatedCardsResponse = {
   total_pages: number
 }
 
+export type PaginatedCardsResponse = {
+  cards: ApiCard[]
+  total: number
+  page: number
+  per_page: number
+  total_pages: number
+}
+
 export type ApiCard = {
   card_id: string
   deck_id: string
