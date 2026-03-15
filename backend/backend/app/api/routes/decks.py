@@ -33,6 +33,7 @@ from app.schemas.cards import (
 from app.schemas.decks_public import PublicDeckSummary
 from app.services.anki_mapper import AnkiMapper
 from app.services.anki_parser import ApkgParseError, ApkgParser
+from app.services.deck_access import is_deck_editor, is_deck_owner, require_deck_editor
 
 router = APIRouter(tags=["decks"])
 logger = logging.getLogger(__name__)
@@ -481,14 +482,15 @@ def get_deck_with_cards_ordered(
 @router.delete("/{deck_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_deck(
     deck_id: UUID,
-    user_id: str = Depends(get_current_user_id),
+    user_id: UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     deck = db.get(Deck, deck_id)
     if not deck:
         raise HTTPException(status_code=404, detail="Deck not found")
 
-    if str(deck.owner_id) != str(user_id):
+    # Only owner can delete the deck
+    if not is_deck_owner(db, deck_id, user_id):
         raise HTTPException(status_code=403, detail="You are not the owner of this deck")
 
     # Удаляем все привязки колоды к user-группам (иначе FK может мешать)
@@ -515,11 +517,11 @@ def update_deck(
     user_id: UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    deck = db.query(Deck).filter(Deck.id == deck_id).first()
-    if not deck:
-        raise HTTPException(status_code=404, detail="Deck not found")
-
-    if deck.owner_id != user_id:
+    try:
+        deck = require_deck_editor(db, deck_id, user_id)
+    except ValueError as e:
+        if str(e) == "not_found":
+            raise HTTPException(status_code=404, detail="Deck not found")
         raise HTTPException(status_code=403, detail="Deck not accessible")
 
     if payload.title is not None:
@@ -538,6 +540,9 @@ def update_deck(
         deck.color = c
 
     if payload.is_public is not None:
+        # Only owner can change visibility
+        if not is_deck_owner(db, deck_id, user_id):
+            raise HTTPException(status_code=403, detail="Only owner can change deck visibility")
         deck.is_public = payload.is_public
 
     db.commit()
@@ -566,13 +571,11 @@ def get_study_cards(
     if include != "full":
         raise HTTPException(status_code=422, detail="Only include=full is supported")
 
-    # доступ как в /session: owner или public
-    deck = (
-        db.query(Deck)
-        .filter(Deck.id == deck_id, (Deck.owner_id == user_id) | (Deck.is_public.is_(True)))
-        .first()
-    )
+    # доступ как в /session: owner, editor или public
+    deck = db.query(Deck).filter(Deck.id == deck_id).first()
     if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    if not deck.is_public and not is_deck_editor(db, deck_id, user_id):
         raise HTTPException(status_code=403, detail="Deck not accessible")
 
     cards: List[Card] = (
