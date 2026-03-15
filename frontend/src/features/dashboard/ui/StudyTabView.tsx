@@ -8,6 +8,7 @@ import { DeckInviteModal } from '@/features/deck-invite'
 import type { PublicDeckSummary } from '@/entities/deck'
 import type { Group } from '@/entities/group'
 import type { ImportAnkiResult } from '@/features/deck-import'
+import type { DeckInviteMode } from '@/features/deck-invite'
 
 import { GroupsBar } from './components/GroupsBar'
 import { DeckList } from './components/DeckList'
@@ -41,11 +42,13 @@ type Props = {
   onImportAnkiSuccess: (result: ImportAnkiResult) => void
 }
 
+type InviteState = { deckId: string; mode: DeckInviteMode } | null
+
 export function StudyTabView(props: Props) {
   const [showAddModal, setShowAddModal] = React.useState(false)
   const [showImportAnki, setShowImportAnki] = React.useState(false)
   const [movingDeckId, setMovingDeckId] = React.useState<string | null>(null)
-  const [invitingDeckId, setInvitingDeckId] = React.useState<string | null>(null)
+  const [inviteState, setInviteState] = React.useState<InviteState>(null)
 
   const activeGroup = props.groups.find(g => g.id === props.activeGroupId)
   const groupDescription = activeGroup?.description?.trim()
@@ -80,7 +83,8 @@ export function StudyTabView(props: Props) {
         onEditDeck={props.onEditDeck}
         onDeleteDeck={props.onDeleteDeck}
         onMoveDeck={props.onMoveDeck ? deckId => setMovingDeckId(deckId) : undefined}
-        onInviteDeck={deckId => setInvitingDeckId(deckId)}
+        onInviteDeck={deckId => setInviteState({ deckId, mode: 'editor' })}
+        onShareDeck={deckId => setInviteState({ deckId, mode: 'share' })}
       />
 
       <div className={styles.footerSection}>
@@ -119,10 +123,11 @@ export function StudyTabView(props: Props) {
         />
       )}
 
-      {invitingDeckId && (
+      {inviteState && (
         <DeckInviteModal
-          deckId={invitingDeckId}
-          onClose={() => setInvitingDeckId(null)}
+          deckId={inviteState.deckId}
+          mode={inviteState.mode}
+          onClose={() => setInviteState(null)}
         />
       )}
     </div>

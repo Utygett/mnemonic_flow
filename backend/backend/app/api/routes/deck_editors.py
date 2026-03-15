@@ -4,7 +4,7 @@ import base64
 import io
 import secrets
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List, Literal, Optional
 from uuid import UUID
 
 import qrcode
@@ -36,10 +36,15 @@ def get_db():
 # ---------------------------------------------------------------------------
 
 
+class InviteCreateRequest(BaseModel):
+    invite_type: Literal["editor", "viewer"] = "editor"
+
+
 class InviteCreateResponse(BaseModel):
     token: str
     invite_url: str
     qr_base64: str
+    invite_type: str
     expires_at: Optional[datetime]
 
 
@@ -49,6 +54,17 @@ class EditorInfo(BaseModel):
     username: Optional[str]
     invited_by: UUID
     created_at: datetime
+
+
+class JoinResponse(BaseModel):
+    detail: str
+    deck_id: str
+    deck_title: str
+    invite_type: str  # 'editor' | 'viewer'
+
+
+class AddToGroupRequest(BaseModel):
+    group_id: str
 
 
 # ---------------------------------------------------------------------------
@@ -81,10 +97,13 @@ def _generate_qr_base64(url: str) -> str:
 )
 def create_invite(
     deck_id: UUID,
+    body: InviteCreateRequest = InviteCreateRequest(),
     user_id: UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Generate an invite link + QR code that grants editor access to this deck.
+    """Generate an invite link + QR code.
+    invite_type='editor'  — recipient becomes an editor.
+    invite_type='viewer'  — recipient can add the deck to their own group.
     Only the deck owner can create invites.
     """
     deck = db.query(Deck).filter(Deck.id == deck_id).first()
@@ -98,7 +117,8 @@ def create_invite(
         deck_id=deck_id,
         created_by=user_id,
         token=token_str,
-        expires_at=None,  # бессрочный — можно добавить TTL позже
+        invite_type=body.invite_type,
+        expires_at=None,
         is_active=True,
     )
     db.add(invite)
@@ -112,17 +132,21 @@ def create_invite(
         token=token_str,
         invite_url=invite_url,
         qr_base64=qr_b64,
+        invite_type=body.invite_type,
         expires_at=invite.expires_at,
     )
 
 
-@router.post("/join/{token}", status_code=status.HTTP_200_OK)
+@router.post("/join/{token}", response_model=JoinResponse, status_code=status.HTTP_200_OK)
 def join_by_token(
     token: str,
     user_id: UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Activate an invite token — adds the current user as a deck editor."""
+    """Activate an invite token.
+    - editor: adds current user as deck editor immediately.
+    - viewer: returns deck info so frontend can ask which group to add it to.
+    """
     invite = (
         db.query(DeckInviteToken)
         .filter(DeckInviteToken.token == token, DeckInviteToken.is_active.is_(True))
@@ -131,7 +155,6 @@ def join_by_token(
     if not invite:
         raise HTTPException(status_code=404, detail="Invite not found or already deactivated")
 
-    # Проверяем срок действия
     if invite.expires_at and invite.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=410, detail="Invite has expired")
 
@@ -140,18 +163,33 @@ def join_by_token(
     if not deck:
         raise HTTPException(status_code=404, detail="Deck not found")
 
-    # Нельзя стать редактором своей колоды
+    invite_type = getattr(invite, "invite_type", "editor") or "editor"
+
+    if invite_type == "viewer":
+        # Для viewer — только возвращаем инфо, группу выберет пользователь сам
+        return JoinResponse(
+            detail="Deck available to add",
+            deck_id=str(deck_id),
+            deck_title=deck.title,
+            invite_type="viewer",
+        )
+
+    # --- editor flow ---
     if deck.owner_id == user_id:
         raise HTTPException(status_code=400, detail="You are already the owner of this deck")
 
-    # Идемпотентность: уже редактор — просто возвращаем OK
     existing = (
         db.query(DeckEditor)
         .filter(DeckEditor.deck_id == deck_id, DeckEditor.user_id == user_id)
         .first()
     )
     if existing:
-        return {"detail": "Already an editor", "deck_id": str(deck_id)}
+        return JoinResponse(
+            detail="Already an editor",
+            deck_id=str(deck_id),
+            deck_title=deck.title,
+            invite_type="editor",
+        )
 
     editor = DeckEditor(
         deck_id=deck_id,
@@ -161,7 +199,42 @@ def join_by_token(
     db.add(editor)
     db.commit()
 
-    return {"detail": "Editor access granted", "deck_id": str(deck_id)}
+    return JoinResponse(
+        detail="Editor access granted",
+        deck_id=str(deck_id),
+        deck_title=deck.title,
+        invite_type="editor",
+    )
+
+
+@router.post("/join/{token}/add-to-group", status_code=status.HTTP_200_OK)
+def add_shared_deck_to_group(
+    token: str,
+    body: AddToGroupRequest,
+    user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """After a viewer-type invite, add the deck to a specific group of the current user.
+    The actual group membership is managed by the groups service via groups API;
+    here we just validate the token and return deck_id so frontend can call
+    PUT /groups/{group_id}/decks/{deck_id} directly.
+    """
+    invite = (
+        db.query(DeckInviteToken)
+        .filter(DeckInviteToken.token == token, DeckInviteToken.is_active.is_(True))
+        .first()
+    )
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invite not found or already deactivated")
+
+    if invite.expires_at and invite.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=410, detail="Invite has expired")
+
+    invite_type = getattr(invite, "invite_type", "editor") or "editor"
+    if invite_type != "viewer":
+        raise HTTPException(status_code=400, detail="This invite is for editors, not viewers")
+
+    return {"deck_id": str(invite.deck_id), "group_id": body.group_id}
 
 
 @router.get("/{deck_id}/editors", response_model=List[EditorInfo])

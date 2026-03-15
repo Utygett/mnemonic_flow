@@ -9,7 +9,7 @@ from app.db.base import Base
 
 
 class DeckInviteToken(Base):
-    """One-time or reusable invite tokens for granting editor access to a deck."""
+    """One-time or reusable invite tokens for granting editor access or sharing a deck."""
 
     __tablename__ = "deck_invite_tokens"
 
@@ -24,6 +24,9 @@ class DeckInviteToken(Base):
 
     # Random unique string used in invite URL / QR code
     token: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
+
+    # 'editor' — grants edit access; 'viewer' — only adds deck to recipient's group
+    invite_type: Mapped[str] = mapped_column(String(16), nullable=False, default="editor")
 
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

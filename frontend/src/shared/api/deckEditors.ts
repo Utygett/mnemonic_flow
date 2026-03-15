@@ -1,11 +1,13 @@
 // API client for deck editor invite endpoints
 
 import { apiRequest } from './request'
+import { addDeckToGroup } from '@/entities/group'
 
 export interface InviteCreateResponse {
   token: string
   invite_url: string
   qr_base64: string
+  invite_type: string
   expires_at: string | null
 }
 
@@ -17,13 +19,28 @@ export interface EditorInfo {
   created_at: string
 }
 
+export interface JoinResponse {
+  detail: string
+  deck_id: string
+  deck_title: string
+  invite_type: string // 'editor' | 'viewer'
+}
+
 export const deckEditorsApi = {
-  createInvite(deckId: string): Promise<InviteCreateResponse> {
-    return apiRequest<InviteCreateResponse>(`/decks/${deckId}/invite`, { method: 'POST' })
+  createInvite(deckId: string, inviteType: 'editor' | 'viewer' = 'editor'): Promise<InviteCreateResponse> {
+    return apiRequest<InviteCreateResponse>(`/decks/${deckId}/invite`, {
+      method: 'POST',
+      body: JSON.stringify({ invite_type: inviteType }),
+    })
   },
 
-  joinByToken(token: string): Promise<{ detail: string; deck_id: string }> {
-    return apiRequest(`/decks/join/${token}`, { method: 'POST' })
+  joinByToken(token: string): Promise<JoinResponse> {
+    return apiRequest<JoinResponse>(`/decks/join/${token}`, { method: 'POST' })
+  },
+
+  /** For viewer invites: after join, add deck to selected group */
+  async addSharedDeckToGroup(deckId: string, groupId: string): Promise<void> {
+    await addDeckToGroup(groupId, deckId)
   },
 
   listEditors(deckId: string): Promise<EditorInfo[]> {

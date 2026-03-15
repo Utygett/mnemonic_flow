@@ -1,14 +1,26 @@
 import React from 'react'
 
+import type { DeckInviteMode } from '../model/types'
 import { useDeckInviteModel } from '../model/useDeckInviteModel'
 import styles from './DeckInviteModal.module.css'
 
 type Props = {
   deckId: string
+  mode: DeckInviteMode
   onClose: () => void
 }
 
-export function DeckInviteModal({ deckId, onClose }: Props) {
+const TITLES: Record<DeckInviteMode, string> = {
+  editor: 'Пригласить редактора',
+  share: 'Поделиться колодой',
+}
+
+const BTN_LABELS: Record<DeckInviteMode, string> = {
+  editor: 'Создать ссылку для редактора',
+  share: 'Создать ссылку для добавления',
+}
+
+export function DeckInviteModal({ deckId, mode, onClose }: Props) {
   const {
     invite,
     loadingInvite,
@@ -19,19 +31,24 @@ export function DeckInviteModal({ deckId, onClose }: Props) {
     editors,
     loadingEditors,
     removeEditor,
-  } = useDeckInviteModel({ deckId, onClose })
+  } = useDeckInviteModel({ deckId, mode, onClose })
 
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
-          <h2 className={styles.title}>Пригласить редактора</h2>
+          <h2 className={styles.title}>{TITLES[mode]}</h2>
           <button className={styles.closeBtn} onClick={onClose} type="button">
             ✕
           </button>
         </div>
 
-        {/* QR + ссылка — показываем если инвайт уже создан */}
+        {mode === 'share' && (
+          <p className={styles.hint}>
+            По этой ссылке другой пользователь сможет добавить колоду в свою группу.
+          </p>
+        )}
+
         {invite ? (
           <>
             <div className={styles.qrWrap}>
@@ -41,13 +58,8 @@ export function DeckInviteModal({ deckId, onClose }: Props) {
                 alt="QR-код приглашения"
               />
             </div>
-
             <div className={styles.linkRow}>
-              <input
-                className={styles.linkInput}
-                readOnly
-                value={invite.invite_url}
-              />
+              <input className={styles.linkInput} readOnly value={invite.invite_url} />
               <button className={styles.copyBtn} onClick={copyLink} type="button">
                 {copied ? '✓ Скопировано' : 'Копировать'}
               </button>
@@ -62,33 +74,35 @@ export function DeckInviteModal({ deckId, onClose }: Props) {
               disabled={loadingInvite}
               type="button"
             >
-              {loadingInvite ? 'Создание…' : 'Создать ссылку-приглашение'}
+              {loadingInvite ? 'Создание…' : BTN_LABELS[mode]}
             </button>
           </>
         )}
 
-        {/* Список текущих редакторов */}
-        <div>
-          <p className={styles.sectionTitle}>Редакторы</p>
-          {loadingEditors ? (
-            <div className={styles.emptyEditors}>Загрузка…</div>
-          ) : editors.length === 0 ? (
-            <div className={styles.emptyEditors}>Редакторов пока нет</div>
-          ) : (
-            editors.map(e => (
-              <div key={e.user_id} className={styles.editorRow}>
-                <span className={styles.editorEmail}>{e.username ?? e.email ?? e.user_id}</span>
-                <button
-                  className={styles.removeBtn}
-                  onClick={() => removeEditor(e.user_id)}
-                  type="button"
-                >
-                  Удалить
-                </button>
-              </div>
-            ))
-          )}
-        </div>
+        {/* Список редакторов — только в режиме editor */}
+        {mode === 'editor' && (
+          <div>
+            <p className={styles.sectionTitle}>Редакторы</p>
+            {loadingEditors ? (
+              <div className={styles.emptyEditors}>Загрузка…</div>
+            ) : editors.length === 0 ? (
+              <div className={styles.emptyEditors}>Редакторов пока нет</div>
+            ) : (
+              editors.map(e => (
+                <div key={e.user_id} className={styles.editorRow}>
+                  <span className={styles.editorEmail}>{e.username ?? e.email ?? e.user_id}</span>
+                  <button
+                    className={styles.removeBtn}
+                    onClick={() => removeEditor(e.user_id)}
+                    type="button"
+                  >
+                    Удалить
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

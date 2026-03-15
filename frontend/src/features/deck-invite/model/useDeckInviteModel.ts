@@ -6,7 +6,6 @@ import { getErrorMessage } from '@/shared/lib/errors/getErrorMessage'
 import type { DeckInviteProps } from './types'
 
 export type DeckInviteViewModel = {
-  // invite generation
   invite: InviteCreateResponse | null
   loadingInvite: boolean
   inviteError: string | null
@@ -14,13 +13,13 @@ export type DeckInviteViewModel = {
   copyLink: () => void
   copied: boolean
 
-  // editors list
+  // only for editor mode
   editors: EditorInfo[]
   loadingEditors: boolean
   removeEditor: (userId: string) => Promise<void>
 }
 
-export function useDeckInviteModel({ deckId, onClose }: DeckInviteProps): DeckInviteViewModel {
+export function useDeckInviteModel({ deckId, mode, onClose }: DeckInviteProps): DeckInviteViewModel {
   const [invite, setInvite] = useState<InviteCreateResponse | null>(null)
   const [loadingInvite, setLoadingInvite] = useState(false)
   const [inviteError, setInviteError] = useState<string | null>(null)
@@ -29,33 +28,35 @@ export function useDeckInviteModel({ deckId, onClose }: DeckInviteProps): DeckIn
   const [editors, setEditors] = useState<EditorInfo[]>([])
   const [loadingEditors, setLoadingEditors] = useState(false)
 
-  // Load editors list on mount
+  // Load editors list on mount only in editor mode
   useEffect(() => {
+    if (mode !== 'editor') return
     ;(async () => {
       setLoadingEditors(true)
       try {
         const list = await deckEditorsApi.listEditors(deckId)
         setEditors(list)
       } catch {
-        // non-critical — just show empty list
+        // non-critical
       } finally {
         setLoadingEditors(false)
       }
     })()
-  }, [deckId])
+  }, [deckId, mode])
 
   const generateInvite = useCallback(async () => {
     setLoadingInvite(true)
     setInviteError(null)
     try {
-      const data = await deckEditorsApi.createInvite(deckId)
+      const inviteType = mode === 'share' ? 'viewer' : 'editor'
+      const data = await deckEditorsApi.createInvite(deckId, inviteType)
       setInvite(data)
     } catch (e) {
       setInviteError(getErrorMessage(e))
     } finally {
       setLoadingInvite(false)
     }
-  }, [deckId])
+  }, [deckId, mode])
 
   const copyLink = useCallback(() => {
     if (!invite) return
