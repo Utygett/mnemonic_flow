@@ -17,6 +17,7 @@ echo "Latest release branch: $LATEST_RELEASE_BRANCH"
 # Переходим на релизную ветку
 git checkout $LATEST_RELEASE_BRANCH
 git pull origin $LATEST_RELEASE_BRANCH
+git reset --hard origin/$LATEST_RELEASE_BRANCH
 
 # Извлекаем версию из файла VERSION (уже находясь на релизной ветке)
 export VER=$(cat VERSION | tr -d '[:space:]')

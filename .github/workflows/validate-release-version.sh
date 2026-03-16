@@ -44,35 +44,28 @@ git fetch origin develop >/dev/null 2>&1
 DEVELOP_VERSION=$(git show origin/develop:VERSION | tr -d '[:space:]')
 echo "Develop branch VERSION: ${DEVELOP_VERSION}"
 
-# Проверяем формат VERSION в develop
-if ! echo "${DEVELOP_VERSION}" | grep -qP '^\d+\.\d+\.\d+$'; then
-    echo "::error::Develop VERSION '${DEVELOP_VERSION}' does not match format major.minor.patch"
+# Проверяем формат VERSION в develop (допускаем -dev)
+if ! echo "${DEVELOP_VERSION}" | grep -qP '^\d+\.\d+\.\d+(-dev)?$'; then
+    echo "::error::Develop VERSION '${DEVELOP_VERSION}' does not match format major.minor.patch[-dev]"
     exit 1
 fi
 
-# Проверяем что develop VERSION совпадает с major.minor ветки
-DEVELOP_MAJOR_MINOR=$(echo "${DEVELOP_VERSION}" | cut -d. -f1,2)
+# Проверяем что develop VERSION совпадает с major.minor ветки (убираем -dev для сравнения)
+DEVELOP_MAJOR_MINOR=$(echo "${DEVELOP_VERSION}" | sed 's/-dev$//' | cut -d. -f1,2)
 if [ "${DEVELOP_MAJOR_MINOR}" != "${MAJOR_MINOR}" ]; then
     echo "::error::Develop VERSION ${DEVELOP_VERSION} does not match release branch ${MAJOR_MINOR}.x"
     exit 1
 fi
 
-# Проверяем что develop VERSION > release VERSION
-if [ "$(echo -e "${RELEASE_VERSION}\n${DEVELOP_VERSION}" | sort -V | tail -n 1)" != "${DEVELOP_VERSION}" ]; then
-    echo "::error::Develop VERSION (${DEVELOP_VERSION}) must be greater than release VERSION (${RELEASE_VERSION})"
-    exit 1
-fi
-
-# Проверяем что develop VERSION не равна {major}.{minor}.99
-MAX_PATCH="${MAJOR_MINOR}.99"
-if [ "${DEVELOP_VERSION}" = "${MAX_PATCH}" ]; then
-    echo "::error::Develop VERSION cannot be ${MAX_PATCH} (maximum patch version)"
+# Проверяем что develop VERSION > release VERSION (убираем -dev для сравнения)
+DEVELOP_VERSION_CLEAN=$(echo "${DEVELOP_VERSION}" | sed 's/-dev$//')
+if [ "$(echo -e "${RELEASE_VERSION}\n${DEVELOP_VERSION_CLEAN}" | sort -V | tail -n 1)" != "${DEVELOP_VERSION_CLEAN}" ]; then
+    echo "::error::Develop VERSION (${DEVELOP_VERSION_CLEAN}) must be greater than release VERSION (${RELEASE_VERSION})"
     exit 1
 fi
 
 echo "✓ All validations passed!"
 echo "  Develop VERSION ${DEVELOP_VERSION} > Release VERSION ${RELEASE_VERSION}"
-echo "  Develop VERSION is not ${MAX_PATCH}"
 echo "  Develop VERSION matches release branch ${MAJOR_MINOR}.x"
 
 # Выводим версию для использования в других скриптах
