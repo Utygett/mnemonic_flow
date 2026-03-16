@@ -31,9 +31,23 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Read VERSION
+      - name: Extract version from commit
         id: version
-        run: echo "version=$(cat VERSION | tr -d '[:space:]')" >> $GITHUB_OUTPUT
+        run: |
+          # Ищем последний коммит с паттерном "release: update to vX.X.X"
+          RELEASE_COMMIT=$(git log --oneline --grep="^release: update to v" -n 1)
+          echo "Found release commit: $RELEASE_COMMIT"
+
+          # Парсим версию из коммита
+          VERSION=$(echo "$RELEASE_COMMIT" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | sed 's/^v//')
+
+          if [ -z "$VERSION" ]; then
+            echo "Error: No version found in commit message"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
 
       - name: Check if tag exists
         id: check_tag
