@@ -19,7 +19,7 @@ jobs:
 
       - name: Validate VERSION
         run: |
-          chmod +x .github/workflows/validate-version.sh
+          chmod +x .github/workflows/validate-release-version.sh
           .github/workflows/validate-release-version.sh "${{ github.ref_name }}"
 
   tag-and-release:
@@ -31,23 +31,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Extract version from commit
+      - name: Extract version from VERSION file
         id: version
         run: |
-          # Ищем последний коммит с паттерном "release: update to vX.X.X"
-          RELEASE_COMMIT=$(git log --oneline --grep="^release: update to v" -n 1)
-          echo "Found release commit: $RELEASE_COMMIT"
+          # Читаем VERSION и убираем -dev если есть
+          VERSION=$(cat VERSION | tr -d '[:space:]' | sed 's/-dev$//')
+          echo "Extracted version: $VERSION"
 
-          # Парсим версию из коммита
-          VERSION=$(echo "$RELEASE_COMMIT" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | sed 's/^v//')
-
-          if [ -z "$VERSION" ]; then
-            echo "Error: No version found in commit message"
+          # Валидируем формат
+          if ! echo "${VERSION}" | grep -qP '^\d+\.\d+\.\d+$'; then
+            echo "Error: Invalid version format: ${VERSION}"
             exit 1
           fi
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Extracted version: $VERSION"
 
       - name: Check if tag exists
         id: check_tag
@@ -129,3 +126,48 @@ jobs:
           .github/workflows/push-to-main.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  bump-develop-version:
+    needs: push-to-main
+    runs-on: ubuntu-latest
+    if: needs.push-to-main.result == 'success'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump VERSION in develop
+        run: |
+          # Конфигурируем git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Получаем версию из текущего релиза
+          CURRENT_VERSION=$(cat VERSION | tr -d '[:space:]' | sed 's/-dev$//')
+          echo "Current version: $CURRENT_VERSION"
+
+          # Инкрементируем patch версию
+          MAJOR=$(echo "$CURRENT_VERSION" | cut -d. -f1)
+          MINOR=$(echo "$CURRENT_VERSION" | cut -d. -f2)
+          PATCH=$(echo "$CURRENT_VERSION" | cut -d. -f3)
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}-dev"
+
+          echo "New version: $NEW_VERSION"
+
+          # Переключаемся на develop
+          git fetch origin develop
+          git checkout develop
+          git pull origin develop
+
+          # Обновляем VERSION
+          echo "$NEW_VERSION" > VERSION
+
+          # Коммитим изменения
+          git add VERSION
+          git commit -m "chore: bump VERSION to $NEW_VERSION"
+
+          # Пушим в develop
+          git push origin develop
