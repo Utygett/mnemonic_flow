@@ -28,23 +28,36 @@ export interface Deck {
   color: string
 }
 
+/** Deck metadata returned by GET /decks/{id}/info and inside PaginatedCardsResponse */
+export type DeckDetail = {
+  deck_id: string
+  title: string
+  description: string | null
+  color: string
+  owner_id: string
+  is_public: boolean
+  show_card_title: boolean
+  /** True if current user is allowed to edit this deck (owner or granted editor permission). */
+  can_edit: boolean
+  count_repeat: number
+  count_for_repeat: number
+  cards_count: number
+  completed_cards_count: number
+}
+
 // API-specific types - deck object with nested cards (from /decks/{id}/with_cards endpoint)
 export type ApiDeckWithCards = {
-  deck: {
-    deck_id: string
-    title: string
-    description: string | null
-    color: string | null
-    owner_id: string
-    is_public: boolean
-    show_card_title: boolean
-    can_edit?: boolean
-    count_repeat?: number
-    count_for_repeat?: number
-    cards_count?: number
-    completed_cards_count?: number
-  }
+  deck: DeckDetail
   cards: ApiCard[]
+}
+
+export type PaginatedCardsResponse = {
+  deck?: DeckDetail | null
+  cards: ApiCard[]
+  total: number
+  page: number
+  per_page: number
+  total_pages: number
 }
 
 export type ApiCard = {

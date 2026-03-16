@@ -7,3 +7,17 @@
   margin-left: auto;
   margin-right: auto;
 }
+
+.loading {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.error {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--danger, #e53e3e);
+  font-size: 14px;
+}

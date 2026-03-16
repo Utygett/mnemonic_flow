@@ -41,3 +41,12 @@ export async function removeDeckFromGroup(groupId: string, deckId: string): Prom
     method: 'DELETE',
   })
 }
+
+export async function moveDeckToGroup(
+  fromGroupId: string,
+  toGroupId: string,
+  deckId: string
+): Promise<void> {
+  await removeDeckFromGroup(fromGroupId, deckId)
+  await addDeckToGroup(toGroupId, deckId)
+}

@@ -90,3 +90,10 @@ export async function deleteCardProgress(cardId: string) {
 export async function deleteCard(cardId: string): Promise<void> {
   return apiRequest<void>(`/cards/${cardId}`, { method: 'DELETE' })
 }
+
+export async function moveCardToDeck(cardId: string, targetDeckId: string): Promise<void> {
+  return apiRequest<void>(`/cards/${cardId}/move`, {
+    method: 'POST',
+    body: JSON.stringify({ target_deck_id: targetDeckId }),
+  })
+}

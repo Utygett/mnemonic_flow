@@ -3,13 +3,17 @@ import React from 'react'
 import { Button } from '../../../shared/ui/Button/Button'
 import { ResumeSessionCard } from '@/features/study-flow'
 import { ImportAnkiModal } from '@/features/deck-import'
+import { DeckInviteModal } from '@/features/deck-invite'
 
 import type { PublicDeckSummary } from '@/entities/deck'
+import type { Group } from '@/entities/group'
 import type { ImportAnkiResult } from '@/features/deck-import'
+import type { DeckInviteMode } from '@/features/deck-invite'
 
 import { GroupsBar } from './components/GroupsBar'
 import { DeckList } from './components/DeckList'
 import { AddDeckModal } from './components/AddDeckModal'
+import { MoveDeckSheet } from './components/MoveDeckSheet'
 
 import styles from './DashboardView.module.css'
 
@@ -23,7 +27,7 @@ type ResumeSessionProps = {
 
 type Props = {
   decks: PublicDeckSummary[]
-  groups: any[]
+  groups: Group[]
   activeGroupId: string | null
   resumeSession?: ResumeSessionProps
   onGroupChange: (groupId: string | null) => void
@@ -32,17 +36,29 @@ type Props = {
   onDeckClick: (deckId: string) => void
   onEditDeck: (deckId: string) => void
   onDeleteDeck: (deckId: string) => void
+  onRemoveFromGroup?: (deckId: string) => void
+  onMoveDeck?: (deckId: string, targetGroupId: string) => Promise<void>
   onAddDeck: () => void
   onCreateDeck: () => void
   onImportAnkiSuccess: (result: ImportAnkiResult) => void
 }
 
+type InviteState = { deckId: string; mode: DeckInviteMode } | null
+
 export function StudyTabView(props: Props) {
   const [showAddModal, setShowAddModal] = React.useState(false)
   const [showImportAnki, setShowImportAnki] = React.useState(false)
+  const [movingDeckId, setMovingDeckId] = React.useState<string | null>(null)
+  const [inviteState, setInviteState] = React.useState<InviteState>(null)
 
-  const activeGroup = props.groups.find((g: any) => g.id === props.activeGroupId)
-  const groupDescription = (activeGroup as any)?.description?.trim()
+  const activeGroup = props.groups.find(g => g.id === props.activeGroupId)
+  const groupDescription = activeGroup?.description?.trim()
+
+  const handleMoveDeck = async (targetGroupId: string) => {
+    if (!movingDeckId || !props.onMoveDeck) return
+    await props.onMoveDeck(movingDeckId, targetGroupId)
+    setMovingDeckId(null)
+  }
 
   return (
     <div className={styles.dashboard}>
@@ -67,6 +83,10 @@ export function StudyTabView(props: Props) {
         onDeckClick={props.onDeckClick}
         onEditDeck={props.onEditDeck}
         onDeleteDeck={props.onDeleteDeck}
+        onRemoveFromGroup={props.onRemoveFromGroup}
+        onMoveDeck={props.onMoveDeck ? deckId => setMovingDeckId(deckId) : undefined}
+        onInviteDeck={deckId => setInviteState({ deckId, mode: 'editor' })}
+        onShareDeck={deckId => setInviteState({ deckId, mode: 'share' })}
       />
 
       <div className={styles.footerSection}>
@@ -95,6 +115,23 @@ export function StudyTabView(props: Props) {
           props.onImportAnkiSuccess(result)
         }}
       />
+
+      {movingDeckId && (
+        <MoveDeckSheet
+          groups={props.groups}
+          currentGroupId={props.activeGroupId}
+          onMove={handleMoveDeck}
+          onClose={() => setMovingDeckId(null)}
+        />
+      )}
+
+      {inviteState && (
+        <DeckInviteModal
+          deckId={inviteState.deckId}
+          mode={inviteState.mode}
+          onClose={() => setInviteState(null)}
+        />
+      )}
     </div>
   )
 }

@@ -8,6 +8,7 @@ export type DeckDetailsProps = {
   onResume: (saved: PersistedSession) => void
   clearSavedSession: () => void
   onEditCard?: (cardId: string) => void
+  onDeleteCard?: (cardId: string) => Promise<void>
   onAddCard?: () => void
   onAddCardWithDeckId?: (deckId: string) => void
 }

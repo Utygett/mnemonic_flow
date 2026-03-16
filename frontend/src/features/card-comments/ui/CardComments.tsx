@@ -28,10 +28,8 @@ export function CardComments({ cardId, levelId }: CardCommentsProps) {
   }
 
   const formatDate = (dateString: string) => {
-    console.log('Date string:', dateString)
     const d = new Date(dateString)
-    console.log('Parsed date:', d, 'isValid:', !isNaN(d.getTime()))
-    if (isNaN(d.getTime())) return 'Invalid Date'
+    if (isNaN(d.getTime())) return 'Неверная дата'
 
     const now = new Date()
     const diffMs = now.getTime() - d.getTime()
@@ -39,24 +37,24 @@ export function CardComments({ cardId, levelId }: CardCommentsProps) {
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
 
-    if (diffMins < 1) return 'just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays < 7) return `${diffDays}d ago`
+    if (diffMins < 1) return 'только что'
+    if (diffMins < 60) return `${diffMins} мин. назад`
+    if (diffHours < 24) return `${diffHours} ч. назад`
+    if (diffDays < 7) return `${diffDays} дн. назад`
 
     return d.toLocaleDateString()
   }
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>Comments</div>
+      <div className={styles.header}>Комментарии</div>
 
       {error && <div className={styles.errorMessage}>{error}</div>}
 
       <div className={styles.form}>
         <textarea
           className={styles.textarea}
-          placeholder="Add a comment..."
+          placeholder="Добавить комментарий..."
           value={newComment}
           onChange={e => setNewComment(e.target.value)}
           onKeyDown={e => {
@@ -73,15 +71,15 @@ export function CardComments({ cardId, levelId }: CardCommentsProps) {
             onClick={handleSubmit}
             disabled={!newComment.trim() || submitting || loading}
           >
-            {submitting ? 'Sending...' : 'Send'}
+            {submitting ? 'Отправка...' : 'Отправить'}
           </button>
         </div>
       </div>
 
       {loading ? (
-        <div className={styles.loadingState}>Loading comments...</div>
+        <div className={styles.loadingState}>Загрузка комментариев...</div>
       ) : comments.length === 0 ? (
-        <div className={styles.emptyState}>No comments yet. Be the first!</div>
+        <div className={styles.emptyState}>Пока нет комментариев. Будьте первым!</div>
       ) : (
         <div className={styles.commentsList}>
           {comments.map(comment => (

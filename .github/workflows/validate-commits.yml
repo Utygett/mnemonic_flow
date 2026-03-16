@@ -115,7 +115,7 @@ jobs:
               head: pr.head.sha,
             });
 
-            const conventionalCommitPattern = /^(feat|fix|docs|style|refactor|perf|test|chore|revert)(\(.+\))?\!?:\s.+$/;
+            const conventionalCommitPattern = /^(feat|fix|docs|style|refactor|perf|test|chore|revert|release)(\(.+\))?\!?:\s.+$/;
 
             for (const commit of compare.commits) {
               const message = commit.commit.message.split('\n')[0];
