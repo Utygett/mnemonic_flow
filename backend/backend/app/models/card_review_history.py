@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -17,6 +17,12 @@ from app.models.card_level import CardLevel  # noqa: F401 - needed for SQLAlchem
 
 class CardReviewHistory(Base):
     __tablename__ = "card_review_history"
+
+    # Composite indexes for statistics queries
+    __table_args__ = (
+        Index("idx_user_review_date", "user_id", "reviewed_at"),
+        Index("idx_card_deck_reviews", "card_id", "reviewed_at"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

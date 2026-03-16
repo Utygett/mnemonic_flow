@@ -1,5 +1,5 @@
 import React from 'react'
-import { Trash2 } from 'lucide-react'
+import { MoreVertical, Trash2, FolderInput, UserPlus, Share2, FolderMinus } from 'lucide-react'
 
 import type { PublicDeckSummary } from '../model/types'
 
@@ -9,9 +9,24 @@ type Props = {
   deck: PublicDeckSummary
   onClick: () => void
   onDelete?: (deckId: string) => void
+  onRemoveFromGroup?: (deckId: string) => void
+  onMove?: (deckId: string) => void
+  onInvite?: (deckId: string) => void
+  onShare?: (deckId: string) => void
 }
 
-export function DeckCard({ deck, onClick, onDelete }: Props) {
+export function DeckCard({
+  deck,
+  onClick,
+  onDelete,
+  onRemoveFromGroup,
+  onMove,
+  onInvite,
+  onShare,
+}: Props) {
+  const [menuOpen, setMenuOpen] = React.useState(false)
+  const menuRef = React.useRef<HTMLDivElement>(null)
+
   const description = deck.description?.trim()
 
   const totalCards = Number(deck.cards_count ?? 0)
@@ -21,25 +36,104 @@ export function DeckCard({ deck, onClick, onDelete }: Props) {
 
   const progress = totalCards > 0 ? Math.round((completedCards / totalCards) * 100) : 0
 
+  React.useEffect(() => {
+    if (!menuOpen) return
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [menuOpen])
+
+  const hasMenu = Boolean(onDelete || onRemoveFromGroup || onMove || onInvite || onShare)
+
   return (
     <div className={styles.root}>
       <button type="button" onClick={onClick} className={styles.clickArea}>
         <div className={styles.headerRow}>
           <div className={styles.title}>{deck.title}</div>
-          {onDelete && (
-            <div className={styles.headerActions}>
+          {hasMenu && (
+            <div ref={menuRef} className={styles.menuWrapper} onClick={e => e.stopPropagation()}>
               <button
                 type="button"
-                className={styles.deleteButton}
-                onClick={e => {
-                  e.stopPropagation()
-                  onDelete(deck.deck_id)
-                }}
-                aria-label="Удалить колоду"
-                title="Удалить колоду"
+                className={styles.menuButton}
+                onClick={() => setMenuOpen(v => !v)}
+                aria-label="Действия с колодой"
               >
-                <Trash2 size={16} />
+                <MoreVertical size={16} />
               </button>
+
+              {menuOpen && (
+                <div className={styles.dropdown}>
+                  {onShare && (
+                    <button
+                      type="button"
+                      className={styles.dropdownItem}
+                      onClick={() => {
+                        setMenuOpen(false)
+                        onShare(deck.deck_id)
+                      }}
+                    >
+                      <Share2 size={14} />
+                      Поделиться колодой
+                    </button>
+                  )}
+                  {onInvite && (
+                    <button
+                      type="button"
+                      className={styles.dropdownItem}
+                      onClick={() => {
+                        setMenuOpen(false)
+                        onInvite(deck.deck_id)
+                      }}
+                    >
+                      <UserPlus size={14} />
+                      Пригласить редактора
+                    </button>
+                  )}
+                  {onMove && (
+                    <button
+                      type="button"
+                      className={styles.dropdownItem}
+                      onClick={() => {
+                        setMenuOpen(false)
+                        onMove(deck.deck_id)
+                      }}
+                    >
+                      <FolderInput size={14} />
+                      Переместить
+                    </button>
+                  )}
+                  {onRemoveFromGroup && (
+                    <button
+                      type="button"
+                      className={styles.dropdownItem}
+                      onClick={() => {
+                        setMenuOpen(false)
+                        onRemoveFromGroup(deck.deck_id)
+                      }}
+                    >
+                      <FolderMinus size={14} />
+                      Убрать из группы
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      type="button"
+                      className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`}
+                      onClick={() => {
+                        setMenuOpen(false)
+                        onDelete(deck.deck_id)
+                      }}
+                    >
+                      <Trash2 size={14} />
+                      Удалить
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

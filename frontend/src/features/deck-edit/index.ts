@@ -1,2 +1,5 @@
 export { EditDeck } from './ui/EditDeck'
+export { EditDeckForm } from './ui/EditDeckForm'
+export { useEditDeckModel } from './model/useEditDeckModel'
 export type { EditDeckProps } from './model/types'
+export type { EditDeckViewModel } from './model/useEditDeckModel'

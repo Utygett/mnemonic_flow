@@ -17,7 +17,13 @@ export function loadThemeState(): ThemeState {
     return { name: 'custom', tokens }
   }
 
-  return { name: name === 'light' ? 'light' : 'dark' }
+  // Validate theme name
+  if (name === 'light' || name === 'blue' || name === 'dark') {
+    return { name }
+  }
+
+  // Fallback to dark for invalid values
+  return { name: 'dark' }
 }
 
 export function saveThemeState(state: ThemeState) {

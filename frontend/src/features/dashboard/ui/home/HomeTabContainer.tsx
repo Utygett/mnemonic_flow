@@ -6,6 +6,7 @@ import type { PersistedSession } from '@/shared/lib/utils/session-store'
 import type { PublicDeckSummary } from '@/entities/deck'
 import type { ImportAnkiResult } from '@/features/deck-import'
 
+import { moveDeckToGroup, removeDeckFromGroup } from '@/entities/group'
 import { CreateGroup } from '../../../../features/group-create'
 import { DeckDetailsScreen } from '../../../../features/deck-details'
 import { AddDeck } from '../../../../features/deck-add'
@@ -194,6 +195,29 @@ export function HomeTabContainer(props: Props) {
       )
     : undefined
 
+  const handleMoveDeck = async (deckId: string, targetGroupId: string) => {
+    if (!props.activeGroupId) return
+    await moveDeckToGroup(props.activeGroupId, targetGroupId, deckId)
+    await props.refreshDecks()
+  }
+
+  const handleRemoveFromGroup = props.activeGroupId
+    ? async (deckId: string) => {
+        if (!props.activeGroupId) return
+
+        // Считаем группы кроме текущей — если их нет, колода станет недоступна
+        const otherGroups = props.groups.filter(g => g.id !== props.activeGroupId)
+        const confirmMessage =
+          otherGroups.length === 0
+            ? 'Это единственная группа с этой колодой. После удаления колода станет недоступна в приложении (карточки из неё продолжат появляться в повторении). Всё равно убрать?'
+            : 'Убрать колоду из группы? Сама колода не будет удалена.'
+
+        if (!window.confirm(confirmMessage)) return
+        await removeDeckFromGroup(props.activeGroupId, deckId)
+        await props.refreshDecks()
+      }
+    : undefined
+
   return (
     <StudyTabView
       decks={decksForStudy}
@@ -206,6 +230,8 @@ export function HomeTabContainer(props: Props) {
       onDeckClick={deckId => setView({ kind: 'deckDetails', deckId })}
       onEditDeck={props.onOpenEditDeck}
       onDeleteDeck={props.onDeleteDeck}
+      onRemoveFromGroup={handleRemoveFromGroup}
+      onMoveDeck={props.activeGroupId ? handleMoveDeck : undefined}
       onAddDeck={() => {
         if (!props.activeGroupId) return
         setView({ kind: 'addDeck', groupId: props.activeGroupId })

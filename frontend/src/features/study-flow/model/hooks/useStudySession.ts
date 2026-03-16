@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 
 import type { CardReviewInput, DifficultyRating, StudyCard } from '@/entities/card'
 import { reviewCardWithMeta } from '@/entities/card'
@@ -13,6 +14,7 @@ type Result = {
 }
 
 export function useStudySession(deckCards: StudyCard[], initialIndex: number): Result {
+  const queryClient = useQueryClient()
   const [currentIndex, setCurrentIndex] = useState<number>(initialIndex ?? 0)
   const prevDeckCardsRef = useRef(deckCards)
 
@@ -46,6 +48,8 @@ export function useStudySession(deckCards: StudyCard[], initialIndex: number): R
       // server-side rating (non-blocking for UI)
       try {
         await reviewCardWithMeta(card.id, payload)
+        // Invalidate stats queries to refresh heatmap and other stats
+        queryClient.invalidateQueries({ queryKey: ['stats'] })
       } catch {
         // ignore: rating is best-effort
       }

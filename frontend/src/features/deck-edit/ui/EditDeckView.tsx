@@ -6,6 +6,7 @@ import styles from './EditDeckView.module.css'
 
 type Props = EditDeckViewModel & {
   onCancel: () => void
+  // onInvite removed: invite is now available via deck card context menu
 }
 
 export function EditDeckView(props: Props) {

@@ -7,4 +7,5 @@ export {
   deleteGroup,
   addDeckToGroup,
   removeDeckFromGroup,
+  moveDeckToGroup,
 } from './api/groupsApi'

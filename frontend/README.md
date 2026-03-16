@@ -69,7 +69,11 @@ src/
 │   ├── dashboard/         # Дашборд с диаграммой сложности
 │   ├── group-create/      # Создание группы
 │   ├── profile/           # Профиль пользователя
-│   ├── statistics/        # Статистика
+│   ├── statistics/        # Страница статистики
+│   ├── stats-general/     # Общая статистика (время, рейтинги)
+│   ├── stats-heatmap/     # Тепловая карта активности
+│   ├── stats-decks/       # Прогресс по колодам
+│   ├── stats-charts/      # Графики активности
 │   ├── study-flow/        # Flow изучения
 │   └── ...
 │
@@ -303,6 +307,153 @@ const { importFile, importing, error } = useImportAnki()
 const result = await importFile(file)
 // result: { deck_id: string, title: string, cards_created: number, warnings: string[] }
 ```
+
+## 📊 Страница статистики
+
+Страница статистики реализована в виде набора отдельных features для гибкости и переиспользования:
+
+### Структура features
+
+```
+features/
+├── statistics/         # Страница статистики (контейнер)
+│   └── ui/
+│       └── Statistics.tsx
+├── stats-general/      # Общая статистика
+│   ├── ui/
+│   │   ├── GeneralStatsSection.tsx       # Контейнер секции
+│   │   └── RatingDistributionChart.tsx   # Donut chart оценок
+│   ├── model/
+│   │   └── useGeneralStats.ts            # React Query hook
+│   └── index.ts
+├── stats-heatmap/      # Тепловая карта активности
+│   ├── ui/
+│   │   ├── ActivityHeatmap.tsx           # GitHub-style календарь
+│   │   └── HeatmapLegend.tsx             # Легенда цветов
+│   ├── lib/
+│   │   └── heatmapUtils.ts               # Утилиты: генерация сетки, цвета
+│   ├── model/
+│   │   └── useActivityHeatmap.ts         # React Query hook
+│   └── index.ts
+├── stats-decks/        # Прогресс по колодам
+│   ├── ui/
+│   │   ├── DeckProgressSection.tsx       # Контейнер
+│   │   ├── DeckProgressCard.tsx          # Карточка колоды
+│   │   └── DeckProgressBar.tsx           # Прогресс-бар
+│   ├── model/
+│   │   └── useDeckProgress.ts
+│   └── index.ts
+└── stats-charts/       # Графики активности
+    ├── ui/
+    │   ├── ActivityChartSection.tsx      # Селектор периода + чарт
+    │   ├── ActivityLineChart.tsx         # Recharts LineChart
+    │   └── ActivityBarChart.tsx          # Recharts BarChart
+    ├── model/
+    │   └── useActivityChart.ts           # Hook с периодом
+    └── index.ts
+```
+
+### Использование
+
+```typescript
+import { Statistics } from '@/features/statistics'
+
+// Страница статистики автоматически загружает и отображает все секции
+<Statistics />
+```
+
+Отдельные компоненты можно использовать переиспользовать:
+
+```typescript
+import { ActivityHeatmap } from '@/features/stats-heatmap'
+import { GeneralStatsSection } from '@/features/stats-general'
+
+<ActivityHeatmap days={365} />
+<GeneralStatsSection />
+```
+
+### Entities: Statistics
+
+Типы данных и API клиент для статистики находятся в `entities/statistics/`:
+
+```typescript
+// types.ts
+export interface GeneralStatistics {
+  totalStudyTimeMinutes: number
+  totalStudyTimeFormatted: string
+  averageSessionDurationMinutes: number
+  totalReviews: number
+  learningSpeedCardsPerDay: number
+  ratingDistribution: RatingDistribution
+  averageRating: number
+}
+
+export interface ActivityHeatmapEntry {
+  date: string // YYYY-MM-DD
+  reviewsCount: number
+  studyTimeMinutes: number
+}
+
+export interface DeckProgressStats {
+  deckId: string
+  deckTitle: string
+  deckColor: string
+  totalCards: number
+  masteredCards: number // stability >= 30 дней
+  learningCards: number // 0 < stability < 30 дней
+  newCards: number // ещё не повторялись
+  progressPercentage: number
+  totalReviews: number
+  totalStudyTimeMinutes: number
+}
+
+export interface ActivityChartEntry {
+  date: string
+  reviews: number
+  newCards: number
+  studyTimeMinutes: number
+  uniqueCards: number
+}
+
+export type ChartPeriod = 'day' | 'week' | 'month'
+
+// statisticsApi.ts
+export async function getGeneralStatistics(): Promise<GeneralStatistics>
+export async function getActivityHeatmap(days = 365): Promise<ActivityHeatmapEntry[]>
+export async function getDeckProgress(): Promise<DeckProgressStats[]>
+export async function getActivityChart(
+  period: ChartPeriod,
+  days = 30
+): Promise<ActivityChartEntry[]>
+```
+
+### React Query
+
+Все хуки статистики используют React Query для кеширования и автоматического обновления:
+
+```typescript
+import { useGeneralStats } from '@/features/stats-general'
+
+function MyComponent() {
+  const { data, isLoading, error, refetch } = useGeneralStats()
+
+  if (isLoading) return <div>Loading...</div>
+  if (error) return <div>Error: {error.message}</div>
+
+  return <div>Total time: {data.totalStudyTimeFormatted}</div>
+}
+```
+
+### Визуализация
+
+Для визуализации данных используется **Recharts**:
+
+- **RatingDistributionChart**: PieChart с donut стилем
+- **ActivityHeatmap**: CSS Grid (7 колонок для дней недели)
+- **ActivityLineChart**: LineChart для тренда активности
+- **ActivityBarChart**: BarChart для времени изучения
+
+Все графики адаптивны и поддерживают темную тему через CSS переменные.
 
 ## 🔧 Конфигурация
 

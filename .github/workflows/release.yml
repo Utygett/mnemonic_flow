@@ -1,0 +1,165 @@
+name: Tag and Release
+
+on:
+  push:
+    branches:
+      - 'release_v[0-9].[0-9].x'
+
+permissions:
+  contents: write
+
+jobs:
+  validate-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate VERSION
+        run: |
+          chmod +x .github/workflows/validate-release-version.sh
+          .github/workflows/validate-release-version.sh "${{ github.ref_name }}"
+
+  tag-and-release:
+    needs: validate-version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from VERSION file
+        id: version
+        run: |
+          # Читаем VERSION и убираем -dev если есть
+          VERSION=$(cat VERSION | tr -d '[:space:]' | sed 's/-dev$//')
+          echo "Extracted version: $VERSION"
+
+          # Валидируем формат
+          if ! echo "${VERSION}" | grep -qP '^\d+\.\d+\.\d+$'; then
+            echo "Error: Invalid version format: ${VERSION}"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if git rev-parse "v${VERSION}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Tag v${VERSION} already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Tag v${VERSION} does not exist"
+          fi
+
+      - name: Create and push tag
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${VERSION}" -m "Release v${VERSION}"
+          git push origin "v${VERSION}"
+
+      - name: Get previous tag
+        id: prev_tag
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          echo "prev_tag=${PREV_TAG}" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PREV_TAG="${{ steps.prev_tag.outputs.prev_tag }}"
+
+          if [ -n "$PREV_TAG" ]; then
+            echo "## What's Changed" > changelog.md
+            echo "" >> changelog.md
+            git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" >> changelog.md
+          else
+            echo "## What's Changed" > changelog.md
+            echo "" >> changelog.md
+            git log --pretty=format:"- %s (%h)" | head -20 >> changelog.md
+          fi
+
+      - name: Create Release
+        if: steps.check_tag.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
+          body_path: changelog.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  push-to-main:
+    needs: tag-and-release
+    runs-on: ubuntu-latest
+    if: needs.tag-and-release.result == 'success'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Run push-to-main script
+        run: |
+          chmod +x .github/workflows/push-to-main.sh
+          .github/workflows/push-to-main.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump develop VERSION
+        run: |
+          # Конфигурируем git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Переключаемся на develop
+          git fetch origin develop
+          git checkout develop
+          git pull origin develop
+
+          # Читаем текущую версию из develop
+          CURRENT_VERSION=$(cat VERSION | tr -d '[:space:]')
+          echo "Current develop version: $CURRENT_VERSION"
+
+          # Убираем -dev суффикс
+          VERSION_without_dev="${CURRENT_VERSION%-dev}"
+
+          # Инкрементируем patch версию
+          MAJOR=$(echo "$VERSION_without_dev" | cut -d. -f1)
+          MINOR=$(echo "$VERSION_without_dev" | cut -d. -f2)
+          PATCH=$(echo "$VERSION_without_dev" | cut -d. -f3)
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}-dev"
+
+          echo "New develop version: $NEW_VERSION"
+
+          # Обновляем VERSION
+          echo "$NEW_VERSION" > VERSION
+
+          # Коммитим изменения
+          git add VERSION
+          git commit -m "chore: bump develop to v${NEW_VERSION}"
+
+          # Пушим в develop
+          git push origin develop

@@ -1,8 +1,19 @@
 // Public API for deck entity
-export type { PublicDeckSummary, Deck, ApiDeckWithCards } from './model/types'
+export type {
+  PublicDeckSummary,
+  Deck,
+  ApiDeckWithCards,
+  PaginatedCardsResponse,
+  DeckDetail,
+  ApiCard,
+  ApiLevel,
+  ApiUserProgress,
+} from './model/types'
 export {
   getUserDecks,
+  getDeckInfo,
   getDeckWithCards,
+  getDeckCardsPaginated,
   createDeck,
   updateDeck,
   deleteDeck,

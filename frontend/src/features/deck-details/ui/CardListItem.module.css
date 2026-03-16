@@ -145,23 +145,71 @@
   color: var(--muted);
 }
 
-/* Edit button */
+/* ---- three-dot menu ---- */
 
-.editBtn {
+.menuWrapper {
+  position: relative;
   flex-shrink: 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: var(--radius-sm);
-  color: var(--muted);
-  transition:
-    color 0.15s,
-    background 0.15s;
   margin-top: 2px;
 }
 
-.editBtn:hover {
-  color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 10%, transparent);
+.menuButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.menuButton:hover {
+  background: color-mix(in srgb, var(--muted) 12%, transparent);
+  color: var(--text);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 170px;
+  background: color-mix(in srgb, var(--bg) 96%, var(--primary) 4%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  z-index: 100;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.dropdownItem:hover {
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+.dropdownItemDanger {
+  color: var(--danger, #e53e3e);
+}
+
+.dropdownItemDanger:hover {
+  background: color-mix(in srgb, var(--danger, #e53e3e) 12%, transparent);
 }

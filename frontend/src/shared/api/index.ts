@@ -8,6 +8,3 @@ export {
   getMe,
   updateUsername,
 } from './auth-client'
-
-// Stats
-export { getStatsOverview } from './stats-client'

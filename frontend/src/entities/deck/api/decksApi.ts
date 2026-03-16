@@ -1,13 +1,34 @@
 // Deck API methods
 import { apiRequest } from '@/shared/api/request'
-import type { PublicDeckSummary, ApiDeckWithCards } from '../model/types'
+import type {
+  PublicDeckSummary,
+  ApiDeckWithCards,
+  PaginatedCardsResponse,
+  DeckDetail,
+} from '../model/types'
 
 export async function getUserDecks(): Promise<PublicDeckSummary[]> {
   return apiRequest<PublicDeckSummary[]>(`/decks/`)
 }
 
+export async function getDeckInfo(deckId: string): Promise<DeckDetail> {
+  return apiRequest<DeckDetail>(`/decks/${deckId}/info`)
+}
+
 export async function getDeckWithCards(deckId: string): Promise<ApiDeckWithCards> {
   return apiRequest<ApiDeckWithCards>(`/decks/${deckId}/with_cards`)
+}
+
+export async function getDeckCardsPaginated(
+  deckId: string,
+  page: number = 1,
+  perPage: number = 15
+): Promise<PaginatedCardsResponse> {
+  const params = new URLSearchParams()
+  params.set('page', String(page))
+  params.set('per_page', String(perPage))
+
+  return apiRequest<PaginatedCardsResponse>(`/decks/${deckId}/cards?${params.toString()}`)
 }
 
 export async function createDeck(payload: {
