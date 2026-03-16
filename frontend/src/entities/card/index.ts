@@ -28,6 +28,7 @@ export {
   getReviewPreview,
   createCard,
   deleteCard,
+  moveCardToDeck,
   replaceCardLevels,
   levelUp,
   levelDown,

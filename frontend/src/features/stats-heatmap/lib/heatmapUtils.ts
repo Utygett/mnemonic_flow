@@ -18,30 +18,38 @@ export function generateHeatmapGrid(
   data: ActivityHeatmapEntry[],
   weeks: number = 12
 ): HeatmapCell[][] {
-  // Group by week starting from Sunday
-  const today = new Date()
-  const startDate = new Date(today)
-  startDate.setDate(startDate.getDate() - weeks * 7)
-
   // Create date lookup map
   const dataMap = new Map<string, ActivityHeatmapEntry>()
   data.forEach(entry => {
     dataMap.set(entry.date, entry)
   })
 
-  // Generate grid
+  // Start from today and work backwards
+  const now = new Date()
+  const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+
+  // Find the most recent Sunday on or before today
+  const endOfWeek = new Date(todayUTC)
+  const daysSinceSunday = todayUTC.getUTCDay() // 0 = Sunday, 1 = Monday, etc.
+  endOfWeek.setUTCDate(endOfWeek.getUTCDate() - daysSinceSunday)
+
+  // Calculate start date (weeks * 7 days before the Sunday)
+  const startDate = new Date(endOfWeek)
+  startDate.setUTCDate(startDate.getUTCDate() - (weeks - 1) * 7)
+
+  // Generate grid from start to end
   const grid: HeatmapCell[][] = []
   const currentDate = new Date(startDate)
-
-  // Align to Sunday
-  const dayOfWeek = currentDate.getDay()
-  currentDate.setDate(currentDate.getDate() - dayOfWeek)
 
   for (let week = 0; week < weeks; week++) {
     const weekData: HeatmapCell[] = []
 
     for (let day = 0; day < 7; day++) {
-      const dateStr = currentDate.toISOString().split('T')[0]
+      // Format date as YYYY-MM-DD using UTC components
+      const year = currentDate.getUTCFullYear()
+      const month = String(currentDate.getUTCMonth() + 1).padStart(2, '0')
+      const dayOfMonth = String(currentDate.getUTCDate()).padStart(2, '0')
+      const dateStr = `${year}-${month}-${dayOfMonth}`
       const entry = dataMap.get(dateStr)
 
       const reviewsCount = entry?.reviewsCount || 0
@@ -55,13 +63,17 @@ export function generateHeatmapGrid(
         level,
       })
 
-      currentDate.setDate(currentDate.getDate() + 1)
+      currentDate.setUTCDate(currentDate.getUTCDate() + 1)
     }
 
     grid.push(weekData)
   }
 
   return grid
+}
+
+function formatDateUTC(date: Date): string {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`
 }
 
 export function getActivityLevel(count: number): 0 | 1 | 2 | 3 {

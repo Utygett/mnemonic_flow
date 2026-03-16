@@ -6,6 +6,7 @@ import { CreateDeck } from '../../features/deck-create'
 import { EditDeck } from '../../features/deck-edit'
 import { Statistics } from '../../features/statistics'
 import { ProfileContainer } from '../../features/profile'
+import { DeckStudyAllScreen } from '../../features/deck-study-all'
 
 import { HomeTabContainer, HomeDashboardView } from '../../features/dashboard'
 
@@ -16,7 +17,11 @@ import type { MnemonicRootSwitchProps } from './mnemonicRootSwitch.types'
 
 import styles from './MnemonicRootSwitch.module.css'
 
+type HomeView = { kind: 'dashboard' } | { kind: 'deckStudyAll' }
+
 export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
+  const [homeView, setHomeView] = React.useState<HomeView>({ kind: 'dashboard' })
+
   // loading
   const isInitialDecksLoading = props.status.decksLoading && (props.data.decks?.length ?? 0) === 0
   const isInitialStatsLoading = props.status.statsLoading && !props.data.statistics
@@ -127,16 +132,31 @@ export function MnemonicRootSwitch(props: MnemonicRootSwitchProps) {
       )}
 
       {props.activeTab === 'home' && (
-        <HomeDashboardView
-          statistics={props.data.dashboardStats}
-          difficultyDistribution={props.data.difficultyDistribution}
-          decks={props.data.decks}
-          resumeCandidate={props.study.resumeCandidate}
-          onResume={props.study.onResume}
-          onDiscardResume={props.study.onDiscardResume}
-          onStartStudy={props.study.onStartReviewStudy}
-          onNavigateToStats={props.onNavigateToStats}
-        />
+        <>
+          {homeView.kind === 'dashboard' && (
+            <HomeDashboardView
+              statistics={props.data.dashboardStats}
+              difficultyDistribution={props.data.difficultyDistribution}
+              decks={props.data.decks}
+              resumeCandidate={props.study.resumeCandidate}
+              onResume={props.study.onResume}
+              onDiscardResume={props.study.onDiscardResume}
+              onStartStudy={props.study.onStartReviewStudy}
+              onStartDeckStudy={() => setHomeView({ kind: 'deckStudyAll' })}
+              onNavigateToStats={props.onNavigateToStats}
+            />
+          )}
+
+          {homeView.kind === 'deckStudyAll' && (
+            <DeckStudyAllScreen
+              onStudyStart={async (deckId, mode) => {
+                setHomeView({ kind: 'dashboard' })
+                await props.study.onStartDeckStudy(deckId, mode)
+              }}
+              onBack={() => setHomeView({ kind: 'dashboard' })}
+            />
+          )}
+        </>
       )}
 
       {props.activeTab === 'study' && (

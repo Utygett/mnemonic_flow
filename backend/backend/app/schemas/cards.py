@@ -43,16 +43,19 @@ class DeckSummary(BaseModel):
     deck_id: UUID
     title: str
     description: str | None = None
+    owner_id: UUID | None = None
+    can_edit: bool = False
 
 
 class DeckDetail(BaseModel):
     deck_id: UUID = Field(validation_alias="id", serialization_alias="deck_id")
     title: str
     description: Optional[str] = None
-    color: str
+    color: str = "#4A6FA5"
     owner_id: UUID
     is_public: bool
     show_card_title: bool = False
+    can_edit: bool = False
 
     count_repeat: int = 0
     count_for_repeat: int = 0
@@ -102,6 +105,13 @@ class CreateCardRequest(BaseModel):
     title: Optional[str] = None
     type: str
     levels: List[CreateCardLevelRequest]
+
+
+class CardPatchRequest(BaseModel):
+    """Body for PATCH /cards/{card_id}."""
+
+    title: Optional[str] = None
+    deck_id: Optional[UUID] = None
 
 
 class QaContentIn(BaseModel):

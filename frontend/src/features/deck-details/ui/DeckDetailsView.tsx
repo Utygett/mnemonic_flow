@@ -1,16 +1,20 @@
 import React from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Pencil } from 'lucide-react'
 
 import type { DeckDetailsViewModel } from '../model/useDeckDetailsModel'
 import { Button } from '@/shared/ui/Button/Button'
 import { CardListItem } from './CardListItem'
 import { CardPreviewModal } from './CardPreviewModal'
+import { EditDeckModal } from './EditDeckModal'
 import { StudyModeSelector } from './StudyModeSelector'
+import { MoveCardSheet } from './MoveCardSheet'
 
 import styles from './DeckDetailsView.module.css'
 
 export function DeckDetailsView(props: DeckDetailsViewModel) {
   const [previewCardId, setPreviewCardId] = React.useState<string | null>(null)
+  const [editModalOpen, setEditModalOpen] = React.useState(false)
+  const [movingCardId, setMovingCardId] = React.useState<string | null>(null)
   const [localShowCardTitle, setLocalShowCardTitle] = React.useState(props.showCardTitle)
   const loadMoreRef = React.useRef<HTMLDivElement>(null)
 
@@ -45,6 +49,27 @@ export function DeckDetailsView(props: DeckDetailsViewModel) {
     return () => observer.disconnect()
   }, [props.hasMore, props.loadingMore, props.loadMore])
 
+  const handleMoveCard = async (targetDeckId: string) => {
+    if (!movingCardId) return
+    await props.onMoveCard(movingCardId, targetDeckId)
+    setMovingCardId(null)
+  }
+
+  const handleDeleteCard = async (cardId: string) => {
+    const card = props.cards.find(c => c.card_id === cardId)
+    const label = card?.title || 'эту карточку'
+    if (!window.confirm(`Удалить карточку «${label}»? Это действие нельзя отменить.`)) return
+    try {
+      await props.onDeleteCard(cardId)
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Не удалось удалить карточку. Возможно, у вас нет прав.'
+      window.alert(msg)
+    }
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -52,7 +77,18 @@ export function DeckDetailsView(props: DeckDetailsViewModel) {
           <Button onClick={props.onBack} variant="secondary" size="small">
             Назад
           </Button>
-          <h1 className={styles.title}>{props.deckTitle || 'Колода'}</h1>
+          <div className={styles.titleRow}>
+            <h1 className={styles.title}>{props.deckTitle || 'Колода'}</h1>
+            {props.canEdit && (
+              <button
+                className={styles.editBtn}
+                onClick={() => setEditModalOpen(true)}
+                aria-label="Редактировать колоду"
+              >
+                <Pencil size={16} strokeWidth={2} />
+              </button>
+            )}
+          </div>
           {props.deckDescription && <p className={styles.description}>{props.deckDescription}</p>}
           <div className={styles.meta}>
             {props.totalCards}{' '}
@@ -91,15 +127,17 @@ export function DeckDetailsView(props: DeckDetailsViewModel) {
           <div className={styles.cardListSection}>
             <div className={styles.sectionHeader}>
               <h2 className={styles.sectionTitle}>Карточки</h2>
-              <Button
-                onClick={props.onAddCard}
-                variant="primary"
-                size="small"
-                aria-label="Добавить карточку"
-              >
-                <Plus size={16} strokeWidth={2} />
-                Добавить
-              </Button>
+              {props.canEdit && (
+                <Button
+                  onClick={props.onAddCard}
+                  variant="primary"
+                  size="small"
+                  aria-label="Добавить карточку"
+                >
+                  <Plus size={16} strokeWidth={2} />
+                  Добавить
+                </Button>
+              )}
             </div>
 
             {props.cardsLoading && props.cards.length === 0 && (
@@ -132,7 +170,9 @@ export function DeckDetailsView(props: DeckDetailsViewModel) {
                       card={card}
                       canEdit={props.canEdit}
                       showCardTitle={localShowCardTitle}
-                      onEdit={props.onEditCard}
+                      onEdit={props.canEdit ? props.onEditCard : undefined}
+                      onMove={props.canEdit ? setMovingCardId : undefined}
+                      onDelete={props.canEdit ? handleDeleteCard : undefined}
                       onClick={() => setPreviewCardId(card.card_id)}
                     />
                   ))}
@@ -169,6 +209,26 @@ export function DeckDetailsView(props: DeckDetailsViewModel) {
             props.onEditCard(cardId)
           }}
           onClose={() => setPreviewCardId(null)}
+        />
+      )}
+
+      {editModalOpen && (
+        <EditDeckModal
+          deckId={props.deckId}
+          onClose={() => setEditModalOpen(false)}
+          onSaved={async () => {
+            setEditModalOpen(false)
+            await props.refreshCards()
+          }}
+        />
+      )}
+
+      {movingCardId && (
+        <MoveCardSheet
+          currentDeckId={props.deckId}
+          decks={props.editableDecks}
+          onMove={handleMoveCard}
+          onClose={() => setMovingCardId(null)}
         />
       )}
     </div>

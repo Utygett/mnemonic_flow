@@ -33,6 +33,7 @@ from app.schemas.cards import (
 from app.schemas.decks_public import PublicDeckSummary
 from app.services.anki_mapper import AnkiMapper
 from app.services.anki_parser import ApkgParseError, ApkgParser
+from app.services.deck_access import is_deck_editor, is_deck_owner, require_deck_editor
 
 router = APIRouter(tags=["decks"])
 logger = logging.getLogger(__name__)
@@ -55,6 +56,17 @@ def _ensure_settings(db: Session, user_id: UUID) -> UserLearningSettings:
     db.commit()
     db.refresh(s)
     return s
+
+
+def _user_has_deck_in_group(db: Session, user_id: UUID, deck_id: UUID) -> bool:
+    """Return True if the deck is linked to any of user's groups (viewer access via invite)."""
+    link = (
+        db.query(UserStudyGroupDeck)
+        .join(UserStudyGroup, UserStudyGroup.id == UserStudyGroupDeck.user_group_id)
+        .filter(UserStudyGroup.user_id == user_id, UserStudyGroupDeck.deck_id == deck_id)
+        .first()
+    )
+    return link is not None
 
 
 @router.get("/public", response_model=List[PublicDeckSummary])
@@ -97,7 +109,11 @@ def list_user_decks(user_id: UUID = Depends(get_current_user_id), db: Session = 
             deck = db.query(Deck).filter(Deck.id == link.deck_id).first()
             if deck:
                 summary = DeckSummary(
-                    deck_id=deck.id, title=deck.title, description=deck.description
+                    deck_id=deck.id,
+                    title=deck.title,
+                    description=deck.description,
+                    owner_id=deck.owner_id,
+                    can_edit=is_deck_editor(db, deck.id, user_uuid),
                 )
                 deck_list.append(summary)
     return deck_list
@@ -123,7 +139,6 @@ def get_deck_info(
     if not deck:
         raise HTTPException(status_code=404, detail="Deck not found")
 
-    # Count total cards
     total_cards = db.query(Card).filter(Card.deck_id == deck_id).count()
 
     return DeckDetail(
@@ -135,6 +150,7 @@ def get_deck_info(
         is_public=deck.is_public,
         show_card_title=deck.show_card_title,
         cards_count=total_cards,
+        can_edit=is_deck_editor(db, deck_id, user_id),
     )
 
 
@@ -157,16 +173,13 @@ def list_deck_cards(
     if not link:
         raise HTTPException(404, "Deck not found or access denied")
 
-    # Get deck info
     deck = db.query(Deck).filter(Deck.id == deck_id).first()
     if not deck:
         raise HTTPException(404, "Deck not found")
 
-    # Count total cards
     total_count = db.query(Card).filter(Card.deck_id == deck_id).count()
     total_pages = math.ceil(total_count / per_page) if total_count > 0 else 0
 
-    # Get paginated cards with consistent ordering
     offset = (page - 1) * per_page
     cards = (
         db.query(Card)
@@ -200,7 +213,6 @@ def list_deck_cards(
             CardSummary(card_id=card.id, title=card.title, type=card.type, levels=levels_data)
         )
 
-    # Create deck detail - use 'id' not 'deck_id' because of validation_alias
     deck_detail = DeckDetail(
         id=deck.id,
         title=deck.title,
@@ -210,6 +222,7 @@ def list_deck_cards(
         is_public=deck.is_public,
         show_card_title=deck.show_card_title,
         cards_count=total_count,
+        can_edit=is_deck_editor(db, deck_id, user_uuid),
     )
 
     return PaginatedCardsResponse(
@@ -231,15 +244,17 @@ def get_deck_session(
     user_uuid = user_id
     settings = _ensure_settings(db, user_uuid)
 
-    deck = (
-        db.query(Deck)
-        .filter(
-            Deck.id == deck_id,
-            (Deck.owner_id == user_uuid) | (Deck.is_public.is_(True)),
-        )
-        .first()
-    )
+    deck = db.query(Deck).filter(Deck.id == deck_id).first()
     if not deck:
+        raise HTTPException(404, "Deck not found")
+
+    # Allow access if: owner, editor, public, OR deck is linked in user's group (viewer invite)
+    if (
+        deck.owner_id != user_uuid
+        and not deck.is_public
+        and not is_deck_editor(db, deck_id, user_uuid)
+        and not _user_has_deck_in_group(db, user_uuid, deck_id)
+    ):
         raise HTTPException(403, "Deck not accessible")
 
     cards: List[Card] = (
@@ -250,7 +265,6 @@ def get_deck_session(
 
     card_ids = [c.id for c in cards]
 
-    # Берём активный прогресс по карточкам
     progress_list: List[CardProgress] = (
         db.query(CardProgress)
         .filter(
@@ -265,7 +279,6 @@ def get_deck_session(
     now = datetime.now(timezone.utc)
     to_create: list[CardProgress] = []
 
-    # Чтобы не делать N+1 за level0, можно одним запросом взять все level0:
     lvl0_all = (
         db.query(CardLevel)
         .filter(CardLevel.card_id.in_(card_ids), CardLevel.level_index == 0)
@@ -297,7 +310,6 @@ def get_deck_session(
         db.add_all(to_create)
         db.commit()
 
-    # уровни пачкой
     levels_all: List[CardLevel] = (
         db.query(CardLevel)
         .filter(CardLevel.card_id.in_(card_ids))
@@ -308,7 +320,6 @@ def get_deck_session(
     for lvl in levels_all:
         levels_by_card.setdefault(lvl.card_id, []).append(lvl)
 
-    # собрать ответ
     result: List[DeckSessionCard] = []
     for card in cards:
         progress = progress_by_card[card.id]
@@ -375,7 +386,8 @@ def create_deck(
     db.add(link)
 
     db.commit()
-    return DeckSummary(deck_id=deck.id, title=deck.title)
+    # Owner always can edit their own deck
+    return DeckSummary(deck_id=deck.id, title=deck.title, owner_id=deck.owner_id, can_edit=True)
 
 
 @router.get("/{deck_id}", response_model=DeckWithCards)
@@ -421,7 +433,18 @@ def get_deck_with_cards(
             )
         )
 
-    return DeckWithCards(deck=deck, cards=result_cards)
+    # Build DeckDetail manually to pass can_edit
+    deck_detail = DeckDetail(
+        id=deck.id,
+        title=deck.title,
+        description=deck.description,
+        color=deck.color or "#4A6FA5",
+        owner_id=deck.owner_id,
+        is_public=deck.is_public,
+        show_card_title=deck.show_card_title,
+        can_edit=is_deck_editor(db, deck_id, userid),
+    )
+    return DeckWithCards(deck=deck_detail, cards=result_cards)
 
 
 @router.get("/{deck_id}/with_cards", response_model=DeckWithCards)
@@ -472,20 +495,31 @@ def get_deck_with_cards_ordered(
             )
         )
 
-    return DeckWithCards(deck=deck, cards=out_cards)
+    deck_detail = DeckDetail(
+        id=deck.id,
+        title=deck.title,
+        description=deck.description,
+        color=deck.color or "#4A6FA5",
+        owner_id=deck.owner_id,
+        is_public=deck.is_public,
+        show_card_title=deck.show_card_title,
+        can_edit=is_deck_editor(db, deck_id, user_id),
+    )
+    return DeckWithCards(deck=deck_detail, cards=out_cards)
 
 
 @router.delete("/{deck_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_deck(
     deck_id: UUID,
-    user_id: str = Depends(get_current_user_id),
+    user_id: UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     deck = db.get(Deck, deck_id)
     if not deck:
         raise HTTPException(status_code=404, detail="Deck not found")
 
-    if str(deck.owner_id) != str(user_id):
+    # Only owner can delete the deck
+    if not is_deck_owner(db, deck_id, user_id):
         raise HTTPException(status_code=403, detail="You are not the owner of this deck")
 
     # Удаляем все привязки колоды к user-группам (иначе FK может мешать)
@@ -512,11 +546,11 @@ def update_deck(
     user_id: UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    deck = db.query(Deck).filter(Deck.id == deck_id).first()
-    if not deck:
-        raise HTTPException(status_code=404, detail="Deck not found")
-
-    if deck.owner_id != user_id:
+    try:
+        deck = require_deck_editor(db, deck_id, user_id)
+    except ValueError as e:
+        if str(e) == "not_found":
+            raise HTTPException(status_code=404, detail="Deck not found")
         raise HTTPException(status_code=403, detail="Deck not accessible")
 
     if payload.title is not None:
@@ -535,6 +569,9 @@ def update_deck(
         deck.color = c
 
     if payload.is_public is not None:
+        # Only owner can change visibility
+        if not is_deck_owner(db, deck_id, user_id):
+            raise HTTPException(status_code=403, detail="Only owner can change deck visibility")
         deck.is_public = payload.is_public
 
     db.commit()
@@ -547,6 +584,7 @@ def update_deck(
         color=deck.color,
         owner_id=deck.owner_id,
         is_public=deck.is_public,
+        can_edit=True,  # user passed require_deck_editor, so can_edit is always True here
     )
 
 
@@ -563,13 +601,16 @@ def get_study_cards(
     if include != "full":
         raise HTTPException(status_code=422, detail="Only include=full is supported")
 
-    # доступ как в /session: owner или public
-    deck = (
-        db.query(Deck)
-        .filter(Deck.id == deck_id, (Deck.owner_id == user_id) | (Deck.is_public.is_(True)))
-        .first()
-    )
+    deck = db.query(Deck).filter(Deck.id == deck_id).first()
     if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found")
+
+    # Allow access if: owner, editor, public, OR deck is linked in user's group (viewer invite)
+    if (
+        not deck.is_public
+        and not is_deck_editor(db, deck_id, user_id)
+        and not _user_has_deck_in_group(db, user_id, deck_id)
+    ):
         raise HTTPException(status_code=403, detail="Deck not accessible")
 
     cards: List[Card] = (
