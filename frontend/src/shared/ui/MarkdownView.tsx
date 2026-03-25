@@ -7,6 +7,7 @@ import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
 
 import { convertBracketLatexToDollar } from '@/shared/lib/utils'
+import { useLineCount } from './hooks/useLineCount'
 import styles from './MarkdownView.module.css'
 
 const components = {
@@ -19,16 +20,27 @@ const components = {
 
 export function MarkdownView({ value }: { value: string }) {
   const processed = convertBracketLatexToDollar(value ?? '')
+  const { hasManyLines, ref } = useLineCount([value])
+
+  // Determine alignment class based on line count
+  const alignmentClass =
+    hasManyLines === null
+      ? '' // Still calculating, use default
+      : hasManyLines
+        ? styles.alignLeft
+        : styles.alignCenter
 
   return (
-    <div className={styles.markdownContent}>
-      <ReactMarkdown
-        remarkPlugins={[remarkMath, remarkGfm]}
-        rehypePlugins={[rehypeKatex]}
-        components={components}
-      >
-        {processed}
-      </ReactMarkdown>
+    <div className={styles.markdownContent} ref={ref}>
+      <div className={alignmentClass}>
+        <ReactMarkdown
+          remarkPlugins={[remarkMath, remarkGfm]}
+          rehypePlugins={[rehypeKatex]}
+          components={components}
+        >
+          {processed}
+        </ReactMarkdown>
+      </div>
     </div>
   )
 }
