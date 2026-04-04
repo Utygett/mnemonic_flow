@@ -69,8 +69,12 @@ export function useStudyLauncher(input: Input) {
     try {
       input.setLoadingDeckCards(true)
 
-      const items = await getReviewSession(20)
-      input.setDeckCards(toStudyCards(items as any[]))
+      const rawItems = await getReviewSession(200)
+      // Группируем карточки по колодам: все карточки одной колоды идут подряд
+      const sorted = [...(rawItems as any[])].sort((a, b) =>
+        (a.deck_id ?? '').localeCompare(b.deck_id ?? '')
+      )
+      input.setDeckCards(toStudyCards(sorted))
       input.setActiveDeckId(null)
       input.setShowCardTitle(false)
 

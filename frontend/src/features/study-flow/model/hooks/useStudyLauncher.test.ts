@@ -235,7 +235,7 @@ describe('useStudyLauncher', () => {
   })
 
   describe('startReviewStudy', () => {
-    it('должен запустить review сессию с лимитом 20', async () => {
+    it('должен запустить review сессию с лимитом 200', async () => {
       const mockItems = createMockCards(5)
       vi.mocked(getReviewSession).mockResolvedValue(mockItems)
 
@@ -245,7 +245,7 @@ describe('useStudyLauncher', () => {
         await result.current.startReviewStudy()
       })
 
-      expect(getReviewSession).toHaveBeenCalledWith(20)
+      expect(getReviewSession).toHaveBeenCalledWith(200)
       expect(mockInput.setDeckCards).toHaveBeenCalledWith(mockItems)
       expect(mockInput.setActiveDeckId).toHaveBeenCalledWith(null)
       expect(mockInput.setSessionMode).toHaveBeenCalledWith('review')

@@ -79,7 +79,7 @@ export async function levelDown(cardId: string) {
   return apiRequest(`/cards/${cardId}/level_down`, { method: 'POST' })
 }
 
-export async function getReviewSession(limit = 20) {
+export async function getReviewSession(limit = 200) {
   return apiRequest(`/cards/review_with_levels?limit=${limit}`)
 }
 
