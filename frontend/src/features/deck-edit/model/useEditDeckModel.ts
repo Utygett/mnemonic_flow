@@ -15,6 +15,9 @@ export type EditDeckViewModel = {
   isPublic: boolean
   setIsPublic: (v: boolean) => void
 
+  autoAddCardsToStudy: boolean
+  setAutoAddCardsToStudy: (v: boolean) => void
+
   loading: boolean
   saving: boolean
   error: string | null
@@ -32,6 +35,7 @@ export function useEditDeckModel(props: EditDeckProps): EditDeckViewModel {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPublic, setIsPublic] = useState(false)
+  const [autoAddCardsToStudy, setAutoAddCardsToStudy] = useState(false)
 
   useEffect(() => {
     ;(async () => {
@@ -43,6 +47,7 @@ export function useEditDeckModel(props: EditDeckProps): EditDeckViewModel {
         setTitle(deck?.title ?? deck?.name ?? '')
         setDescription(deck?.description ?? '')
         setIsPublic(Boolean(deck?.is_public ?? false))
+        setAutoAddCardsToStudy(Boolean(deck?.auto_add_cards_to_study ?? false))
       } catch (e: unknown) {
         console.error(e)
         setError('Не удалось загрузить колоду: ' + getErrorMessage(e))
@@ -66,6 +71,7 @@ export function useEditDeckModel(props: EditDeckProps): EditDeckViewModel {
         title: t,
         description: description || null,
         is_public: isPublic,
+        auto_add_cards_to_study: autoAddCardsToStudy,
       } as any)
 
       onSaved()
@@ -86,6 +92,9 @@ export function useEditDeckModel(props: EditDeckProps): EditDeckViewModel {
 
     isPublic,
     setIsPublic,
+
+    autoAddCardsToStudy,
+    setAutoAddCardsToStudy,
 
     loading,
     saving,

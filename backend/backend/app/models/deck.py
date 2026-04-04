@@ -20,3 +20,4 @@ class Deck(Base):
 
     is_public: Mapped[bool] = mapped_column(Boolean, default=False)
     show_card_title: Mapped[bool] = mapped_column(Boolean, default=False)
+    auto_add_cards_to_study: Mapped[bool] = mapped_column(Boolean, default=False)

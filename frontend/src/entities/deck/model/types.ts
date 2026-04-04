@@ -12,6 +12,8 @@ export type PublicDeckSummary = {
   /** True if current user is allowed to edit this deck (owner or granted permission). */
   can_edit?: boolean
 
+  has_new_cards: boolean
+
   count_repeat: number
   count_for_repeat: number
   cards_count: number
@@ -37,6 +39,7 @@ export type DeckDetail = {
   owner_id: string
   is_public: boolean
   show_card_title: boolean
+  auto_add_cards_to_study: boolean
   /** True if current user is allowed to edit this deck (owner or granted editor permission). */
   can_edit: boolean
   count_repeat: number

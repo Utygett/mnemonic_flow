@@ -19,15 +19,25 @@ export function DeckDetailsView(props: DeckDetailsViewModel) {
   const [shareModalOpen, setShareModalOpen] = React.useState(false)
   const [editorModalOpen, setEditorModalOpen] = React.useState(false)
   const [localShowCardTitle, setLocalShowCardTitle] = React.useState(props.showCardTitle)
+  const [localAutoAddCards, setLocalAutoAddCards] = React.useState(props.autoAddCardsToStudy)
   const loadMoreRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
     setLocalShowCardTitle(props.showCardTitle)
   }, [props.showCardTitle])
 
+  React.useEffect(() => {
+    setLocalAutoAddCards(props.autoAddCardsToStudy)
+  }, [props.autoAddCardsToStudy])
+
   const handleShowCardTitleChange = async (checked: boolean) => {
     setLocalShowCardTitle(checked)
     await props.setShowCardTitle(checked)
+  }
+
+  const handleAutoAddCardsChange = async (checked: boolean) => {
+    setLocalAutoAddCards(checked)
+    await props.setAutoAddCardsToStudy(checked)
   }
 
   const previewCard = previewCardId
@@ -151,6 +161,17 @@ export function DeckDetailsView(props: DeckDetailsViewModel) {
               disabled={props.savingDeckSetting}
             />
             <span>Показывать имя карточки</span>
+          </label>
+
+          <label className={styles.checkboxRow}>
+            <input
+              className={styles.checkbox}
+              type="checkbox"
+              checked={localAutoAddCards}
+              onChange={e => handleAutoAddCardsChange(e.target.checked)}
+              disabled={props.savingDeckSetting}
+            />
+            <span>Автоматически добавлять новые карточки в обучение</span>
           </label>
         </div>
       </div>

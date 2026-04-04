@@ -45,6 +45,7 @@ class DeckSummary(BaseModel):
     description: str | None = None
     owner_id: UUID | None = None
     can_edit: bool = False
+    has_new_cards: bool = False
 
 
 class DeckDetail(BaseModel):
@@ -55,6 +56,7 @@ class DeckDetail(BaseModel):
     owner_id: UUID
     is_public: bool
     show_card_title: bool = False
+    auto_add_cards_to_study: bool = False
     can_edit: bool = False
 
     count_repeat: int = 0
@@ -182,6 +184,7 @@ class DeckCreate(BaseModel):
     description: str | None = None
     color: str | None = None
     show_card_title: bool = False
+    auto_add_cards_to_study: bool = False
 
 
 class CreateCardResponse(BaseModel):
@@ -196,6 +199,7 @@ class DeckUpdate(BaseModel):
     color: Optional[str] = Field(default=None, min_length=1)
     is_public: Optional[bool] = None
     show_card_title: Optional[bool] = None
+    auto_add_cards_to_study: Optional[bool] = None
 
 
 class DeckWithCards(BaseModel):
