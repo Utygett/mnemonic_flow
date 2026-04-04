@@ -29,6 +29,17 @@
   color: var(--text);
   line-height: 1.2;
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.newDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--success, #22c55e);
+  flex-shrink: 0;
 }
 
 /* ---- three-dot menu ---- */
