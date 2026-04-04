@@ -31,8 +31,9 @@ export function Login({ onSwitch }: { onSwitch: () => void }) {
       await login(data.access_token, data.refresh_token)
     } catch (e: unknown) {
       console.error('Login error:', e)
-      const msg = e instanceof Error ? e.message : 'Ошибка входа'
-      setError(msg || 'Ошибка входа')
+      const raw = e instanceof Error ? e.message : ''
+      const msg = raw === 'Failed to fetch' ? 'Нет соединения с сервером' : raw || 'Ошибка входа'
+      setError(msg)
     } finally {
       setLoading(false)
     }
