@@ -16,6 +16,7 @@ export type AudioFile = {
 export type LevelQA = {
   question: string
   answer: string
+  explanation?: string // комментарий/объяснение к ответу
   questionImageFiles: ImageFile[]
   answerImageFiles: ImageFile[]
   questionAudioFiles: AudioFile[]
@@ -137,6 +138,7 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
     {
       question: '',
       answer: '',
+      explanation: '',
       questionImageFiles: [],
       answerImageFiles: [],
       questionAudioFiles: [],
@@ -165,6 +167,7 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
         {
           question: '',
           answer: '',
+          explanation: '',
           questionImageFiles: [],
           answerImageFiles: [],
           questionAudioFiles: [],
@@ -508,7 +511,11 @@ export function useCreateCardLevelsModel(cardType: CardType): CreateCardLevelsMo
 
   const cleanedLevelsQA = useMemo(() => {
     return levelsQA
-      .map(l => ({ question: l.question.trim(), answer: l.answer.trim() }))
+      .map(l => ({
+        question: l.question.trim(),
+        answer: l.answer.trim(),
+        explanation: l.explanation?.trim() || undefined,
+      }))
       .filter(l => l.question && l.answer)
   }, [levelsQA])
 

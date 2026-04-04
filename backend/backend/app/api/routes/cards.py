@@ -158,7 +158,8 @@ def create_card(
                     status_code=422, detail=f"Level {i + 1}: answer is required for flashcard"
                 )
 
-            content = {"question": q, "answer": a}
+            explanation = (lvl.explanation or "").strip() or None
+            content = {"question": q, "answer": a, "explanation": explanation}
 
         elif payload.type == "multiple_choice":
             options = lvl.options or []
@@ -654,7 +655,8 @@ def update_card_levels(
                     status_code=422, detail="QA level question/answer must be non-empty"
                 )
 
-            content: Dict[str, Any] = {"question": q, "answer": a}
+            explanation = (c.explanation or "").strip() or None
+            content: Dict[str, Any] = {"question": q, "answer": a, "explanation": explanation}
 
         elif isinstance(c, McqContentIn):
             q = (c.question or "").strip()

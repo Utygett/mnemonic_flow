@@ -679,6 +679,15 @@ export function CreateCard({
                   className={styles.mt4}
                 />
 
+                <MarkdownField
+                  label="Объяснение (не обязательно)"
+                  value={activeQA?.explanation ?? ''}
+                  onChange={v => patchLevelQA(activeLevel, { explanation: v })}
+                  preview={aPreview}
+                  onTogglePreview={() => setAPreview(!aPreview)}
+                  className={styles.mt4}
+                />
+
                 {/* Answer Image Upload */}
                 <div className={styles.inlineImageUpload}>
                   <div className={styles.imagesList}>

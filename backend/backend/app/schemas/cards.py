@@ -117,6 +117,7 @@ class CardPatchRequest(BaseModel):
 class QaContentIn(BaseModel):
     question: str
     answer: str
+    explanation: str = ""  # комментарий/объяснение к ответу
 
 
 class McqOptionIn(BaseModel):
