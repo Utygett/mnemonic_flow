@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import type { StudyCard } from '../model/studyCardTypes'
+import { isMultipleChoice } from '../model/studyCardTypes'
 import { motion } from 'motion/react'
 import { MarkdownView } from '../../../shared/ui/MarkdownView'
 import { ImageWithFallback } from '@/shared/ui/ImageWithFallback'
@@ -50,6 +51,8 @@ export function FlipCard({
     ? (card as any).title || (level as any)?.content?.question || '…'
     : (level as any)?.content?.question || '…'
   const backText = (level as any)?.content?.answer || '…'
+  const explanationText = (level as any)?.content?.explanation || ''
+  const hasExplanation = Boolean(explanationText.trim())
 
   // Media URLs are returned at the top level of the level object (camelCase from API)
   // Now they are arrays for multiple files
@@ -212,7 +215,21 @@ export function FlipCard({
             )}
 
             <div className={styles.flipcardText}>
-              {backContent ?? <MarkdownView value={backText} />}
+              {backContent ?? (
+                <div className={styles.answerContainer}>
+                  <div className={styles.answerSection}>
+                    <MarkdownView value={backText} />
+                  </div>
+                  {hasExplanation && !isMultipleChoice(card) && (
+                    <div className={styles.explanationSection}>
+                      <div className={styles.explanationDivider}>
+                        <MarkdownView value="---" />
+                      </div>
+                      <MarkdownView value={explanationText} />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {card.levels.length > 1 ? (

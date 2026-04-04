@@ -5,6 +5,7 @@ export type CardType = 'flashcard' | 'multiple_choice'
 export type FlashcardContent = {
   question: string
   answer: string
+  explanation?: string // комментарий/объяснение к ответу
   // можно хранить, но пока не используем для flashcard
   timerSec?: number
 }
