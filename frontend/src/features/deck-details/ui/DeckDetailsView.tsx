@@ -1,5 +1,5 @@
 import React from 'react'
-import { Plus, Pencil } from 'lucide-react'
+import { Plus, Pencil, Share2, Globe } from 'lucide-react'
 
 import type { DeckDetailsViewModel } from '../model/useDeckDetailsModel'
 import { Button } from '@/shared/ui/Button/Button'
@@ -8,6 +8,7 @@ import { CardPreviewModal } from './CardPreviewModal'
 import { EditDeckModal } from './EditDeckModal'
 import { StudyModeSelector } from './StudyModeSelector'
 import { MoveCardSheet } from './MoveCardSheet'
+import { DeckInviteModal } from '@/features/deck-invite'
 
 import styles from './DeckDetailsView.module.css'
 
@@ -15,6 +16,8 @@ export function DeckDetailsView(props: DeckDetailsViewModel) {
   const [previewCardId, setPreviewCardId] = React.useState<string | null>(null)
   const [editModalOpen, setEditModalOpen] = React.useState(false)
   const [movingCardId, setMovingCardId] = React.useState<string | null>(null)
+  const [shareModalOpen, setShareModalOpen] = React.useState(false)
+  const [editorModalOpen, setEditorModalOpen] = React.useState(false)
   const [localShowCardTitle, setLocalShowCardTitle] = React.useState(props.showCardTitle)
   const loadMoreRef = React.useRef<HTMLDivElement>(null)
 
@@ -78,16 +81,56 @@ export function DeckDetailsView(props: DeckDetailsViewModel) {
             Назад
           </Button>
           <div className={styles.titleRow}>
-            <h1 className={styles.title}>{props.deckTitle || 'Колода'}</h1>
-            {props.canEdit && (
-              <button
-                className={styles.editBtn}
-                onClick={() => setEditModalOpen(true)}
-                aria-label="Редактировать колоду"
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <h1 className={styles.title}>{props.deckTitle || 'Колода'}</h1>
+              {props.canEdit && (
+                <button
+                  className={styles.editBtn}
+                  onClick={() => setEditModalOpen(true)}
+                  aria-label="Редактировать колоду"
+                  type="button"
+                >
+                  <Pencil size={16} strokeWidth={2} />
+                </button>
+              )}
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem',
+                alignItems: 'flex-end',
+              }}
+            >
+              <Button
+                onClick={() => props.setIsPublic(!props.isPublic)}
+                variant="primary"
+                size="small"
+                disabled={props.savingDeckSetting}
+                style={{ width: '200px', justifyContent: 'center' }}
               >
-                <Pencil size={16} strokeWidth={2} />
-              </button>
-            )}
+                <Globe size={16} strokeWidth={2} style={{ marginRight: '6px' }} />
+                {props.isPublic ? 'Сделать приватной' : 'Сделать публичной'}
+              </Button>
+              <Button
+                onClick={() => setShareModalOpen(true)}
+                variant="primary"
+                size="small"
+                style={{ width: '200px', justifyContent: 'center' }}
+              >
+                <Share2 size={16} strokeWidth={2} style={{ marginRight: '6px' }} />
+                Поделиться
+              </Button>
+              <Button
+                onClick={() => setEditorModalOpen(true)}
+                variant="primary"
+                size="small"
+                style={{ width: '200px', justifyContent: 'center' }}
+              >
+                <Pencil size={16} strokeWidth={2} style={{ marginRight: '6px' }} />
+                Пригласить редактора
+              </Button>
+            </div>
           </div>
           {props.deckDescription && <p className={styles.description}>{props.deckDescription}</p>}
           <div className={styles.meta}>
@@ -229,6 +272,22 @@ export function DeckDetailsView(props: DeckDetailsViewModel) {
           decks={props.editableDecks}
           onMove={handleMoveCard}
           onClose={() => setMovingCardId(null)}
+        />
+      )}
+
+      {shareModalOpen && (
+        <DeckInviteModal
+          deckId={props.deckId}
+          mode="share"
+          onClose={() => setShareModalOpen(false)}
+        />
+      )}
+
+      {editorModalOpen && (
+        <DeckInviteModal
+          deckId={props.deckId}
+          mode="editor"
+          onClose={() => setEditorModalOpen(false)}
         />
       )}
     </div>
