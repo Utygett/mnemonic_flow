@@ -4,12 +4,12 @@ import type { StudyCard } from '@/entities/card'
 function toCardLevels(levels: any[] | undefined): any[] {
   if (!levels) return []
   return levels.map((l: any) => ({
-    levelindex: l.level_index,
+    levelindex: l.levelIndex ?? l.levelindex ?? l.level_index,
     content: l.content,
-    questionImageUrls: l.question_image_urls,
-    answerImageUrls: l.answer_image_urls,
-    questionAudioUrls: l.question_audio_urls,
-    answerAudioUrls: l.answer_audio_urls,
+    questionImageUrls: l.questionImageUrls ?? l.question_image_urls,
+    answerImageUrls: l.answerImageUrls ?? l.answer_image_urls,
+    questionAudioUrls: l.questionAudioUrls ?? l.question_audio_urls,
+    answerAudioUrls: l.answerAudioUrls ?? l.answer_audio_urls,
   }))
 }
 

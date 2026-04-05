@@ -19,6 +19,27 @@ type Input = {
   setSessionIndex: (v: number) => void
 }
 
+/** Map raw API response (camelCase or snake_case) to StudyCard. */
+function mapRawCards(cards: any[]): StudyCard[] {
+  return cards.map((c: any) => ({
+    id: c.id ?? c.card_id,
+    deckId: c.deckId ?? c.deck_id,
+    title: c.title,
+    type: c.type,
+    levels: (c.levels ?? []).map((l: any) => ({
+      levelindex: l.levelIndex ?? l.levelindex ?? l.level_index,
+      content: l.content,
+      questionImageUrls: l.questionImageUrls ?? l.question_image_urls ?? [],
+      answerImageUrls: l.answerImageUrls ?? l.answer_image_urls ?? [],
+      questionAudioUrls: l.questionAudioUrls ?? l.question_audio_urls ?? [],
+      answerAudioUrls: l.answerAudioUrls ?? l.answer_audio_urls ?? [],
+    })),
+    activeLevel: c.activeLevel ?? c.active_level ?? 0,
+    activeCardLevelId: c.activeCardLevelId ?? c.card_level_id ?? c.active_card_level_id ?? '',
+    reviewHistory: c.reviewHistory ?? c.review_history ?? [],
+  }))
+}
+
 export function useStudyLauncher(input: Input) {
   const startDeckStudy = useCallback(
     async (deckId: string, mode: StudyMode, limit?: number) => {
@@ -50,7 +71,8 @@ export function useStudyLauncher(input: Input) {
           return // Не запускаем сессию
         }
 
-        input.setDeckCards(res.cards)
+        // Normalize: API may return camelCase or snake_case fields, map to StudyCard
+        input.setDeckCards(mapRawCards(res.cards as any[]))
         input.setActiveDeckId(deckId)
         input.setShowCardTitle(res.deck.show_card_title)
         input.setSessionMode('deck')
