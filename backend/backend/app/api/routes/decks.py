@@ -731,6 +731,7 @@ def get_study_cards(
             {
                 "id": str(c.id),
                 "deckId": str(c.deck_id),
+                "deckOwnerId": str(deck.owner_id),
                 "title": c.title,
                 "type": c.type,
                 "levels": [

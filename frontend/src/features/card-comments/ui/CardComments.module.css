@@ -51,9 +51,33 @@
   color: var(--text);
 }
 
+.commentHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .commentDate {
   font-size: 11px;
   color: var(--muted);
+}
+
+.deleteButton {
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deleteButton:hover {
+  color: var(--danger, #e53e3e);
+  background: color-mix(in srgb, var(--danger, #e53e3e) 12%, transparent);
 }
 
 .commentContent {

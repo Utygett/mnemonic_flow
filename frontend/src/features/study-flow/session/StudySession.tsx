@@ -480,7 +480,11 @@ export function StudySession({
                 />
               </div>
 
-              <CardComments cardId={currentCard.id} levelId={currentCard.activeCardLevelId} />
+              <CardComments
+                cardId={currentCard.id}
+                levelId={currentCard.activeCardLevelId}
+                deckOwnerId={currentCard.deckOwnerId}
+              />
             </div>
           )}
         </div>

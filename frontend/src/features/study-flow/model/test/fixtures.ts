@@ -6,6 +6,7 @@ export function createMockFlashcard(overrides: Partial<StudyCard> = {}): StudyCa
   return {
     id: `card-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     deckId: 'deck-1',
+    deckOwnerId: 'user-1',
     title: 'Test Flashcard',
     type: 'flashcard',
     activeLevel: 0,
@@ -27,6 +28,7 @@ export function createMockMcqCard(overrides: Partial<StudyCard> = {}): StudyCard
   return {
     id: `card-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     deckId: 'deck-1',
+    deckOwnerId: 'user-1',
     title: 'Test MCQ',
     type: 'multiple_choice',
     activeLevel: 0,

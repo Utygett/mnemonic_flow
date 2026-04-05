@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
-import { createComment, getComments } from '@/entities/comment'
+import { createComment, deleteComment as deleteCommentApi, getComments } from '@/entities/comment'
 import type { Comment } from '@/entities/comment'
 
 interface UseCardCommentsResult {
@@ -11,6 +11,7 @@ interface UseCardCommentsResult {
   error: string | null
   refresh: () => Promise<void>
   addComment: (content: string) => Promise<Comment | null>
+  deleteComment: (commentId: string) => Promise<void>
 }
 
 export function useCardComments(cardId: string, levelId: string): UseCardCommentsResult {
@@ -50,9 +51,25 @@ export function useCardComments(cardId: string, levelId: string): UseCardComment
     [cardId, levelId]
   )
 
+  const deleteComment = useCallback(
+    async (commentId: string) => {
+      if (!cardId || !levelId) return
+
+      try {
+        await deleteCommentApi(cardId, levelId, commentId)
+        // Remove comment from the list
+        setComments(prev => prev.filter(c => c.id !== commentId))
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to delete comment')
+        throw e
+      }
+    },
+    [cardId, levelId]
+  )
+
   useEffect(() => {
     refresh()
-  }, [refresh])
+  }, [cardId, levelId])
 
-  return { comments, loading, error, refresh, addComment }
+  return { comments, loading, error, refresh, addComment, deleteComment }
 }

@@ -15,13 +15,14 @@ function toCardLevels(levels: any[] | undefined): any[] {
 
 export function toStudyCards(items: any[]): StudyCard[] {
   return items.map((c: any) => ({
-    id: c.card_id,
-    deckId: c.deck_id,
+    id: c.card_id ?? c.id,
+    deckId: c.deck_id ?? c.deckId,
+    deckOwnerId: c.deck_owner_id ?? c.deckOwnerId ?? '',
     title: c.title,
     type: c.type,
     levels: toCardLevels(c.levels),
-    activeLevel: c.active_level ?? 0,
-    activeCardLevelId: c.card_level_id ?? c.active_card_level_id ?? '',
-    reviewHistory: c.review_history ?? [],
+    activeLevel: c.active_level ?? c.activeLevel ?? 0,
+    activeCardLevelId: c.card_level_id ?? c.active_card_level_id ?? c.activeCardLevelId ?? '',
+    reviewHistory: c.review_history ?? c.reviewHistory ?? [],
   }))
 }
