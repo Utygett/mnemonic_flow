@@ -64,13 +64,16 @@ export function StudyTabView(props: Props) {
     <div className={styles.dashboard}>
       {props.resumeSession && <ResumeSessionCard {...props.resumeSession} />}
 
-      <GroupsBar
-        groups={props.groups}
-        activeGroupId={props.activeGroupId}
-        onGroupChange={props.onGroupChange}
-        onCreateGroup={props.onCreateGroup}
-        onDeleteActiveGroup={props.onDeleteActiveGroup}
-      />
+      <div className={styles.sectionGroups}>
+        <h2 className={styles.sectionTitle}>Группы</h2>
+        <GroupsBar
+          groups={props.groups}
+          activeGroupId={props.activeGroupId}
+          onGroupChange={props.onGroupChange}
+          onCreateGroup={props.onCreateGroup}
+          onDeleteActiveGroup={props.onDeleteActiveGroup}
+        />
+      </div>
 
       {groupDescription && (
         <div className={styles.groupDescriptionSection}>
@@ -78,16 +81,19 @@ export function StudyTabView(props: Props) {
         </div>
       )}
 
-      <DeckList
-        decks={props.decks}
-        onDeckClick={props.onDeckClick}
-        onEditDeck={props.onEditDeck}
-        onDeleteDeck={props.onDeleteDeck}
-        onRemoveFromGroup={props.onRemoveFromGroup}
-        onMoveDeck={props.onMoveDeck ? deckId => setMovingDeckId(deckId) : undefined}
-        onInviteDeck={deckId => setInviteState({ deckId, mode: 'editor' })}
-        onShareDeck={deckId => setInviteState({ deckId, mode: 'share' })}
-      />
+      <div className={styles.sectionDecks}>
+        <h2 className={styles.sectionTitle}>Колоды</h2>
+        <DeckList
+          decks={props.decks}
+          onDeckClick={props.onDeckClick}
+          onEditDeck={props.onEditDeck}
+          onDeleteDeck={props.onDeleteDeck}
+          onRemoveFromGroup={props.onRemoveFromGroup}
+          onMoveDeck={props.onMoveDeck ? deckId => setMovingDeckId(deckId) : undefined}
+          onInviteDeck={deckId => setInviteState({ deckId, mode: 'editor' })}
+          onShareDeck={deckId => setInviteState({ deckId, mode: 'share' })}
+        />
+      </div>
 
       <div className={styles.footerSection}>
         <Button onClick={() => setShowAddModal(true)} variant="primary" size="medium" fullWidth>
