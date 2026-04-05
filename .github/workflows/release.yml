@@ -127,6 +127,134 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  push-backend:
+    needs: push-to-main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify we're on main branch
+        run: |
+          if [ "$(git branch --show-current)" != "main" ]; then
+            echo "Error: Not on main branch"
+            exit 1
+          fi
+
+          echo "Verified: on main branch
+
+      - name: Read VERSION
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          VERSION=$(cat VERSION)
+          docker buildx build \
+            --no-cache \
+            --tag ghcr.io/${REPO_LOWER}/mnemonic_flow/backend:latest \
+            --build-arg VERSION="${VERSION}" \
+            --push \
+            -f backend/Dockerfile \
+            backend
+
+  push-frontend:
+    needs: push-to-main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Read VERSION
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push frontend
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          VERSION=$(cat VERSION)
+          docker buildx build \
+            --no-cache \
+            --tag ghcr.io/${REPO_LOWER}/mnemonic_flow/frontend:latest \
+            --build-arg VERSION="${VERSION}" \
+            --push \
+            -f frontend/Dockerfile \
+            frontend
+
+  push-pre-commit:
+    needs: push-to-main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push pre-commit
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            docker buildx build \
+            --no-cache \
+            --tag ghcr.io/${REPO_LOWER}/mnemonic_flow/pre-commit:latest \
+            --push \
+            -f infra/Dockerfile.pre-commit \
+            .
+
+  deploy:
+    needs: [push-backend, push-frontend, push-pre-commit]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          fingerprint: ${{ secrets.DEPLOY_HOST_FINGERPRINT }}
+          command_timeout: 20m
+          script: |
+            set -e
+            /opt/mnemonicflow/deploy.sh
+
+  bump-develop-version:
+    needs: [push-to-main]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Bump develop VERSION
         run: |
           # Конфигурируем git
