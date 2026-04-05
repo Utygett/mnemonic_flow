@@ -42,9 +42,17 @@ export function useGroupsDecksController() {
   const refreshGroups = useCallback(async () => {
     const groups = await getUserGroups()
     setState(s => {
-      const stillExists = s.activeGroupId ? groups.some(g => g.id === s.activeGroupId) : true
-      const activeGroupId = stillExists ? s.activeGroupId : null
-      if (!activeGroupId) localStorage.removeItem(LS_KEY)
+      // Если текущая активная группа валидна - сохраняем
+      const stillExists = s.activeGroupId ? groups.some(g => g.id === s.activeGroupId) : false
+      let activeGroupId = stillExists ? s.activeGroupId : null
+
+      // Если нет активной группы - выбираем первую из списка
+      if (!activeGroupId && groups.length > 0) {
+        activeGroupId = groups[0].id
+      }
+
+      if (activeGroupId) localStorage.setItem(LS_KEY, activeGroupId)
+      else localStorage.removeItem(LS_KEY)
 
       return { ...s, groups, activeGroupId }
     })
