@@ -453,31 +453,34 @@ export function StudySession({
             </Button>
           ) : (
             <div className={styles.studyActionsInner}>
-              <div className={styles.ratingRow}>
-                <RatingButton
-                  rating="again"
-                  label="Снова"
-                  intervalSeconds={ratingIntervals.again}
-                  onClick={() => submitReview('again')}
-                />
-                <RatingButton
-                  rating="hard"
-                  label="Трудно"
-                  intervalSeconds={ratingIntervals.hard}
-                  onClick={() => submitReview('hard')}
-                />
-                <RatingButton
-                  rating="good"
-                  label="Хорошо"
-                  intervalSeconds={ratingIntervals.good}
-                  onClick={() => submitReview('good')}
-                />
-                <RatingButton
-                  rating="easy"
-                  label="Легко"
-                  intervalSeconds={ratingIntervals.easy}
-                  onClick={() => submitReview('easy')}
-                />
+              <div className={styles.ratingSection}>
+                <div className={styles.ratingHeader}>Оценка сложности карточки</div>
+                <div className={styles.ratingRow}>
+                  <RatingButton
+                    rating="again"
+                    label="Не знаю"
+                    intervalSeconds={ratingIntervals.again}
+                    onClick={() => submitReview('again')}
+                  />
+                  <RatingButton
+                    rating="hard"
+                    label="Не уверен"
+                    intervalSeconds={ratingIntervals.hard}
+                    onClick={() => submitReview('hard')}
+                  />
+                  <RatingButton
+                    rating="good"
+                    label="Понимаю"
+                    intervalSeconds={ratingIntervals.good}
+                    onClick={() => submitReview('good')}
+                  />
+                  <RatingButton
+                    rating="easy"
+                    label="Выучил"
+                    intervalSeconds={ratingIntervals.easy}
+                    onClick={() => submitReview('easy')}
+                  />
+                </div>
               </div>
 
               <CardComments
