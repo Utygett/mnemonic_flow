@@ -61,3 +61,22 @@
   max-width: 390px;
   margin: 0 auto;
 }
+
+.sectionGroups {
+  padding: 16px;
+  max-width: 390px;
+  margin: 0 auto;
+}
+
+.sectionDecks {
+  padding: 16px;
+  max-width: 390px;
+  margin: 0 auto;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 12px 0;
+}

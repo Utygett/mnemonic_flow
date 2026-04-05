@@ -39,6 +39,36 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* Level controls — above the card */
+.levelControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  max-width: 390px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 16px 10px;
+}
+
+.levelBtn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease;
+  white-space: nowrap;
+}
+
+.levelBtn:hover {
+  background: var(--surface-2);
+}
+
 .studyCardArea {
   flex: 1;
   display: flex;
@@ -117,30 +147,22 @@
   text-align: center;
 }
 
-.flipcardLevelControls {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.flipcardLevelBtn {
-  border: 1px solid rgba(30, 41, 59, 0.9);
-  background: rgba(255, 255, 255, 0.06);
-  color: #e8eaf0;
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.flipcardLevelBtn:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
 .ratingRow {
   display: flex;
   justify-content: space-between;
   gap: 10px;
+}
+
+.ratingSection {
+  margin-bottom: 16px;
+}
+
+.ratingHeader {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(232, 234, 240, 0.85);
+  text-align: center;
+  margin-bottom: 12px;
 }
 
 .ratingButton {

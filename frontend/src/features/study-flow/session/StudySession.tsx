@@ -29,7 +29,9 @@ const ratingColorMap: Record<DifficultyRating, string> = {
 }
 
 function getLevelIndex(l: any): number {
-  return typeof l?.level_index === 'number' ? l.level_index : l?.levelindex
+  if (typeof l?.levelIndex === 'number') return l.levelIndex
+  if (typeof l?.level_index === 'number') return l.level_index
+  return l?.levelindex
 }
 
 function nowIso() {
@@ -181,6 +183,20 @@ export function StudySession({
 
   const mcq = isMultipleChoice(currentCard) ? ((level as any)?.content as any) : null
   const timerSec = typeof mcq?.timerSec === 'number' && mcq.timerSec > 0 ? mcq.timerSec : 0
+
+  // Level navigation
+  const hasPrev = currentCard.levels.some(
+    (l: any) => getLevelIndex(l) === currentCard.activeLevel - 1
+  )
+  const hasNext = currentCard.levels.some(
+    (l: any) => getLevelIndex(l) === currentCard.activeLevel + 1
+  )
+  const showLevelControls = hasPrev || hasNext
+
+  // Human-readable level numbers (1-based)
+  const currentLevelNum = currentCard.activeLevel + 1
+  const prevLevelNum = currentCard.activeLevel // activeLevel is 0-based, so prev = activeLevel - 1 + 1 = activeLevel
+  const nextLevelNum = currentCard.activeLevel + 2
 
   useEffect(() => {
     if (!currentCard) return
@@ -418,6 +434,32 @@ export function StudySession({
           </div>
         </div>
 
+        {/* Level controls — above card, always visible when card has multiple levels */}
+        {showLevelControls && (
+          <div className={styles.levelControls}>
+            {hasPrev ? (
+              <button
+                type="button"
+                className={styles.levelBtn}
+                onClick={onLevelDown}
+                aria-label={`Понизить уровень карточки до ${prevLevelNum}`}
+              >
+                ↓ Понизить уровень ({prevLevelNum})
+              </button>
+            ) : null}
+            {hasNext ? (
+              <button
+                type="button"
+                className={styles.levelBtn}
+                onClick={onLevelUp}
+                aria-label={`Повысить уровень карточки до ${nextLevelNum}`}
+              >
+                Повысить уровень ({nextLevelNum}) ↑
+              </button>
+            ) : null}
+          </div>
+        )}
+
         <div className={styles.studyCardArea}>
           {isMultipleChoice(currentCard) ? (
             <FlipCard
@@ -428,8 +470,6 @@ export function StudySession({
                 setIsFlipped(v => !v)
               }}
               disableFlipOnClick
-              onLevelUp={onLevelUp}
-              onLevelDown={onLevelDown}
               frontContent={renderMcqFront()}
               backContent={renderMcqBack()}
               showCardTitle={showCardTitle}
@@ -439,8 +479,6 @@ export function StudySession({
               card={currentCard}
               isFlipped={isFlipped}
               onFlip={handleFlip}
-              onLevelUp={onLevelUp}
-              onLevelDown={onLevelDown}
               showCardTitle={showCardTitle}
             />
           )}
@@ -453,34 +491,41 @@ export function StudySession({
             </Button>
           ) : (
             <div className={styles.studyActionsInner}>
-              <div className={styles.ratingRow}>
-                <RatingButton
-                  rating="again"
-                  label="Снова"
-                  intervalSeconds={ratingIntervals.again}
-                  onClick={() => submitReview('again')}
-                />
-                <RatingButton
-                  rating="hard"
-                  label="Трудно"
-                  intervalSeconds={ratingIntervals.hard}
-                  onClick={() => submitReview('hard')}
-                />
-                <RatingButton
-                  rating="good"
-                  label="Хорошо"
-                  intervalSeconds={ratingIntervals.good}
-                  onClick={() => submitReview('good')}
-                />
-                <RatingButton
-                  rating="easy"
-                  label="Легко"
-                  intervalSeconds={ratingIntervals.easy}
-                  onClick={() => submitReview('easy')}
-                />
+              <div className={styles.ratingSection}>
+                <div className={styles.ratingHeader}>Оценка сложности карточки</div>
+                <div className={styles.ratingRow}>
+                  <RatingButton
+                    rating="again"
+                    label="Не знаю"
+                    intervalSeconds={ratingIntervals.again}
+                    onClick={() => submitReview('again')}
+                  />
+                  <RatingButton
+                    rating="hard"
+                    label="Не уверен"
+                    intervalSeconds={ratingIntervals.hard}
+                    onClick={() => submitReview('hard')}
+                  />
+                  <RatingButton
+                    rating="good"
+                    label="Понимаю"
+                    intervalSeconds={ratingIntervals.good}
+                    onClick={() => submitReview('good')}
+                  />
+                  <RatingButton
+                    rating="easy"
+                    label="Выучил"
+                    intervalSeconds={ratingIntervals.easy}
+                    onClick={() => submitReview('easy')}
+                  />
+                </div>
               </div>
 
-              <CardComments cardId={currentCard.id} levelId={currentCard.activeCardLevelId} />
+              <CardComments
+                cardId={currentCard.id}
+                levelId={currentCard.activeCardLevelId}
+                deckOwnerId={currentCard.deckOwnerId}
+              />
             </div>
           )}
         </div>

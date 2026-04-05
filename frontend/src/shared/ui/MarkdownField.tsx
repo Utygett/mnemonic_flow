@@ -56,6 +56,8 @@ export function MarkdownField({
             height={200}
             textareaProps={{
               placeholder: 'Введите текст...',
+              enterKeyHint: 'enter', // Show "Enter" key instead of "Go"/"Send" on mobile
+              form: undefined, // Prevent association with any form
             }}
           />
         </div>

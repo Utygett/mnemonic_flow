@@ -53,7 +53,10 @@ export function DeckCard({
     <div className={styles.root}>
       <button type="button" onClick={onClick} className={styles.clickArea}>
         <div className={styles.headerRow}>
-          <div className={styles.title}>{deck.title}</div>
+          <div className={styles.title}>
+            {deck.title}
+            {deck.has_new_cards && <span className={styles.newDot} />}
+          </div>
           {hasMenu && (
             <div ref={menuRef} className={styles.menuWrapper} onClick={e => e.stopPropagation()}>
               <button

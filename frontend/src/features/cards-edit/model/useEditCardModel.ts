@@ -317,7 +317,11 @@ export function useEditCardModel(props: Props): EditCardViewModel {
     return usable.map((lvl, level_index) => {
       const content =
         lvl.kind === 'qa'
-          ? { question: lvl.question.trim(), answer: lvl.answer.trim() }
+          ? {
+              question: lvl.question.trim(),
+              answer: lvl.answer.trim(),
+              explanation: (lvl as any).explanation?.trim() || undefined,
+            }
           : {
               question: lvl.question.trim(),
               options: lvl.options

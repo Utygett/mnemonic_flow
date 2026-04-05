@@ -24,15 +24,16 @@ jobs:
           # Читаем версию
           VERSION=$(cat VERSION | tr -d '[:space:]')
 
-          # Проверяем формат xx.xx.xx (semver)
-          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+          # Проверяем формат xx.xx.xx или xx.xx.xx-dev (semver)
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-dev)?$'; then
             echo "❌ Invalid VERSION format: $VERSION"
-            echo "Expected format: xx.xx.xx (e.g., 1.0.0, 0.5.12)"
+            echo "Expected format: xx.xx.xx or xx.xx.xx-dev (e.g., 1.0.0, 0.5.12, 0.0.6-dev)"
             exit 1
           fi
 
-          # Проверяем, что каждый компонент < 1000
-          IFS='.' read -ra PARTS <<< "$VERSION"
+          # Проверяем, что каждый компонент < 1000 (убираем -dev для проверки)
+          VERSION_CLEAN=$(echo "$VERSION" | sed 's/-dev$//')
+          IFS='.' read -ra PARTS <<< "$VERSION_CLEAN"
           for part in "${PARTS[@]}"; do
             if [ "$part" -ge 1000 ]; then
               echo "❌ Version part too large: $part (must be < 1000)"
@@ -72,9 +73,11 @@ jobs:
           CURRENT_VERSION="${{ steps.versions.outputs.current_version }}"
           MAIN_VERSION="${{ steps.versions.outputs.main_version }}"
 
-          # Функция для преобразования версии в число
+          # Функция для преобразования версии в число (убирает -dev если есть)
           version_to_number() {
             local version=$1
+            # Убираем постфикс -dev для корректного сравнения
+            version=$(echo "$version" | sed 's/-dev$//')
             IFS='.' read -ra PARTS <<< "$version"
             echo $((PARTS[0] * 1000000 + PARTS[1] * 1000 + PARTS[2]))
           }

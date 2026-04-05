@@ -26,3 +26,17 @@ export async function createComment(
     body: JSON.stringify(payload),
   })
 }
+
+/**
+ * Delete a comment. Only the author can delete their own comment.
+ * Requires authentication.
+ */
+export async function deleteComment(
+  cardId: string,
+  levelId: string,
+  commentId: string
+): Promise<void> {
+  return apiRequest<void>(`/cards/${cardId}/levels/${levelId}/comments/${commentId}`, {
+    method: 'DELETE',
+  })
+}

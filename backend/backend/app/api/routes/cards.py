@@ -158,7 +158,8 @@ def create_card(
                     status_code=422, detail=f"Level {i + 1}: answer is required for flashcard"
                 )
 
-            content = {"question": q, "answer": a}
+            explanation = (lvl.explanation or "").strip() or None
+            content = {"question": q, "answer": a, "explanation": explanation}
 
         elif payload.type == "multiple_choice":
             options = lvl.options or []
@@ -216,6 +217,11 @@ def create_card(
     db.add_all(levels_to_add)
 
     db.commit()
+
+    # Auto-add card to study mode if deck has this setting enabled
+    if deck.auto_add_cards_to_study:
+        settings = _ensure_settings(db, deck.owner_id)
+        _ensure_active_progress(db, user_id=deck.owner_id, card=card, settings=settings)
 
     return CreateCardResponse(card_id=card.id, deck_id=payload.deck_id, title=card.title)
 
@@ -654,7 +660,8 @@ def update_card_levels(
                     status_code=422, detail="QA level question/answer must be non-empty"
                 )
 
-            content: Dict[str, Any] = {"question": q, "answer": a}
+            explanation = (c.explanation or "").strip() or None
+            content: Dict[str, Any] = {"question": q, "answer": a, "explanation": explanation}
 
         elif isinstance(c, McqContentIn):
             q = (c.question or "").strip()

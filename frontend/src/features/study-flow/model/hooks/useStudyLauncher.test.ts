@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { renderHook, act, waitFor } from '@testing-library/react'
+import { renderHook, act } from '@testing-library/react'
 import { useStudyLauncher } from './useStudyLauncher'
 import { createMockCards, createMockPersistedSession } from '../test/fixtures'
 
@@ -65,7 +65,13 @@ describe('useStudyLauncher', () => {
         seed: undefined,
         limit: undefined,
       })
-      expect(mockInput.setDeckCards).toHaveBeenCalledWith(mockCards)
+      expect(mockInput.setDeckCards).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 'card-0', title: 'Card 0', type: 'flashcard' }),
+          expect.objectContaining({ id: 'card-1', title: 'Card 1', type: 'flashcard' }),
+          expect.objectContaining({ id: 'card-2', title: 'Card 2', type: 'flashcard' }),
+        ])
+      )
       expect(mockInput.setActiveDeckId).toHaveBeenCalledWith('deck-1')
       expect(mockInput.setShowCardTitle).toHaveBeenCalledWith(false)
       expect(mockInput.setSessionMode).toHaveBeenCalledWith('deck')
@@ -206,13 +212,10 @@ describe('useStudyLauncher', () => {
         await result.current.startDeckStudy('deck-1', 'ordered')
       })
 
-      // Loading state should be set before the promise resolves
       expect(mockInput.setLoadingDeckCards).toHaveBeenCalledWith(true)
 
-      // Resolve the mock promise
       resolvePromise!({ cards: mockCards, deck: { show_card_title: false } })
 
-      // Wait for the act to complete
       await promise
 
       expect(mockInput.setLoadingDeckCards).toHaveBeenCalledWith(false)
@@ -235,7 +238,7 @@ describe('useStudyLauncher', () => {
   })
 
   describe('startReviewStudy', () => {
-    it('должен запустить review сессию с лимитом 20', async () => {
+    it('должен запустить review сессию с лимитом 200', async () => {
       const mockItems = createMockCards(5)
       vi.mocked(getReviewSession).mockResolvedValue(mockItems)
 
@@ -245,7 +248,7 @@ describe('useStudyLauncher', () => {
         await result.current.startReviewStudy()
       })
 
-      expect(getReviewSession).toHaveBeenCalledWith(20)
+      expect(getReviewSession).toHaveBeenCalledWith(200)
       expect(mockInput.setDeckCards).toHaveBeenCalledWith(mockItems)
       expect(mockInput.setActiveDeckId).toHaveBeenCalledWith(null)
       expect(mockInput.setSessionMode).toHaveBeenCalledWith('review')

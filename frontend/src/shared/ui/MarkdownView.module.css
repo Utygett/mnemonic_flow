@@ -4,6 +4,14 @@
   width: 100%;
   word-break: break-word;
   overflow-wrap: break-word;
+}
+
+/* Alignment classes based on line count */
+.alignCenter {
+  text-align: center;
+}
+
+.alignLeft {
   text-align: left;
 }
 

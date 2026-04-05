@@ -13,6 +13,7 @@ export function defaultQaLevel(): QaLevelDraft {
     kind: 'qa',
     question: '',
     answer: '',
+    explanation: '',
     question_image_urls: undefined,
     answer_image_urls: undefined,
     question_audio_urls: undefined,
@@ -97,6 +98,7 @@ export function normalizeQaLevel(rawLevel: any): QaLevelDraft {
     kind: 'qa',
     question: String(c.question ?? ''),
     answer: String(c.answer ?? ''),
+    explanation: String(c.explanation ?? ''),
     // Media URLs are at the top level of the level object (arrays)
     question_image_urls: level.question_image_urls ?? level.questionImageUrls ?? undefined,
     answer_image_urls: level.answer_image_urls ?? level.answerImageUrls ?? undefined,

@@ -10,6 +10,7 @@ export interface CardLevel {
 export interface StudyCard {
   id: string
   deckId: string
+  deckOwnerId: string
   title: string
   type: string
   levels: CardLevel[]
