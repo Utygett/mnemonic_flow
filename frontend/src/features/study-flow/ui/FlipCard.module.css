@@ -50,6 +50,34 @@
   overflow: auto;
   overflow-x: hidden;
   text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Answer and explanation container */
+.answerContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.answerSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.explanationDivider {
+  width: 100%;
+  margin: 0.75rem 0;
+  opacity: 0.5;
+}
+
+.explanationSection {
+  display: flex;
+  flex-direction: column;
 }
 
 .flipcardHint {

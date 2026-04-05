@@ -108,12 +108,33 @@ def list_user_decks(user_id: UUID = Depends(get_current_user_id), db: Session = 
         for link in links:
             deck = db.query(Deck).filter(Deck.id == link.deck_id).first()
             if deck:
+                # Check for new cards (cards without progress for this user)
+                from sqlalchemy import func
+
+                # Subquery to get card IDs that have progress
+                cards_with_progress = (
+                    db.query(CardProgress.card_id)
+                    .filter(CardProgress.user_id == user_uuid)
+                    .subquery()
+                )
+
+                # Count cards in this deck without progress
+                new_cards_count = (
+                    db.query(func.count(Card.id))
+                    .filter(Card.deck_id == deck.id)
+                    .filter(~Card.id.in_(cards_with_progress))
+                    .scalar()
+                )
+
+                has_new_cards = (new_cards_count or 0) > 0
+
                 summary = DeckSummary(
                     deck_id=deck.id,
                     title=deck.title,
                     description=deck.description,
                     owner_id=deck.owner_id,
                     can_edit=is_deck_editor(db, deck.id, user_uuid),
+                    has_new_cards=has_new_cards,
                 )
                 deck_list.append(summary)
     return deck_list
@@ -374,6 +395,8 @@ def create_deck(
         description=payload.description,
         color=payload.color or "#4A6FA5",
         is_public=False,
+        show_card_title=payload.show_card_title,
+        auto_add_cards_to_study=payload.auto_add_cards_to_study,
     )
     db.add(deck)
     db.flush()
@@ -574,6 +597,12 @@ def update_deck(
             raise HTTPException(status_code=403, detail="Only owner can change deck visibility")
         deck.is_public = payload.is_public
 
+    if payload.show_card_title is not None:
+        deck.show_card_title = payload.show_card_title
+
+    if payload.auto_add_cards_to_study is not None:
+        deck.auto_add_cards_to_study = payload.auto_add_cards_to_study
+
     db.commit()
     db.refresh(deck)
 
@@ -584,6 +613,8 @@ def update_deck(
         color=deck.color,
         owner_id=deck.owner_id,
         is_public=deck.is_public,
+        show_card_title=deck.show_card_title,
+        auto_add_cards_to_study=deck.auto_add_cards_to_study,
         can_edit=True,  # user passed require_deck_editor, so can_edit is always True here
     )
 
@@ -700,6 +731,7 @@ def get_study_cards(
             {
                 "id": str(c.id),
                 "deckId": str(c.deck_id),
+                "deckOwnerId": str(deck.owner_id),
                 "title": c.title,
                 "type": c.type,
                 "levels": [

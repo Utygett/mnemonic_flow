@@ -16,6 +16,8 @@ export function EditDeckForm(props: Props) {
     setDescription,
     isPublic,
     setIsPublic,
+    autoAddCardsToStudy,
+    setAutoAddCardsToStudy,
     loading,
     saving,
     error,
@@ -56,6 +58,17 @@ export function EditDeckForm(props: Props) {
           disabled={saving}
         />
         <span>Сделать колоду публичной</span>
+      </label>
+
+      <label className={styles.checkboxRow}>
+        <input
+          className={styles.checkbox}
+          type="checkbox"
+          checked={autoAddCardsToStudy}
+          onChange={e => setAutoAddCardsToStudy(e.target.checked)}
+          disabled={saving}
+        />
+        <span>Автоматически добавлять новые карточки в обучение</span>
       </label>
 
       <label className={styles.field}>

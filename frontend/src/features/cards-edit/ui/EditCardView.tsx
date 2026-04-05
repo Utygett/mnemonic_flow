@@ -250,6 +250,18 @@ export function EditCardView(props: Props) {
                           onTogglePreview={() => setAPreview(p => !p)}
                           disabled={saving}
                         />
+
+                        <div style={{ marginTop: '1rem' }}>
+                          <MarkdownField
+                            label="Объяснение (не обязательно)"
+                            value={(active as any)?.explanation || ''}
+                            onChange={v => patchLevel(activeLevel, { explanation: v } as any)}
+                            preview={aPreview}
+                            onTogglePreview={() => setAPreview(p => !p)}
+                            disabled={saving}
+                          />
+                        </div>
+
                         <div className={styles.mt3}>
                           <CardImageUpload
                             cardId={selectedCardId}

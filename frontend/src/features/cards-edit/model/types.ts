@@ -39,6 +39,7 @@ export type QaLevelDraft = {
   kind: 'qa'
   question: string
   answer: string
+  explanation?: string // комментарий/объяснение к ответу
   // Media URLs (arrays for multiple files)
   question_image_urls?: string[]
   answer_image_urls?: string[]

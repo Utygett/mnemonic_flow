@@ -63,11 +63,7 @@ export async function login(email: string, password: string) {
   }
 
   if (!res.ok) {
-    // FastAPI HTTPException: {"detail": "..."} или {"detail": {code,message}}
-    const msg =
-      payload?.detail?.message ?? payload?.detail ?? rawText ?? `Login failed (${res.status})`
-
-    throw new Error(String(msg))
+    throw new Error(extractFastApiError(payload, `Login failed (${res.status})`))
   }
 
   // успешный ответ (ожидаем JSON с токенами)

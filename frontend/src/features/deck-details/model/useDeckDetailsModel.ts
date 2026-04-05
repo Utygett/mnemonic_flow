@@ -17,7 +17,11 @@ export type DeckDetailsViewModel = {
   canEdit: boolean
   showCardTitle: boolean
   setShowCardTitle: (v: boolean) => void
+  autoAddCardsToStudy: boolean
+  setAutoAddCardsToStudy: (v: boolean) => void
   savingDeckSetting: boolean
+  isPublic: boolean
+  setIsPublic: (v: boolean) => void
   limit: number
   setLimit: (v: number) => void
 
@@ -158,6 +162,30 @@ export function useDeckDetailsModel(props: DeckDetailsProps): DeckDetailsViewMod
     }
   }
 
+  const setIsPublic = async (value: boolean) => {
+    setSavingDeckSetting(true)
+    try {
+      await updateDeck(props.deckId, { is_public: value })
+      await refreshCards()
+    } catch (err) {
+      console.error('Failed to update deck public status:', err)
+    } finally {
+      setSavingDeckSetting(false)
+    }
+  }
+
+  const setAutoAddCardsToStudy = async (value: boolean) => {
+    setSavingDeckSetting(true)
+    try {
+      await updateDeck(props.deckId, { auto_add_cards_to_study: value })
+      await refreshCards()
+    } catch (err) {
+      console.error('Failed to update auto add cards setting:', err)
+    } finally {
+      setSavingDeckSetting(false)
+    }
+  }
+
   // Prefer can_edit from backend; fall back to owner_id comparison for compatibility
   const canEdit =
     deck != null ? (deck.can_edit ?? String(deck.owner_id) === String(currentUserId)) : true
@@ -169,7 +197,11 @@ export function useDeckDetailsModel(props: DeckDetailsProps): DeckDetailsViewMod
     canEdit,
     showCardTitle: deck?.show_card_title ?? false,
     setShowCardTitle,
+    autoAddCardsToStudy: deck?.auto_add_cards_to_study ?? false,
+    setAutoAddCardsToStudy,
     savingDeckSetting,
+    isPublic: deck?.is_public ?? false,
+    setIsPublic,
     limit,
     setLimit,
 
