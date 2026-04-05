@@ -15,9 +15,6 @@ interface FlipCardProps {
   isFlipped: boolean
   onFlip: () => void
 
-  onLevelUp?: () => void
-  onLevelDown?: () => void
-
   frontContent?: React.ReactNode
   backContent?: React.ReactNode
   disableFlipOnClick?: boolean
@@ -25,7 +22,9 @@ interface FlipCardProps {
 }
 
 function getLevelIndex(l: any): number {
-  return typeof l?.level_index === 'number' ? l.level_index : l?.levelindex
+  if (typeof l?.levelIndex === 'number') return l.levelIndex
+  if (typeof l?.level_index === 'number') return l.level_index
+  return l?.levelindex
 }
 
 type ViewerState = { src: string; alt: string } | null
@@ -34,8 +33,6 @@ export function FlipCard({
   card,
   isFlipped,
   onFlip,
-  onLevelUp,
-  onLevelDown,
   frontContent,
   backContent,
   disableFlipOnClick = false,
@@ -51,32 +48,17 @@ export function FlipCard({
     : (level as any)?.content?.question || '…'
   const backText = (level as any)?.content?.answer || '…'
 
-  // Media URLs are returned at the top level of the level object (camelCase from API)
-  // Now they are arrays for multiple files
   const questionImageUrls = (level as any)?.questionImageUrls || []
   const answerImageUrls = (level as any)?.answerImageUrls || []
   const questionAudioUrls = (level as any)?.questionAudioUrls || []
   const answerAudioUrls = (level as any)?.answerAudioUrls || []
 
-  const hasPrev = card.levels.some((l: any) => getLevelIndex(l) === card.activeLevel - 1)
-  const hasNext = card.levels.some((l: any) => getLevelIndex(l) === card.activeLevel + 1)
-
-  const canDown = hasPrev
-  const canUp = hasNext
-
-  // Get user's audio autoplay preference
   const autoplayMode = getStoredAudioAutoplayMode()
 
-  // Auto-play question audio when card loads (front side)
   const questionAudio = useAudioAutoplay(questionAudioUrls, autoplayMode, !isFlipped, 0)
-
-  // Auto-play answer audio when card is flipped to back
-  // Add a small delay to let the flip animation start
   const answerAudio = useAudioAutoplay(answerAudioUrls, autoplayMode, isFlipped, 300)
 
   const handleClick = () => {
-    // In MCQ we disable flip from the front side (to avoid interfering with option clicks),
-    // but we still allow flipping back from the answer side.
     if (disableFlipOnClick && !isFlipped) return
     onFlip()
   }
@@ -177,49 +159,9 @@ export function FlipCard({
               </div>
             )}
 
-            {(canDown || canUp) && (
-              <div className={styles.flipcardLevelControls} onClick={e => e.stopPropagation()}>
-                {canDown ? (
-                  <button
-                    type="button"
-                    className={styles.flipcardLevelBtnLeft}
-                    onClick={e => {
-                      e.stopPropagation()
-                      onLevelDown?.()
-                    }}
-                  >
-                    &lt; проще
-                  </button>
-                ) : (
-                  <div />
-                )}
-
-                {canUp ? (
-                  <button
-                    type="button"
-                    className={styles.flipcardLevelBtnRight}
-                    onClick={e => {
-                      e.stopPropagation()
-                      onLevelUp?.()
-                    }}
-                  >
-                    сложнее &gt;
-                  </button>
-                ) : (
-                  <div />
-                )}
-              </div>
-            )}
-
             <div className={styles.flipcardText}>
               {backContent ?? <MarkdownView value={backText} />}
             </div>
-
-            {card.levels.length > 1 ? (
-              <div className={styles.flipcardHint}>
-                Уровень {card.activeLevel + 1} из {card.levels.length}
-              </div>
-            ) : null}
           </div>
         </motion.div>
       </motion.div>

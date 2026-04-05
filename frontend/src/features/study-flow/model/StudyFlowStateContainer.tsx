@@ -166,21 +166,62 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
   }, [isCompleted, isStudying, sessionKey, setResumeCandidate])
 
   const handleLevelUp = async () => {
-    const card = cards[currentIndex]
+    // Use deckCards directly to get the card at current position
+    const card = deckCards[currentIndex]
     if (!card) return
 
-    const r: any = await levelUp(card.id)
-    const nextLevel = typeof r?.active_level === 'number' ? r.active_level : card.activeLevel
+    const maxLevel = card.levels.length - 1
+    if (card.activeLevel >= maxLevel) return
+
+    // Optimistically update level immediately for instant UI feedback
+    const nextLevel = card.activeLevel + 1
     setDeckCards(prev => prev.map(c => (c.id === card.id ? { ...c, activeLevel: nextLevel } : c)))
+
+    // Sync with server in background
+    try {
+      const r: any = await levelUp(card.id)
+      const serverLevel = typeof r?.active_level === 'number' ? r.active_level : nextLevel
+      // Correct if server returned a different value
+      if (serverLevel !== nextLevel) {
+        setDeckCards(prev =>
+          prev.map(c => (c.id === card.id ? { ...c, activeLevel: serverLevel } : c))
+        )
+      }
+    } catch {
+      // Revert on error
+      setDeckCards(prev =>
+        prev.map(c => (c.id === card.id ? { ...c, activeLevel: card.activeLevel } : c))
+      )
+    }
   }
 
   const handleLevelDown = async () => {
-    const card = cards[currentIndex]
+    // Use deckCards directly to get the card at current position
+    const card = deckCards[currentIndex]
     if (!card) return
 
-    const r: any = await levelDown(card.id)
-    const nextLevel = typeof r?.active_level === 'number' ? r.active_level : card.activeLevel
+    if (card.activeLevel <= 0) return
+
+    // Optimistically update level immediately for instant UI feedback
+    const nextLevel = card.activeLevel - 1
     setDeckCards(prev => prev.map(c => (c.id === card.id ? { ...c, activeLevel: nextLevel } : c)))
+
+    // Sync with server in background
+    try {
+      const r: any = await levelDown(card.id)
+      const serverLevel = typeof r?.active_level === 'number' ? r.active_level : nextLevel
+      // Correct if server returned a different value
+      if (serverLevel !== nextLevel) {
+        setDeckCards(prev =>
+          prev.map(c => (c.id === card.id ? { ...c, activeLevel: serverLevel } : c))
+        )
+      }
+    } catch {
+      // Revert on error
+      setDeckCards(prev =>
+        prev.map(c => (c.id === card.id ? { ...c, activeLevel: card.activeLevel } : c))
+      )
+    }
   }
 
   const handleRemoveFromProgress = async () => {
