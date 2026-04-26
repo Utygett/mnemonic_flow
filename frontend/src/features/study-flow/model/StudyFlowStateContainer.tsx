@@ -58,6 +58,7 @@ const emptyRatingCounts = (): RatingCounts => ({
 })
 
 const MAX_CARD_VIEW_MS = 60_000
+const MAX_HISTORY_DOTS = 20
 
 export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Props) {
   const [isStudying, setIsStudying] = React.useState(false)
@@ -331,9 +332,12 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
   }
 
   const currentCard = cards[currentIndex]
-  const ratingHistoryForCurrentCard: DifficultyRating[] = (currentCard?.reviewHistory ?? []).map(
-    h => h.rating as DifficultyRating
-  )
+  // Sort history from oldest to newest (ASC by reviewedAt) so dots render left-to-right correctly,
+  // then take only the last MAX_HISTORY_DOTS entries.
+  const ratingHistoryForCurrentCard: DifficultyRating[] = [...(currentCard?.reviewHistory ?? [])]
+    .sort((a, b) => new Date(a.reviewedAt).getTime() - new Date(b.reviewedAt).getTime())
+    .slice(-MAX_HISTORY_DOTS)
+    .map(h => h.rating as DifficultyRating)
 
   return (
     <>
