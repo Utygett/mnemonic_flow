@@ -80,6 +80,12 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
   const [ratedCount, setRatedCount] = React.useState(0)
   const [spentMs, setSpentMs] = React.useState(0)
 
+  // Ratings made during the current session, keyed by card id.
+  // Used to append live dots to the history row without mutating reviewHistory.
+  const [sessionRatings, setSessionRatings] = React.useState<Map<string, DifficultyRating[]>>(
+    () => new Map()
+  )
+
   const { cards, currentIndex, isCompleted, rateCard, skipCard, resetSession } = useStudySession(
     deckCards,
     sessionIndex
@@ -248,6 +254,16 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
     const capped = Math.min(raw, MAX_CARD_VIEW_MS)
     setSpentMs(prev => prev + capped)
 
+    // Track this rating for the current card so history dots update immediately.
+    const cardId = cards[currentIndex]?.id
+    if (cardId) {
+      setSessionRatings(prev => {
+        const next = new Map(prev)
+        next.set(cardId, [...(next.get(cardId) ?? []), rating])
+        return next
+      })
+    }
+
     await rateCard(review)
     onRated()
   }
@@ -258,6 +274,7 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
     setRatingCounts(emptyRatingCounts())
     setRatedCount(0)
     setSpentMs(0)
+    setSessionRatings(new Map())
   }
 
   const handleCloseStudy = () => {
@@ -332,12 +349,14 @@ export function StudyFlowStateContainer({ onExitToHome, onRated, children }: Pro
   }
 
   const currentCard = cards[currentIndex]
-  // Sort history from oldest to newest (ASC by reviewedAt) so dots render left-to-right correctly,
-  // then take only the last MAX_HISTORY_DOTS entries.
-  const ratingHistoryForCurrentCard: DifficultyRating[] = [...(currentCard?.reviewHistory ?? [])]
-    .sort((a, b) => new Date(a.reviewedAt).getTime() - new Date(b.reviewedAt).getTime())
-    .slice(-MAX_HISTORY_DOTS)
-    .map(h => h.rating as DifficultyRating)
+  // Build history dots: past reviews (ASC) + ratings from the current session.
+  // This ensures dots appear immediately after rating without waiting for a server refresh.
+  const ratingHistoryForCurrentCard: DifficultyRating[] = [
+    ...[...(currentCard?.reviewHistory ?? [])]
+      .sort((a, b) => new Date(a.reviewedAt).getTime() - new Date(b.reviewedAt).getTime())
+      .map(h => h.rating as DifficultyRating),
+    ...(currentCard ? (sessionRatings.get(currentCard.id) ?? []) : []),
+  ].slice(-MAX_HISTORY_DOTS)
 
   return (
     <>
