@@ -96,14 +96,20 @@ export function useStudyLauncher(input: Input) {
       const sorted = [...(rawItems as any[])].sort((a, b) =>
         (a.deck_id ?? '').localeCompare(b.deck_id ?? '')
       )
-      input.setDeckCards(toStudyCards(sorted))
+      const cards = toStudyCards(sorted)
+
+      if (cards.length === 0) {
+        alert('Нет карточек для повторения.')
+        return
+      }
+
+      input.setDeckCards(cards)
       input.setActiveDeckId(null)
       input.setShowCardTitle(false)
-
-      input.setIsStudying(true)
       input.setSessionMode('review')
       input.setSessionKey('review')
       input.setSessionIndex(0)
+      input.setIsStudying(true)
     } finally {
       input.setLoadingDeckCards(false)
     }
